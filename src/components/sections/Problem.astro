@@ -1,17 +1,106 @@
 ---
 /**
- * Problem — stärkster Aufhänger: 43.000 Bewerber · 30 Minuten · 288 Wohnungen.
- * [Platzhalter — TODO(CLAUDE.md): Berliner-Zeitung-Quelle verlinken.]
+ * Problem — Signature-Moment „Scroll-Text-Fill" (siehe CLAUDE.md).
+ * Großer Roboto-Black-Text startet ausgegraut und wird beim Scrollen Wort für
+ * Wort auf volle CD-Farbe geflutet (ScrollTrigger scrub, in animations.ts).
+ * Emphasis-Wörter (Zahlen) leuchten gelb auf.
+ *
+ * Fallback: ohne JS / bei prefers-reduced-motion sofort in voller Farbe.
  */
 import Section from '../Section.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n';
 
 const t = useTranslations(getLangFromUrl(Astro.url));
+const { text, source } = t.sections.problem;
+
+// Text mit **Emphasis** in Wort-Einheiten zerlegen: Whitespace-Tokens, wobei
+// ein Token als Emphasis gilt, sobald es einen **…**-Bereich berührt. So bleibt
+// Interpunktion am Wort (keine Leerzeichen vor Satzzeichen).
+type Unit = { text: string; em: boolean };
+function tokenize(src: string): Unit[] {
+  let plain = '';
+  const ranges: Array<[number, number]> = [];
+  src.split('**').forEach((part, i) => {
+    const start = plain.length;
+    plain += part;
+    if (i % 2 === 1) ranges.push([start, plain.length]); // ungerade = zwischen ** **
+  });
+  const units: Unit[] = [];
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(plain)) !== null) {
+    const s = m.index;
+    const e = s + m[0].length;
+    const em = ranges.some(([rs, reEnd]) => s < reEnd && e > rs);
+    units.push({ text: m[0], em });
+  }
+  return units;
+}
+const units = tokenize(text);
 ---
 
-<Section id="problem" title={t.sections.problem.title} dark>
-  <p class="text-body opacity-80">
-    [Platzhalter] 43.000 Bewerber · 30 Minuten · 288 Wohnungen.
-    <!-- TODO: Quelle (Berliner Zeitung) verlinken -->
+<Section id="problem" title={t.sections.problem.title}>
+  <p class="problem-text" data-problem>
+    {
+      units.map((u, i) => (
+        <>
+          {i > 0 && ' '}
+          {u.em ? (
+            <span class="fill-word fill-word--em">
+              <span class="em-mark" aria-hidden="true" />
+              <span class="em-text">{u.text}</span>
+            </span>
+          ) : (
+            <span class="fill-word">{u.text}</span>
+          )}
+        </>
+      ))
+    }
+  </p>
+  <p class="mt-6 text-body opacity-60">
+    {source}
+    {/* TODO: Quelle verlinken (Berliner Zeitung) */}
   </p>
 </Section>
+
+<style>
+  .problem-text {
+    font-size: clamp(1.75rem, 4.6vw, 3.25rem);
+    font-weight: 900;
+    line-height: 1.14;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    max-width: 60rem;
+  }
+  .fill-word {
+    /* Standard/Fallback: volle CD-Farbe (ohne JS / reduced-motion sofort lesbar) */
+    color: var(--color-black);
+  }
+  .fill-word--em {
+    position: relative;
+    white-space: nowrap;
+  }
+  .em-mark {
+    position: absolute;
+    inset: 0.06em -0.08em 0.04em -0.08em;
+    background-color: var(--color-yellow);
+    border-radius: 0.1em;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .em-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Nur bei aktivem JS + erlaubter Bewegung ausgegraut starten; die GSAP-
+     Scrub-Timeline flutet dann Wort für Wort auf volle Farbe. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .fill-word {
+      color: var(--color-grey-yellow);
+    }
+    html.js .em-mark {
+      transform: scaleX(0);
+    }
+  }
+</style>

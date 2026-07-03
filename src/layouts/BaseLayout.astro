@@ -119,6 +119,14 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
 
     <Footer />
 
+    {/* ---- Eigener Cursor (Signature-Moment) ----
+        Nur aktiv bei (pointer:fine) und ohne prefers-reduced-motion — wird per
+        JS in animations.ts angesteuert; sonst nativer Cursor. */}
+    <div class="cursor" aria-hidden="true">
+      <div class="cursor-ring" data-cursor-ring></div>
+      <div class="cursor-dot" data-cursor-dot></div>
+    </div>
+
     {/* ---- Animations-Skripte: Lenis (Smooth Scroll) + GSAP/ScrollTrigger ----
         Nur clientseitig, respektiert prefers-reduced-motion. */}
     <script>

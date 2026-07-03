@@ -115,6 +115,29 @@ gleiche Tiefe, gleicher Rhythmus), damit die Seite als *ein* durchkomponiertes S
 - **Optional:** sehr feine **Grain-Textur** als Overlay für analoge Wärme (nur wenn Performance
   es hergibt).
 
+### Signature-Moments (wiederverwendbar)
+Vier feste „Signature-Moments" tragen den Awwwards-Charakter durch die ganze Seite. Sie werden
+**einmal global** gebaut und von späteren Sektionen wiederverwendet (nicht neu erfinden):
+
+1. **Eigener Cursor (global, in `BaseLayout`).** Kreis-Umriss (~30 px) folgt dem Zeiger mit
+   leichter Verzögerung (`gsap.quickTo`), dazu ein kleiner Punkt (~5 px) an der exakten Position.
+   Über `a`, `button` und `[data-cursor]` wächst der Kreis (~1,8×) und füllt sich.
+   `mix-blend-mode: difference` (lesbar auf Gelb **und** Schwarz). **Nur** bei `(pointer: fine)`:
+   nativer Cursor aus, Custom an. Bei Touch **und** `prefers-reduced-motion`: nativer Cursor
+   bleibt, kein Custom. Interaktive Elemente können per `[data-cursor]` opt-in andocken.
+2. **Nav → Pille (Header).** `scrollY` < ~60 px: volle Breite, transparent, kein Rand/Schatten.
+   Danach schrumpft die Nav weich zu einer **zentrierten, schwebenden Pille** (kleinere max-width,
+   `rounded-full`, `offwhite/95` + backdrop-blur, weicher großer Schatten, leicht vom oberen Rand
+   abgesetzt). Zitiert die **App-Bottom-Bar**. Logo, Links und „App laden"-CTA durchgehend nutzbar.
+3. **Gelbes Glow / Aurora (hinter Key-Visuals).** Großer, stark geblurter **gelber Radial-Verlauf**
+   mit niedriger Opacity hinter Phone-Mockups/Key-Visuals, langsam **„atmend"** (~10 s
+   ease-in-out-Loop: leichtes translate + scale + Opacity). Nur Gelb, dezent. Parallaxt beim
+   Scrollen **langsamer** als der Vordergrund (Tiefe). `prefers-reduced-motion`: statisch.
+4. **Scroll-Text-Fill (Emphasis-Sektionen).** Großer Text (Roboto Black) startet **ausgegraut**
+   und wird beim Scrollen **Wort für Wort** auf volle CD-Farbe „geflutet" (ScrollTrigger `scrub`).
+   Emphasis-Wörter (z. B. Zahlen) leuchten **gelb** bzw. kräftig schwarz auf. Fallback: bei
+   `prefers-reduced-motion`/ohne JS sofort in voller Farbe. Erstverwendung: Problem-Sektion.
+
 ### Farbwelt
 Bleibt strikt **Gelb / Schwarz / Grau** (die CD-Tokens). Der „Awwwards-Look" kommt aus
 **Bewegung, Typo-Drama und Tiefe** — **nicht** aus neuen Farben oder Verläufen in Fremdtönen.
@@ -143,8 +166,8 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
 4. **Lösung (Bridge)** — IB dreht den Spieß um: überwacht 24/7 alle Portale, pingt zuerst.
 5. **Features** — die 4 Säulen (siehe unten), scroll-animiert, je mit echtem Screenshot.
    Bento-Grid. Ersetzt eine geklickte Demo.
-6. **Portale** — 13 Portale, als **Text-Liste** (keine Logos, rechtliche Gründe).
-   [TODO: vollständige Liste der 13]
+6. **Portale** — die überwachten Portale als **Text-Liste** (keine Logos, rechtliche Gründe).
+   Anzahl wird aus `site.ts` abgeleitet und sichtbar als **„über 10"** formuliert (wachstumssicher).
 7. **Preise** — 3 Karten (siehe unten) + 4-Vorteile-Streifen. CTA-Fokus auf
    „7 Tage kostenlos testen – kein Risiko".
 8. **Social Proof** — Bewertungszahlen + Testimonials. [TODO: Testimonials]
@@ -183,7 +206,7 @@ Nicht als flache Liste — als **Ablauf einer Wohnungssuche** gruppieren:
 **Extras** (schmaler Streifen, klein): DE/EN · Light- & Dark-Mode.
 
 **Hero-Features** (groß rausgestellt, die echten Differenzierer):
-13 Portale in einer App · Echtzeit-Push · Suchbereich auf der Karte zeichnen · Bewerbung-Auto-Copy.
+Über 10 Portale in einer App · Echtzeit-Push · Suchbereich auf der Karte zeichnen · Bewerbung-Auto-Copy.
 
 ---
 
@@ -203,8 +226,10 @@ Nicht als flache Liste — als **Ablauf einer Wohnungssuche** gruppieren:
 - Vorteile-Streifen: Echtzeit-Push (auch via Telegram) · Alle Portale in einer App ·
   Alle Features (Favoriten, Bewerbungsschreiben etc.) · Kein Risiko: jederzeit kündbar.
 
-**Portale:** 13 gesamt. Bekannt: ImmobilienScout24, Kleinanzeigen, Immowelt, WG-Gesucht,
-Ohne-Makler, Vonovia. [TODO: vollständige 13]
+**Portale:** über 10 (Anzahl aus `site.ts` abgeleitet, sichtbar als „über 10" / „10+"):
+ImmobilienScout24, Immobilien.de, Immowelt, Kleinanzeigen, LEG Wohnen, Ohne-Makler, Quoka,
+Vonovia, WG-Gesucht, Wohnungsbörse. Anzeige-Name sichtbar; volle Domain nur in `site.ts`
+(`Portal.domain`) für strukturierte Daten/JSON-LD.
 
 ---
 
@@ -307,7 +332,8 @@ Entdeckungs- und Empfehlungsschicht.
 ## Offene TODOs (Assets/Infos von Artem)
 
 - [ ] Frameless App-Screenshots (PNG) — je Säule + Hero
-- [ ] Vollständige Liste der 13 Portale
+- [x] Portal-Liste (10, mit Domains) in `site.ts` gepflegt; Anzahl wird abgeleitet
+- [ ] EN-Store-Badges (`app-store-badge-en.svg` / `google-play-badge-en.svg`) — aktuell Fallback auf DE
 - [ ] Berliner-Zeitung-Quelle (Link) zur 43.000 / 30-Min / 288-Statistik
 - [ ] Testimonials (Text + Name/Stadt) für Social Proof
 - [ ] App-Icon (für die Hero-Notification-Karte)

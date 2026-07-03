@@ -1,0 +1,86 @@
+---
+/**
+ * StoreBadges.astro — wiederverwendbare offizielle Store-Badges.
+ * Sprachabhängig (DE-Badge auf /, EN-Badge auf /en/), verlinkt auf die
+ * Store-Links aus site.ts (UTM via `position`). An mehreren CTA-Stellen nutzbar.
+ *
+ * HINWEIS: Aktuell liegen nur DE-Badges in src/assets/images/
+ * (app-store-badge-de.svg / google-play-badge-de.svg). Sobald EN-Badges
+ * vorhanden sind, unten importieren und in `badgeByLang.en` eintragen.
+ */
+import { getLangFromUrl, useTranslations } from '../i18n';
+import { getStoreLinks } from '../data/site';
+import type { Locale } from '../data/site';
+
+import AppStoreDe from '../assets/images/app-store-badge-de.svg';
+import GooglePlayDe from '../assets/images/google-play-badge-de.svg';
+
+interface Props {
+  /** CTA-Position für UTM/Tracking (site.ts → getStoreLinks). */
+  position?: string;
+  class?: string;
+  /** Sprache überschreiben; sonst aus der URL. */
+  lang?: Locale;
+}
+
+const { position = 'hero', class: cls = '', lang: langProp } = Astro.props;
+const lang: Locale = langProp ?? getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const links = getStoreLinks(position);
+
+// TODO: EN-Badges ergänzen — bis dahin Fallback auf die DE-Badges.
+const badgeByLang = {
+  de: { apple: AppStoreDe, play: GooglePlayDe },
+  en: { apple: AppStoreDe, play: GooglePlayDe },
+} as const;
+const AppStore = badgeByLang[lang].apple;
+const GooglePlay = badgeByLang[lang].play;
+---
+
+<div class:list={['store-badges', cls]}>
+  <a href={links.ios} data-store="ios" aria-label={t.cta.appStore} class="badge-link">
+    <AppStore class="badge badge--apple" aria-hidden="true" />
+  </a>
+  <a href={links.android} data-store="android" aria-label={t.cta.playStore} class="badge-link">
+    <GooglePlay class="badge badge--play" aria-hidden="true" />
+  </a>
+</div>
+
+<style>
+  .store-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    /* gemeinsame Basishöhe für beide Badges */
+    --badge-h: clamp(2.5rem, 6vw, 3rem);
+  }
+  .badge-link {
+    display: inline-flex;
+    transition: transform 0.2s ease;
+  }
+  .badge-link:hover {
+    transform: translateY(-2px);
+  }
+  .badge {
+    display: block;
+    width: auto;
+  }
+  /* Apple-Badge randlos → Basishöhe; Google-Badge hat mehr Innenabstand →
+     leicht größer, damit beide optisch gleich groß wirken. */
+  .badge--apple {
+    height: var(--badge-h);
+  }
+  .badge--play {
+    height: calc(var(--badge-h) * 1.16);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .badge-link {
+      transition: none;
+    }
+    .badge-link:hover {
+      transform: none;
+    }
+  }
+</style>

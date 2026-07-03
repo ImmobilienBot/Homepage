@@ -7,7 +7,14 @@
  *
  * Props laut CLAUDE.md: title, description, canonical, ogImage, noindex.
  */
-import { site, storeLinks, aggregateRating, pricing } from '../../data/site';
+import {
+  site,
+  storeLinks,
+  aggregateRating,
+  pricing,
+  portals,
+  portalCountRounded,
+} from '../../data/site';
 import { getAlternates, hreflangCodes } from '../../i18n';
 import type { Locale } from '../../data/site';
 
@@ -46,6 +53,11 @@ const jsonLd = {
       description,
       url: site.url,
       downloadUrl: [storeLinks.ios, storeLinks.android],
+      // Überwachte Portale mit voller Domain (für strukturierte Daten).
+      featureList: [
+        `Überwacht über ${portalCountRounded} Immobilienportale in Echtzeit`,
+        ...portals.map((p) => `${p.name} (${p.domain})`),
+      ],
       offers: pricing.map((p) => ({
         '@type': 'Offer',
         price: p.priceValue.toFixed(2),

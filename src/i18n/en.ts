@@ -41,10 +41,17 @@ export const en: Dict = {
   },
 
   sections: {
-    problem: { title: 'The Problem' },
+    problem: {
+      title: 'The Problem',
+      text: "In Berlin, a single new development drew **43,000 applicants** – in just **30 minutes**. For only **288 flats**. Click too late and it's gone.",
+      source: 'Source: Berliner Zeitung',
+    },
     solution: { title: 'The Solution' },
     features: { title: 'Features' },
-    portals: { title: 'All portals in one app' },
+    portals: {
+      title: 'All portals in one app',
+      count: 'Over {n} property portals – in a single app.',
+    },
     pricing: { title: 'Pricing' },
     socialProof: { title: 'What users say' },
     faq: { title: 'Frequently asked questions' },

@@ -43,10 +43,19 @@ export const de = {
   },
 
   sections: {
-    problem: { title: 'Das Problem' },
+    problem: {
+      title: 'Das Problem',
+      // **…** markiert Emphasis-Wörter (Zahlen), die beim Scroll-Fill gelb aufleuchten.
+      text: 'In Berlin kamen auf ein einziges Neubauprojekt **43.000 Bewerber** – in nur **30 Minuten**. Für gerade einmal **288 Wohnungen**. Wer zu spät klickt, hat verloren.',
+      source: 'Quelle: Berliner Zeitung',
+    },
     solution: { title: 'Die Lösung' },
     features: { title: 'Features' },
-    portals: { title: 'Alle Portale in einer App' },
+    portals: {
+      title: 'Alle Portale in einer App',
+      // {n} wird aus site.ts (portalCountRounded) ersetzt — wachstumssicher.
+      count: 'Über {n} Immobilienportale – in einer App.',
+    },
     pricing: { title: 'Preise' },
     socialProof: { title: 'Das sagen Nutzer' },
     faq: { title: 'Häufige Fragen' },

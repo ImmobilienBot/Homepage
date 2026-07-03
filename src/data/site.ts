@@ -138,22 +138,39 @@ export const pricingBenefits: string[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Portale  (nur Text-Namen — keine Logos, rechtliche Gründe)         */
+/* Portale  (nur Anzeige-Name sichtbar — keine Logos, rechtliche Gründe;
+   volle Domain separat, ausschließlich für strukturierte Daten/JSON-LD) */
 /* ------------------------------------------------------------------ */
-/**
- * 13 Portale gesamt. Aktuell bekannt/belegt — Rest folgt von Artem.
- * TODO(CLAUDE.md): vollständige Liste der 13 Portale ergänzen.
- */
-export const portals: string[] = [
-  'ImmobilienScout24',
-  'Kleinanzeigen',
-  'Immowelt',
-  'WG-Gesucht',
-  'Ohne-Makler',
-  'Vonovia',
+
+export interface Portal {
+  /** Anzeige-Name ohne Endung — nur dieser wird sichtbar gezeigt. */
+  name: string;
+  /** Volle Domain — nur für strukturierte Daten (JSON-LD), nicht als Logo/Link. */
+  domain: string;
+}
+
+export const portals: Portal[] = [
+  { name: 'ImmobilienScout24', domain: 'immobilienscout24.de' },
+  { name: 'Immobilien.de', domain: 'immobilien.de' },
+  { name: 'Immowelt', domain: 'immowelt.de' },
+  { name: 'Kleinanzeigen', domain: 'kleinanzeigen.de' },
+  { name: 'LEG Wohnen', domain: 'leg-wohnen.de' },
+  { name: 'Ohne-Makler', domain: 'ohne-makler.net' },
+  { name: 'Quoka', domain: 'quoka.de' },
+  { name: 'Vonovia', domain: 'vonovia.de' },
+  { name: 'WG-Gesucht', domain: 'wg-gesucht.de' },
+  { name: 'Wohnungsbörse', domain: 'wohnungsboerse.net' },
 ];
 
-export const portalsTotal = 13;
+/** Anzahl IMMER aus der Liste ableiten — nie hart codieren. */
+export const portalCount = portals.length;
+
+/**
+ * Wachstumssichere, nach unten auf Zehner gerundete Basiszahl für sichtbare
+ * Texte. In der UI stets als „über {n}" / „{n}+" formulieren (nicht als starre
+ * exakte Zahl), damit die Aussage bei Wachstum korrekt bleibt. 10 Portale → 10.
+ */
+export const portalCountRounded = Math.floor(portalCount / 10) * 10;
 
 /* ------------------------------------------------------------------ */
 /* Tracking / GTM                                                     */

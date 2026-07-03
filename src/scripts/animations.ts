@@ -136,14 +136,126 @@ function initPhoneTilt() {
   });
 }
 
-/** Dezente Scroll-Parallax-Tiefe rund ums (tiltende) Phone — Desktop only. */
-function initHeroParallax() {
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-  const glow = document.querySelector<HTMLElement>('#hero .phone-glow');
+/**
+ * Hero-Choreografie: atmendes Glow (~10s Loop, immer aktiv) + scroll-gescrubte
+ * Bewegung des Phones (leichtes rotateY/rotateX + Skalierung/translateY) und
+ * langsamere Glow-Parallax für Tiefe. Scroll-Teil nur Desktop (Mobile reduziert).
+ * Nur transform/opacity.
+ */
+function initHeroChoreography() {
+  const glow = document.querySelector<HTMLElement>('#hero [data-phone-glow]');
+  const glowWrap = document.querySelector<HTMLElement>('#hero [data-glow-wrap]');
+  const choreo = document.querySelector<HTMLElement>('#hero [data-phone-choreo]');
   const stack = document.querySelector<HTMLElement>('#hero [data-notif-stack]');
-  const trigger = { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true };
-  if (glow) gsap.to(glow, { yPercent: 14, ease: 'none', scrollTrigger: { ...trigger } });
-  if (stack) gsap.to(stack, { yPercent: -10, ease: 'none', scrollTrigger: { ...trigger } });
+
+  // „Atmendes" Glow — 5s hin, yoyo zurück ≈ 10s Zyklus. Nur Gelb, dezent.
+  if (glow) {
+    gsap.to(glow, {
+      scale: 1.12,
+      xPercent: 4,
+      yPercent: -4,
+      opacity: 0.72,
+      duration: 5,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    });
+  }
+
+  // Scroll-Choreografie nur auf Desktop.
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+  const st = { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } as const;
+  if (choreo) {
+    gsap.fromTo(
+      choreo,
+      { rotationX: 0, rotationY: 0, scale: 1, yPercent: 0 },
+      {
+        rotationY: 8,
+        rotationX: -4,
+        scale: 0.96,
+        yPercent: -6,
+        ease: 'none',
+        scrollTrigger: { ...st },
+      },
+    );
+  }
+  // Glow parallaxt langsamer (auf dem Wrapper, kollidiert nicht mit dem Breathing).
+  if (glowWrap) gsap.to(glowWrap, { yPercent: 16, ease: 'none', scrollTrigger: { ...st } });
+  if (stack) gsap.to(stack, { yPercent: -12, ease: 'none', scrollTrigger: { ...st } });
+}
+
+/**
+ * Eigener Cursor (Signature-Moment) — nur bei pointer:fine. Ring folgt mit
+ * Verzögerung (quickTo), Punkt exakt; über interaktiven Elementen wächst der
+ * Ring (~1,8×) und füllt sich. Ohne pointer:fine bleibt der native Cursor.
+ */
+function initCursor() {
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+  const ring = document.querySelector<HTMLElement>('[data-cursor-ring]');
+  const dot = document.querySelector<HTMLElement>('[data-cursor-dot]');
+  if (!ring || !dot) return;
+
+  document.documentElement.classList.add('has-custom-cursor');
+  gsap.set([ring, dot], { xPercent: -50, yPercent: -50 });
+
+  const ringX = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3' });
+  const ringY = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3' });
+  const dotX = gsap.quickTo(dot, 'x', { duration: 0.08, ease: 'power3' });
+  const dotY = gsap.quickTo(dot, 'y', { duration: 0.08, ease: 'power3' });
+
+  window.addEventListener('mousemove', (e) => {
+    ringX(e.clientX);
+    ringY(e.clientY);
+    dotX(e.clientX);
+    dotY(e.clientY);
+  });
+
+  const hoverSel = 'a, button, [data-cursor], input, textarea, select, label, summary';
+  document.addEventListener('mouseover', (e) => {
+    if ((e.target as Element).closest?.(hoverSel)) {
+      gsap.to(ring, {
+        scale: 1.8,
+        backgroundColor: 'rgba(255,255,255,1)',
+        duration: 0.25,
+        ease: 'power3',
+      });
+    }
+  });
+  document.addEventListener('mouseout', (e) => {
+    if ((e.target as Element).closest?.(hoverSel)) {
+      gsap.to(ring, {
+        scale: 1,
+        backgroundColor: 'rgba(255,255,255,0)',
+        duration: 0.25,
+        ease: 'power3',
+      });
+    }
+  });
+}
+
+/**
+ * Problem-Sektion: Scroll-Text-Fill. Wörter fluten beim Scrollen von ausgegraut
+ * auf volle CD-Farbe (scrub), Emphasis-Marker wischen gelb herein.
+ * (Farbe = Paint-only, kein Layout — bewusste Ausnahme für diesen Signature-Move.)
+ */
+function initProblemFill() {
+  const el = document.querySelector<HTMLElement>('#problem [data-problem]');
+  if (!el) return;
+  const words = gsap.utils.toArray<HTMLElement>('#problem .fill-word');
+  const marks = gsap.utils.toArray<HTMLElement>('#problem .em-mark');
+  if (!words.length) return;
+
+  const cs = getComputedStyle(document.documentElement);
+  const full = cs.getPropertyValue('--color-black').trim() || '#3b3b3a';
+  const muted = cs.getPropertyValue('--color-grey-yellow').trim() || '#c0c0c1';
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: el, start: 'top 78%', end: 'bottom 55%', scrub: 0.4 },
+  });
+  tl.fromTo(words, { color: muted }, { color: full, ease: 'none', stagger: { each: 0.4 } }, 0);
+  if (marks.length) {
+    tl.fromTo(marks, { scaleX: 0 }, { scaleX: 1, ease: 'none', stagger: { each: 0.4 } }, 0.1);
+  }
 }
 
 function initReveals() {
@@ -166,9 +278,11 @@ function initReveals() {
 
 if (!prefersReducedMotion) {
   initSmoothScroll();
+  initCursor();
   initHeroReveal();
   initHeroNotifications();
   initPhoneTilt();
-  initHeroParallax();
+  initHeroChoreography();
+  initProblemFill();
   initReveals();
 }

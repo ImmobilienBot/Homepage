@@ -17,8 +17,7 @@ user first, in real time, when a listing matches their criteria.
 
 ## Core features
 
-- 13 property portals monitored in one app (incl. ImmobilienScout24, Kleinanzeigen,
-  Immowelt, WG-Gesucht, Ohne-Makler, Vonovia).
+- Over 10 property portals monitored in one app (see the Portals section below).
 - Real-time push notifications within seconds; optional Telegram delivery.
 - Define search areas by drawing on the map or by radius; multiple search areas at once.
 - Filter by rooms, size, price and advanced criteria (furnished, shared room / WG,
@@ -43,6 +42,13 @@ user first, in real time, when a listing matches their criteria.
 - Google Play: 4.2 stars (48 ratings)
 - Google Maps: 5.0 stars (33 ratings)
 - 5,000+ downloads
+
+## Portals monitored (over 10)
+
+ImmobilienScout24 (immobilienscout24.de), Immobilien.de (immobilien.de),
+Immowelt (immowelt.de), Kleinanzeigen (kleinanzeigen.de), LEG Wohnen (leg-wohnen.de),
+Ohne-Makler (ohne-makler.net), Quoka (quoka.de), Vonovia (vonovia.de),
+WG-Gesucht (wg-gesucht.de), Wohnungsbörse (wohnungsboerse.net).
 
 ## Download
 

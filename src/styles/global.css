@@ -77,3 +77,43 @@
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+
+/*
+  Eigener Cursor (Signature-Moment). Standardmäßig unsichtbar; erst wenn JS
+  (nur bei pointer:fine + erlaubter Bewegung) die Klasse `has-custom-cursor`
+  am <html> setzt, wird der native Cursor ausgeblendet und der Custom-Cursor
+  sichtbar. Ring folgt verzögert, Punkt exakt (Ansteuerung in animations.ts).
+  mix-blend-mode: difference → lesbar auf Gelb UND Schwarz.
+*/
+.cursor {
+  opacity: 0;
+}
+html.has-custom-cursor .cursor {
+  opacity: 1;
+}
+html.has-custom-cursor,
+html.has-custom-cursor * {
+  cursor: none !important;
+}
+.cursor-ring,
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 9999px;
+  mix-blend-mode: difference;
+  will-change: transform;
+}
+.cursor-ring {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff;
+  background-color: rgb(255 255 255 / 0); /* füllt sich per JS beim Hover */
+}
+.cursor-dot {
+  width: 5px;
+  height: 5px;
+  background-color: #fff;
+}

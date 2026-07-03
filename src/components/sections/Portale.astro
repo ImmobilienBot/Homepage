@@ -1,23 +1,23 @@
 ---
 /**
- * Portale — 13 Portale als Text-Liste (keine Logos, rechtliche Gründe).
- * [Platzhalter — TODO(CLAUDE.md): vollständige Liste der 13.]
+ * Portale — Text-Liste der überwachten Portale (keine Logos, rechtliche Gründe).
+ * Anzahl wird aus site.ts abgeleitet und als „über 10" formuliert (wachstumssicher).
+ * [Platzhalter — finales Design folgt.]
  */
 import Section from '../Section.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { portals, portalsTotal } from '../../data/site';
+import { portals, portalCountRounded } from '../../data/site';
 
 const t = useTranslations(getLangFromUrl(Astro.url));
+const countLine = t.sections.portals.count.replace('{n}', String(portalCountRounded));
 ---
 
 <Section id="portale" title={t.sections.portals.title}>
-  <p class="text-body opacity-70">
-    {portals.length} von {portalsTotal} bekannt — vollständige Liste folgt.
-  </p>
+  <p class="text-body opacity-70">{countLine}</p>
   <ul class="mt-4 flex flex-wrap gap-2">
     {
-      portals.map((name) => (
-        <li class="rounded-pill bg-offwhite px-4 py-1 text-body">{name}</li>
+      portals.map((p) => (
+        <li class="rounded-pill bg-offwhite px-4 py-1 text-body">{p.name}</li>
       ))
     }
   </ul>

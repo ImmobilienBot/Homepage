@@ -15,8 +15,8 @@
  */
 import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { getStoreLinks } from '../../data/site';
 import type { Locale } from '../../data/site';
+import StoreBadges from '../StoreBadges.astro';
 
 import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
 import screenshot from '../../assets/images/immobilien-bot-app-angebotsliste.png';
@@ -24,7 +24,6 @@ import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-const links = getStoreLinks('hero');
 
 const { headlineLines, markKeyword, notification } = t.hero;
 
@@ -67,21 +66,8 @@ function splitLine(line: string) {
 
       <p class="mt-6 max-w-prose text-subhead" data-hero-sub>{t.hero.subline}</p>
 
-      <div class="mt-8 flex flex-wrap gap-3" data-hero-cta>
-        <a
-          href={links.ios}
-          data-store="ios"
-          class="rounded-pill bg-black px-6 py-3 font-bold text-offwhite transition-transform hover:-translate-y-0.5"
-        >
-          {t.cta.appStore}
-        </a>
-        <a
-          href={links.android}
-          data-store="android"
-          class="rounded-pill bg-black px-6 py-3 font-bold text-offwhite transition-transform hover:-translate-y-0.5"
-        >
-          {t.cta.playStore}
-        </a>
+      <div class="mt-8" data-hero-cta>
+        <StoreBadges position="hero" lang={lang} />
       </div>
 
       <p class="mt-4 text-body opacity-70" data-hero-trust>{t.hero.trustMicroline}</p>
@@ -90,19 +76,24 @@ function splitLine(line: string) {
     {/* ---- Rechts: Phone-Stage (Glow + Tilt + Notifications) ---- */}
     <div class="order-1 flex justify-center md:order-2">
       <div data-phone-stage class="phone-stage relative w-[clamp(230px,72vw,320px)]">
-        {/* Weiches gelbes Glow hinter dem Mockup */}
-        <div class="phone-glow" aria-hidden="true"></div>
+        {/* Weiches gelbes Glow (atmend) — eigener Wrapper für Scroll-Parallax */}
+        <div class="glow-wrap" data-glow-wrap aria-hidden="true">
+          <div class="phone-glow" data-phone-glow></div>
+        </div>
 
-        {/* Tilt-Ebene: Screenshot hinter dem Rahmen */}
-        <div data-phone class="phone relative w-full">
-          <Image
-            src={screenshot}
-            alt={t.hero.mockupAlt}
-            class="phone-screen"
-            loading="eager"
-            fetchpriority="high"
-          />
-          <PhoneFrame class="relative z-10 block h-auto w-full" />
+        {/* Scroll-Choreografie-Ebene (rotate/scale/translate beim Scrollen) */}
+        <div data-phone-choreo class="phone-choreo relative w-full">
+          {/* Tilt-Ebene: Screenshot hinter dem Rahmen (Maus-Tilt) */}
+          <div data-phone class="phone relative w-full">
+            <Image
+              src={screenshot}
+              alt={t.hero.mockupAlt}
+              class="phone-screen"
+              loading="eager"
+              fetchpriority="high"
+            />
+            <PhoneFrame class="relative z-10 block h-auto w-full" />
+          </div>
         </div>
 
         {/* Endlosschleife schwebender Push-Benachrichtigungen (kein Bild) */}
@@ -170,18 +161,28 @@ function splitLine(line: string) {
     z-index: 1;
   }
 
-  /* ---- Phone-Stage: Glow + Tilt ---- */
+  /* ---- Phone-Stage: Glow + Choreografie + Tilt ---- */
   .phone-stage {
     perspective: 1200px;
+  }
+  /* zwei verschachtelte 3D-Ebenen: Scroll-Choreografie außen, Maus-Tilt innen */
+  .phone-choreo {
+    transform-style: preserve-3d;
+    will-change: transform;
   }
   .phone {
     transform-style: preserve-3d;
     will-change: transform;
   }
+  .glow-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
   .phone-glow {
     position: absolute;
     inset: -14% -20%;
-    z-index: 0;
     background: radial-gradient(
       closest-side,
       color-mix(in srgb, var(--color-yellow) 85%, transparent),
@@ -189,7 +190,8 @@ function splitLine(line: string) {
     );
     filter: blur(48px);
     opacity: 0.55;
-    pointer-events: none;
+    transform-origin: center;
+    will-change: transform, opacity;
   }
 
   /* Screenshot exakt in den transparenten Screen-Ausschnitt (Geometrie aus

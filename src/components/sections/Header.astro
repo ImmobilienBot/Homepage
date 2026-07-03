@@ -1,7 +1,10 @@
 ---
 /**
- * Header — sticky, minimal. Logo · Anchor-Nav · persistenter Store-CTA.
- * [Platzhalter-Struktur — finales Design folgt.]
+ * Header — Signature-Moment „Nav → Pille" (siehe CLAUDE.md).
+ * scrollY < ~60px: volle Breite, transparent, kein Rand/Schatten.
+ * Danach schrumpft die Nav weich zu einer zentrierten, schwebenden Pille
+ * (offwhite/95 + backdrop-blur, weicher großer Schatten, vom Rand abgesetzt) —
+ * zitiert die App-Bottom-Bar. Logo, Links und CTA durchgehend nutzbar.
  */
 import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
 import type { Locale } from '../../data/site';
@@ -19,15 +22,13 @@ const navItems = [
 ];
 ---
 
-<header
-  class="sticky top-0 z-40 bg-grey/90 backdrop-blur border-b border-darkgrey"
->
-  <div
-    class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-inset py-3"
-  >
-    <a href={home} class="font-black text-lg">Immobilien&nbsp;Bot</a>
+<header class="site-header" data-header>
+  <div class="nav-inner">
+    <a href={home} class="font-black text-lg" aria-label="Immobilien Bot – Startseite">
+      Immobilien&nbsp;Bot
+    </a>
 
-    <nav class="hidden md:flex items-center gap-6 text-body">
+    <nav class="hidden items-center gap-6 text-body md:flex" aria-label="Hauptnavigation">
       {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
     </nav>
 
@@ -39,3 +40,73 @@ const navItems = [
     </a>
   </div>
 </header>
+
+<script>
+  // Klassen-Toggle vs. Pille — rein CSS-getrieben (kein GSAP nötig).
+  const header = document.querySelector('[data-header]');
+  let ticking = false;
+  function update() {
+    header?.toggleAttribute('data-scrolled', window.scrollY > 60);
+    ticking = false;
+  }
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  update();
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding-top: 0;
+    transition: padding-top 0.4s ease;
+  }
+  .site-header[data-scrolled] {
+    /* schwebende Pille leicht vom oberen Rand abgesetzt */
+    padding-top: 0.75rem;
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-inline: auto;
+    max-width: 72rem;
+    padding: 0.85rem var(--spacing-inset);
+    border-radius: 0;
+    background-color: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+    transition:
+      max-width 0.45s ease,
+      padding 0.45s ease,
+      border-radius 0.45s ease,
+      background-color 0.45s ease,
+      border-color 0.45s ease,
+      box-shadow 0.45s ease;
+  }
+  .site-header[data-scrolled] .nav-inner {
+    max-width: 46rem;
+    padding: 0.55rem 1.25rem;
+    border-radius: 9999px;
+    background-color: color-mix(in srgb, var(--color-offwhite) 95%, transparent);
+    border-color: rgb(59 59 58 / 0.06);
+    box-shadow: 0 20px 45px -18px rgb(59 59 58 / 0.35);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header,
+    .nav-inner {
+      transition: none;
+    }
+  }
+</style>
