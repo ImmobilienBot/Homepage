@@ -5,6 +5,13 @@
  * globales CSS, Roboto, Consent/GTM-Platzhalter und die Animations-Skripte
  * (Lenis + GSAP), die prefers-reduced-motion respektieren.
  */
+// Roboto (CD-Schrift) selbst gehostet via @fontsource — kein Google-Fonts-CDN
+// (garantiertes Laden + DSGVO-konform). Nur Latin-Subset (DE/EN), Gewichte
+// 400/500/700/900.
+import '@fontsource/roboto/latin-400.css';
+import '@fontsource/roboto/latin-500.css';
+import '@fontsource/roboto/latin-700.css';
+import '@fontsource/roboto/latin-900.css';
 import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
 import Header from '../components/sections/Header.astro';
@@ -75,13 +82,8 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
       })(window, document, 'script', 'dataLayer', GTM_ID);
     </script>
 
-    {/* ---- Roboto (Regular + Black) ---- */}
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
-      rel="stylesheet"
-    />
+    {/* Roboto wird selbst gehostet (siehe @fontsource-Imports oben) —
+        kein externer Font-Request. */}
 
     <SEO
       title={title}

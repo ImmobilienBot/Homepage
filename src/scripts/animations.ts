@@ -28,6 +28,29 @@ function initSmoothScroll() {
     lenis.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
+  return lenis;
+}
+
+/**
+ * In-Page-Anker (#…) sanft per Lenis scrollen (z. B. „Kostenlos testen" →
+ * #preise). Existiert das Ziel nicht auf dieser Seite (Cross-Page), bleibt die
+ * native Navigation erhalten. Offset für die sticky Nav-Pille.
+ */
+function initAnchorScroll(lenis: Lenis) {
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest?.('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    const hashIdx = href.indexOf('#');
+    if (hashIdx < 0) return;
+    const id = href.slice(hashIdx + 1);
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return; // Ziel nicht hier → normale Navigation zulassen
+    e.preventDefault();
+    lenis.scrollTo(target, { offset: -84 });
+    history.pushState(null, '', href);
+  });
 }
 
 /**
@@ -85,8 +108,11 @@ function initHeroReveal() {
 }
 
 /**
- * Endlosschleife der schwebenden Push-Benachrichtigungen: nacheinander
- * hereingleiten, ~3 s halten, wieder verschwinden. Nur transform/opacity.
+ * Schwebende Push-Benachrichtigungen UM das Phone herum: jede Karte hat einen
+ * eigenen, zeitversetzten Loop (herein → ~3 s halten → hinaus), sodass 2–3
+ * gleichzeitig an unterschiedlichen Positionen schweben. Endlos, nahtlos.
+ * Zusätzlich dezente Scroll-Parallax je Karte (unterschiedliche Tiefen).
+ * Nur transform/opacity — Loop nutzt yPercent, Parallax nutzt y (px) → komponiert.
  */
 function initHeroNotifications() {
   const cards = gsap.utils.toArray<HTMLElement>('#hero [data-notif]');
@@ -95,22 +121,36 @@ function initHeroNotifications() {
   const IN = 0.6;
   const HOLD = 3;
   const OUT = 0.5;
-  const step = IN + HOLD + OUT;
+  const life = IN + HOLD + OUT;
+  const STAGGER = 1.3;
+  const period = cards.length * STAGGER;
 
-  const tl = gsap.timeline({ repeat: -1, delay: 0.8 });
   cards.forEach((card, i) => {
-    const at = i * step;
+    const tl = gsap.timeline({
+      repeat: -1,
+      delay: i * STAGGER,
+      repeatDelay: Math.max(0, period - life),
+    });
     tl.fromTo(
       card,
-      { yPercent: -60, autoAlpha: 0, scale: 0.96 },
+      { yPercent: -40, autoAlpha: 0, scale: 0.94 },
       { yPercent: 0, autoAlpha: 1, scale: 1, duration: IN, ease: 'back.out(1.6)' },
-      at,
-    ).to(
-      card,
-      { yPercent: 14, autoAlpha: 0, scale: 0.98, duration: OUT, ease: 'power2.in' },
-      at + IN + HOLD,
-    );
+    )
+      .to(card, { autoAlpha: 1, duration: HOLD })
+      .to(card, { yPercent: 18, autoAlpha: 0, scale: 0.96, duration: OUT, ease: 'power2.in' });
   });
+
+  // Unterschiedliche Tiefen: dezente Scroll-Parallax je Karte (nur Desktop).
+  if (window.matchMedia('(pointer: fine)').matches) {
+    cards.forEach((card, i) => {
+      const depth = (i - (cards.length - 1) / 2) * 26; // px; komponiert mit yPercent
+      gsap.to(card, {
+        y: depth,
+        ease: 'none',
+        scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true },
+      });
+    });
+  }
 }
 
 /** Leichter 3D-Tilt des Phones auf Mausbewegung — nur Desktop (pointer:fine). */
@@ -137,6 +177,24 @@ function initPhoneTilt() {
 }
 
 /**
+ * Dezenter Idle-Float des Phones — schwebt/atmet langsam auch ohne Scrollen
+ * (alle Geräte, nur transform). y/rotation komponieren mit dem Maus-Tilt
+ * (rotationX/Y) auf demselben Element.
+ */
+function initPhoneIdle() {
+  const phone = document.querySelector<HTMLElement>('#hero [data-phone]');
+  if (!phone) return;
+  gsap.to(phone, {
+    y: -12,
+    rotation: 0.6,
+    duration: 4.5,
+    ease: 'sine.inOut',
+    yoyo: true,
+    repeat: -1,
+  });
+}
+
+/**
  * Hero-Choreografie: atmendes Glow (~10s Loop, immer aktiv) + scroll-gescrubte
  * Bewegung des Phones (leichtes rotateY/rotateX + Skalierung/translateY) und
  * langsamere Glow-Parallax für Tiefe. Scroll-Teil nur Desktop (Mobile reduziert).
@@ -146,15 +204,14 @@ function initHeroChoreography() {
   const glow = document.querySelector<HTMLElement>('#hero [data-phone-glow]');
   const glowWrap = document.querySelector<HTMLElement>('#hero [data-glow-wrap]');
   const choreo = document.querySelector<HTMLElement>('#hero [data-phone-choreo]');
-  const stack = document.querySelector<HTMLElement>('#hero [data-notif-stack]');
 
-  // „Atmendes" Glow — 5s hin, yoyo zurück ≈ 10s Zyklus. Nur Gelb, dezent.
+  // „Atmendes" Glow — 5s hin, yoyo zurück ≈ 10s Zyklus. Nur Gelb, satt.
   if (glow) {
     gsap.to(glow, {
-      scale: 1.12,
+      scale: 1.14,
       xPercent: 4,
       yPercent: -4,
-      opacity: 0.72,
+      opacity: 0.9,
       duration: 5,
       ease: 'sine.inOut',
       yoyo: true,
@@ -179,9 +236,8 @@ function initHeroChoreography() {
       },
     );
   }
-  // Glow parallaxt langsamer (auf dem Wrapper, kollidiert nicht mit dem Breathing).
+  // Glow parallaxt langsamer als das Phone (Tiefe). Notifications parallaxen je Karte.
   if (glowWrap) gsap.to(glowWrap, { yPercent: 16, ease: 'none', scrollTrigger: { ...st } });
-  if (stack) gsap.to(stack, { yPercent: -12, ease: 'none', scrollTrigger: { ...st } });
 }
 
 /**
@@ -203,33 +259,60 @@ function initCursor() {
   const dotX = gsap.quickTo(dot, 'x', { duration: 0.08, ease: 'power3' });
   const dotY = gsap.quickTo(dot, 'y', { duration: 0.08, ease: 'power3' });
 
-  window.addEventListener('mousemove', (e) => {
-    ringX(e.clientX);
-    ringY(e.clientY);
-    dotX(e.clientX);
-    dotY(e.clientY);
-  });
+  const BASE = 30;
+  const PAD = 14;
+  let hovering: Element | null = null;
 
-  const hoverSel = 'a, button, [data-cursor], input, textarea, select, label, summary';
+  window.addEventListener(
+    'mousemove',
+    (e) => {
+      dotX(e.clientX);
+      dotY(e.clientY);
+      // Ring folgt dem Cursor nur, wenn er nicht gerade ein Element umschließt.
+      if (!hovering) {
+        ringX(e.clientX);
+        ringY(e.clientY);
+      }
+    },
+    { passive: true },
+  );
+
+  const sel = 'a, button, [data-cursor], input, textarea, select, label, summary';
   document.addEventListener('mouseover', (e) => {
-    if ((e.target as Element).closest?.(hoverSel)) {
-      gsap.to(ring, {
-        scale: 1.8,
-        backgroundColor: 'rgba(255,255,255,1)',
-        duration: 0.25,
-        ease: 'power3',
-      });
-    }
+    const el = (e.target as Element).closest?.(sel);
+    if (!el || el === hovering) return;
+    hovering = el;
+    const r = el.getBoundingClientRect();
+    // Ring dockt an die Element-Mitte und UMSCHLIESST es (Breite/Höhe + Padding).
+    // width/height statt scale → dünner Rand bleibt konstant; position:fixed → kein Reflow.
+    ringX(r.left + r.width / 2);
+    ringY(r.top + r.height / 2);
+    gsap.to(ring, {
+      width: r.width + PAD * 2,
+      height: r.height + PAD * 2,
+      borderRadius: 12,
+      backgroundColor: 'rgba(255,255,255,0)', // nur Umriss → verdeckt den Text nicht
+      duration: 0.3,
+      ease: 'power3',
+      overwrite: 'auto',
+    });
   });
   document.addEventListener('mouseout', (e) => {
-    if ((e.target as Element).closest?.(hoverSel)) {
-      gsap.to(ring, {
-        scale: 1,
-        backgroundColor: 'rgba(255,255,255,0)',
-        duration: 0.25,
-        ease: 'power3',
-      });
-    }
+    const el = (e.target as Element).closest?.(sel);
+    if (!el || el !== hovering) return;
+    const related = (e as MouseEvent).relatedTarget as Node | null;
+    if (related && el.contains(related)) return; // noch innerhalb desselben Elements
+    hovering = null;
+    gsap.to(ring, {
+      width: BASE,
+      height: BASE,
+      borderRadius: 9999,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      duration: 0.3,
+      ease: 'power3',
+      overwrite: 'auto',
+    });
+    // Ring folgt ab der nächsten Mausbewegung wieder dem Cursor.
   });
 }
 
@@ -277,11 +360,13 @@ function initReveals() {
 }
 
 if (!prefersReducedMotion) {
-  initSmoothScroll();
+  const lenis = initSmoothScroll();
+  initAnchorScroll(lenis);
   initCursor();
   initHeroReveal();
   initHeroNotifications();
   initPhoneTilt();
+  initPhoneIdle();
   initHeroChoreography();
   initProblemFill();
   initReveals();

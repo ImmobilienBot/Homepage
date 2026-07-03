@@ -65,14 +65,8 @@ const GooglePlay = badgeByLang[lang].play;
   .badge {
     display: block;
     width: auto;
-  }
-  /* Apple-Badge randlos → Basishöhe; Google-Badge hat mehr Innenabstand →
-     leicht größer, damit beide optisch gleich groß wirken. */
-  .badge--apple {
+    /* Beide Badges exakt gleiche Höhe; Breite variiert natürlich. */
     height: var(--badge-h);
-  }
-  .badge--play {
-    height: calc(var(--badge-h) * 1.16);
   }
 
   @media (prefers-reduced-motion: reduce) {

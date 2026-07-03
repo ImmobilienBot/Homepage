@@ -75,11 +75,14 @@ function splitLine(line: string) {
 
     {/* ---- Rechts: Phone-Stage (Glow + Tilt + Notifications) ---- */}
     <div class="order-1 flex justify-center md:order-2">
-      <div data-phone-stage class="phone-stage relative w-[clamp(230px,72vw,320px)]">
+      <div data-phone-stage class="phone-stage relative w-[clamp(250px,80vw,360px)]">
         {/* Weiches gelbes Glow (atmend) — eigener Wrapper für Scroll-Parallax */}
         <div class="glow-wrap" data-glow-wrap aria-hidden="true">
           <div class="phone-glow" data-phone-glow></div>
         </div>
+
+        {/* Kräftige gelbe CD-Winkelform (Störer-Ästhetik), auf der das Phone „sitzt" */}
+        <div class="cd-shape" aria-hidden="true"></div>
 
         {/* Scroll-Choreografie-Ebene (rotate/scale/translate beim Scrollen) */}
         <div data-phone-choreo class="phone-choreo relative w-full">
@@ -127,17 +130,14 @@ function splitLine(line: string) {
 </section>
 
 <style>
-  /* ---- Kinetische Typografie ---- */
+  /* ---- Kinetische Typografie (der Blickfang) ---- */
   .hero-headline {
-    font-size: clamp(3rem, 9vw, 6rem);
-    line-height: 0.92; /* enge Zeilenhöhe */
-    letter-spacing: -0.02em; /* enges Tracking */
-    text-wrap: balance;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    line-height: 0.9; /* enge Zeilenhöhe */
+    letter-spacing: -0.03em; /* enges Tracking */
   }
   .line-mask {
     display: block;
-    overflow: hidden;
-    padding-block: 0.03em; /* schützt Ober-/Unterlängen vor dem Clip */
   }
   .line-inner {
     display: block;
@@ -161,16 +161,19 @@ function splitLine(line: string) {
     z-index: 1;
   }
 
-  /* ---- Phone-Stage: Glow + Choreografie + Tilt ---- */
+  /* ---- Phone-Stage: Glow + CD-Form + Choreografie + Tilt ---- */
   .phone-stage {
     perspective: 1200px;
   }
   /* zwei verschachtelte 3D-Ebenen: Scroll-Choreografie außen, Maus-Tilt innen */
   .phone-choreo {
+    position: relative;
+    z-index: 2;
     transform-style: preserve-3d;
     will-change: transform;
   }
   .phone {
+    position: relative;
     transform-style: preserve-3d;
     will-change: transform;
   }
@@ -182,20 +185,33 @@ function splitLine(line: string) {
   }
   .phone-glow {
     position: absolute;
-    inset: -14% -20%;
+    inset: -18% -24%;
     background: radial-gradient(
       closest-side,
-      color-mix(in srgb, var(--color-yellow) 85%, transparent),
+      color-mix(in srgb, var(--color-yellow) 92%, transparent),
       transparent 72%
     );
-    filter: blur(48px);
-    opacity: 0.55;
+    filter: blur(52px);
+    opacity: 0.7; /* satteres Glow */
     transform-origin: center;
     will-change: transform, opacity;
   }
 
+  /* Kräftige gelbe CD-Winkelform (Störer-Ästhetik) hinter/unter dem Phone.
+     Bold, aber reine Deko (aria-hidden). Das Phone „sitzt" darauf. */
+  .cd-shape {
+    position: absolute;
+    inset: 6% -16% -8% -14%;
+    z-index: 1;
+    background-color: #fff03c;
+    clip-path: polygon(4% 16%, 100% 0, 94% 100%, 0 82%);
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
   /* Screenshot exakt in den transparenten Screen-Ausschnitt (Geometrie aus
-     smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken. */
+     smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken.
+     box-shadow = phone-förmige, weiche große Elevation über der CD-Form. */
   .phone-screen {
     position: absolute;
     left: 2.83%;
@@ -206,21 +222,19 @@ function splitLine(line: string) {
     object-position: top center;
     border-radius: 9%;
     z-index: 0;
+    box-shadow: 0 28px 44px -14px rgb(59 59 58 / 0.32);
   }
 
-  /* ---- Schwebende Notifications ---- */
+  /* ---- Schwebende Notifications: UM das Phone herum, über die Ränder ---- */
   .notif-stack {
     position: absolute;
-    top: 8%;
-    left: -8%;
-    right: -4%;
+    inset: 0;
     z-index: 30;
     pointer-events: none;
   }
   .notif {
     position: absolute;
-    inset-inline: 0;
-    top: 0;
+    width: clamp(10.5rem, 66%, 14.5rem);
     border-radius: 1rem;
     background-color: color-mix(in srgb, var(--color-offwhite) 92%, transparent);
     border: 1px solid rgb(59 59 58 / 0.06);
@@ -228,9 +242,30 @@ function splitLine(line: string) {
     box-shadow: 0 24px 50px -18px rgb(59 59 58 / 0.35);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    padding: 0.75rem 0.85rem;
+    padding: 0.7rem 0.8rem;
     color: var(--color-black);
     will-change: transform, opacity;
+  }
+  /* verschiedene Anker rund ums Phone (über die Ränder ragend) */
+  .notif:nth-child(1) {
+    top: -4%;
+    left: -16%;
+  }
+  .notif:nth-child(2) {
+    top: 20%;
+    right: -18%;
+  }
+  .notif:nth-child(3) {
+    bottom: 9%;
+    left: -18%;
+  }
+  .notif:nth-child(4) {
+    top: 54%;
+    right: -12%;
+  }
+  .notif:nth-child(5) {
+    top: -2%;
+    right: -8%;
   }
   .notif-icon {
     height: 2.5rem;
@@ -267,8 +302,14 @@ function splitLine(line: string) {
   }
 
   /* ---- Anfangszustände NUR bei aktivem JS + erlaubter Bewegung verstecken.
-     Sonst bleibt alles sofort sichtbar (kein Content-Verlust). ---- */
+     Ohne JS / bei reduced-motion bleibt ALLES sofort in voller Größe sichtbar:
+     das Headline-Mask-Clipping wird nur hier aktiviert (sonst kein overflow). */
   @media (prefers-reduced-motion: no-preference) {
+    html.js .line-mask {
+      overflow: hidden;
+      padding-block: 0.1em;
+      margin-block: -0.1em;
+    }
     html.js .line-inner {
       transform: translateY(110%);
     }
@@ -281,6 +322,16 @@ function splitLine(line: string) {
     }
     html.js .notif:first-child {
       opacity: 0; /* im JS-Fall steuert die GSAP-Schleife alle Karten */
+    }
+  }
+
+  /* CD-Form + Notifications auf kleinen Screens zurücknehmen */
+  @media (max-width: 640px) {
+    .cd-shape {
+      inset: 8% -8% -6% -8%;
+    }
+    .notif {
+      width: clamp(9rem, 60%, 12rem);
     }
   }
 </style>

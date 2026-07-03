@@ -16,6 +16,7 @@ export const en: Dict = {
     pricing: 'Pricing',
     faq: 'FAQ',
     cta: 'Get the app',
+    ctaFree: 'Try for free',
     skipToContent: 'Skip to content',
   },
 

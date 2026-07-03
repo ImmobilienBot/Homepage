@@ -11,6 +11,7 @@ import {
 } from '../../i18n';
 import { site } from '../../data/site';
 import type { Locale } from '../../data/site';
+import Logo from '../../assets/images/immobilien-bot-logo.svg';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -29,22 +30,41 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
 ---
 
 <footer class="bg-black px-inset py-12 text-offwhite">
-  <div
-    class="mx-auto flex max-w-6xl flex-col gap-6 md:flex-row md:items-center md:justify-between"
-  >
-    <nav class="flex flex-wrap gap-x-6 gap-y-2 text-body">
-      {legalLinks.map((l) => <a href={l.href}>{l.label}</a>)}
-      <a href={switchHref} hreflang={otherLang}>{t.footer.langSwitch}</a>
-    </nav>
+  <div class="mx-auto flex max-w-6xl flex-col gap-8">
+    <a href={home} class="footer-logo-link" aria-label={`${site.name} – Startseite`}>
+      <Logo class="footer-logo" aria-hidden="true" />
+    </a>
 
-    {/* Store-Badges (Platzhalter) */}
-    <div class="flex gap-3 text-body opacity-70">
-      <span>[App Store Badge]</span>
-      <span>[Google Play Badge]</span>
+    <div
+      class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
+    >
+      <nav class="flex flex-wrap gap-x-6 gap-y-2 text-body">
+        {legalLinks.map((l) => <a href={l.href}>{l.label}</a>)}
+        <a href={switchHref} hreflang={otherLang}>{t.footer.langSwitch}</a>
+      </nav>
+
+      {/* Store-Badges (Platzhalter) */}
+      <div class="flex gap-3 text-body opacity-70">
+        <span>[App Store Badge]</span>
+        <span>[Google Play Badge]</span>
+      </div>
     </div>
-  </div>
 
-  <p class="mx-auto mt-8 max-w-6xl text-body opacity-60">
-    © {site.name} · {t.footer.signature}
-  </p>
+    <p class="text-body opacity-60">© {site.name} · {t.footer.signature}</p>
+  </div>
 </footer>
+
+<style>
+  .footer-logo-link {
+    display: inline-flex;
+    align-items: center;
+  }
+  .footer-logo {
+    display: block;
+    height: 2rem;
+    width: auto;
+    /* Logo ist CD-Schwarz → für den dunklen Footer auf Offwhite umfärben. */
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+  }
+</style>

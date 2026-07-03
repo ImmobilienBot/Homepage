@@ -52,10 +52,22 @@
   }
 
   body {
+    /* Roboto explizit auch am body (überschreibt evtl. Preflight-Defaults). */
+    font-family: var(--font-sans);
     background-color: var(--color-grey);
     color: var(--color-black);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Textselektion global in IB-Gelb, Text in CD-Schwarz (bleibt lesbar). */
+  ::selection {
+    background-color: #fff03c;
+    color: #3b3b3a;
+  }
+  ::-moz-selection {
+    background-color: #fff03c;
+    color: #3b3b3a;
   }
 
   /* Smooth Scroll wird per Lenis (JS) gesteuert; Fallback fürs No-JS-CSS: */
@@ -83,7 +95,11 @@
   (nur bei pointer:fine + erlaubter Bewegung) die Klasse `has-custom-cursor`
   am <html> setzt, wird der native Cursor ausgeblendet und der Custom-Cursor
   sichtbar. Ring folgt verzögert, Punkt exakt (Ansteuerung in animations.ts).
-  mix-blend-mode: difference → lesbar auf Gelb UND Schwarz.
+
+  KEIN mix-blend-mode (erzeugte über Gelb ein blau-magenta Invertieren).
+  Stattdessen klar Weiß/Schwarz mit dünnem Kontrast-Halo → gut sichtbar auf
+  Gelb, Schwarz UND Grau. Beim Hover umschließt der Ring das Zielelement
+  (Ansteuerung per Breite/Höhe in animations.ts — position:fixed, kein Reflow).
 */
 .cursor {
   opacity: 0;
@@ -103,17 +119,21 @@ html.has-custom-cursor * {
   z-index: 9999;
   pointer-events: none;
   border-radius: 9999px;
-  mix-blend-mode: difference;
+  box-sizing: border-box;
   will-change: transform;
 }
 .cursor-ring {
   width: 30px;
   height: 30px;
   border: 2px solid #fff;
-  background-color: rgb(255 255 255 / 0); /* füllt sich per JS beim Hover */
+  background-color: rgb(255 255 255 / 0.1); /* dezente weiße Füllung */
+  /* dünner dunkler Halo → weißer Ring auch auf hellem Grau sichtbar */
+  box-shadow: 0 0 0 1px rgb(59 59 58 / 0.28);
 }
 .cursor-dot {
-  width: 5px;
-  height: 5px;
-  background-color: #fff;
+  width: 6px;
+  height: 6px;
+  background-color: #3b3b3a; /* CD-Schwarz */
+  /* heller Halo → schwarzer Punkt auch auf Schwarz sichtbar */
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.75);
 }

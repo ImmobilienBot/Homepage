@@ -16,6 +16,7 @@ export const de = {
     pricing: 'Preise',
     faq: 'FAQ',
     cta: 'App laden',
+    ctaFree: 'Kostenlos testen',
     skipToContent: 'Zum Inhalt springen',
   },
 
