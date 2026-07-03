@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemap wird von @astrojs/sitemap generiert
+Sitemap: https://immobilien-bot.de/sitemap-index.xml

@@ -1,0 +1,53 @@
+---
+/**
+ * Hero — Phone-Mockup + hereingleitende Notification-Karte (GSAP).
+ * [Platzhalter — finales Design & Animation folgen.]
+ */
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { getStoreLinks } from '../../data/site';
+import type { Locale } from '../../data/site';
+
+const lang: Locale = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const links = getStoreLinks('hero');
+---
+
+<section id="hero" class="px-inset py-section" data-reveal>
+  <div class="mx-auto grid max-w-6xl gap-10 md:grid-cols-2 md:items-center">
+    <div>
+      <h1 class="text-headline font-black">
+        {t.hero.headline}
+      </h1>
+      <p class="mt-6 text-subhead">{t.hero.subline}</p>
+
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          href={links.ios}
+          data-store="ios"
+          class="rounded-pill bg-black px-5 py-3 font-bold text-offwhite"
+        >
+          {t.cta.appStore}
+        </a>
+        <a
+          href={links.android}
+          data-store="android"
+          class="rounded-pill bg-black px-5 py-3 font-bold text-offwhite"
+        >
+          {t.cta.playStore}
+        </a>
+      </div>
+
+      <p class="mt-4 text-body opacity-70">{t.hero.trustMicroline}</p>
+    </div>
+
+    {/* Phone-Mockup + Notification-Karte (Platzhalter) */}
+    <div
+      class="flex min-h-[24rem] items-center justify-center rounded-card bg-darkgrey text-body"
+    >
+      <div class="rounded-card bg-offwhite p-4 shadow">
+        <p class="font-bold">{t.hero.notification.app}</p>
+        <p class="text-body">{t.hero.notification.body}</p>
+      </div>
+    </div>
+  </div>
+</section>

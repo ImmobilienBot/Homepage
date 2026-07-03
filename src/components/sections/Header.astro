@@ -1,0 +1,41 @@
+---
+/**
+ * Header — sticky, minimal. Logo · Anchor-Nav · persistenter Store-CTA.
+ * [Platzhalter-Struktur — finales Design folgt.]
+ */
+import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
+import type { Locale } from '../../data/site';
+
+const lang: Locale = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const home = localizePath('/', lang);
+const base = home === '/' ? '' : home.replace(/\/$/, '');
+
+const navItems = [
+  { label: t.nav.bot, href: `${base}/#loesung` },
+  { label: t.nav.features, href: `${base}/#features` },
+  { label: t.nav.pricing, href: `${base}/#preise` },
+  { label: t.nav.faq, href: `${base}/#faq` },
+];
+---
+
+<header
+  class="sticky top-0 z-40 bg-grey/90 backdrop-blur border-b border-darkgrey"
+>
+  <div
+    class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-inset py-3"
+  >
+    <a href={home} class="font-black text-lg">Immobilien&nbsp;Bot</a>
+
+    <nav class="hidden md:flex items-center gap-6 text-body">
+      {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+
+    <a
+      href={home}
+      class="rounded-pill bg-yellow px-4 py-2 text-body font-bold text-black"
+    >
+      {t.nav.cta}
+    </a>
+  </div>
+</header>

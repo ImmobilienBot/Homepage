@@ -1,0 +1,30 @@
+---
+/**
+ * Social Proof — Bewertungszahlen + Testimonials.
+ * [Platzhalter — TODO(CLAUDE.md): Testimonials von Artem.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { ratings, downloads } from '../../data/site';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+const ratingList = Object.values(ratings);
+---
+
+<Section id="social-proof" title={t.sections.socialProof.title} dark>
+  <div class="flex flex-wrap gap-6 text-body">
+    {
+      ratingList.map((r) => (
+        <div>
+          <span class="font-black">{r.stars.toLocaleString('de-DE')}★</span>
+          <span class="opacity-70"> {r.label} ({r.count})</span>
+        </div>
+      ))
+    }
+    <div>
+      <span class="font-black">{downloads}</span>
+      <span class="opacity-70"> Downloads</span>
+    </div>
+  </div>
+  <p class="mt-6 text-body opacity-60">[Testimonials folgen]</p>
+</Section>

@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/*
+  Design-Tokens aus dem Corporate Design (siehe CLAUDE.md → Design-System).
+  Tailwind v4: CSS-first Theme via @theme. Diese Tokens sind die zentrale Quelle
+  der Wahrheit fürs Styling — nicht ohne Update der CLAUDE.md ändern.
+*/
+@theme {
+  /* ---- Farben ---- */
+  --color-yellow: #fff03c;      /* Primär, Akzent, CTAs, Keyword-Highlights */
+  --color-black: #3b3b3a;       /* Text, dunkle Sektionen */
+  --color-grey: #eaebeb;        /* heller Standard-Hintergrund */
+  --color-offwhite: #f6f6f6;    /* Off-White */
+  --color-darkgrey: #d9dada;    /* Trennflächen */
+  --color-grey-yellow: #c0c0c1; /* Sekundärakzent auf Gelb */
+
+  /* ---- Typografie ---- */
+  /* Roboto: Headlines = Black (900), Fließtext = Regular (400) */
+  --font-sans: "Roboto", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Arial, sans-serif;
+
+  /*
+    Proportionale Type-Skala aus dem CD (Headline = Anker):
+    SubHead ≈ 35 % der Headline · Body ≈ 25 % der Headline.
+    Web: responsive via clamp(), Proportionen beibehalten.
+  */
+  --text-headline: clamp(2.5rem, 6vw, 4.5rem);
+  --text-headline--line-height: 1.03; /* Headline eng (~1,0–1,05) */
+  --text-headline--font-weight: 900;
+
+  --text-subhead: clamp(1.35rem, 2.4vw, 1.6rem);
+  --text-subhead--line-height: 1.1;
+
+  --text-body: clamp(1rem, 1.4vw, 1.15rem);
+  --text-body--line-height: 1.2;
+
+  /* ---- Spacing & Layout (8px-Grid) ---- */
+  /* Einheitlicher Sektions-Rhythmus (zentrales Ordnungsprinzip) */
+  --spacing-section: clamp(4rem, 10vw, 8rem);
+  /* Content-Inset („Einschub") ~100 px Desktop, mobil proportional kleiner */
+  --spacing-inset: clamp(1.5rem, 6vw, 6.25rem);
+
+  /* ---- Radien ---- */
+  --radius-pill: 9999px; /* Buttons: Pill-Form */
+  --radius-card: 1rem;   /* Karten/Container: dezent abgerundet */
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-grey);
+    color: var(--color-black);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Smooth Scroll wird per Lenis (JS) gesteuert; Fallback fürs No-JS-CSS: */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/*
+  Wiederkehrendes CD-Stilmittel: gelber Marker-Highlight auf einzelnen
+  Keywords in Headlines. Nutzung: <span class="mark">Wort</span>
+*/
+@utility mark {
+  background-color: var(--color-yellow);
+  padding: 0 0.12em;
+  border-radius: 0.08em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}

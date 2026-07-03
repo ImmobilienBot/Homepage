@@ -1,0 +1,121 @@
+---
+/**
+ * BaseLayout.astro — Grundgerüst aller Seiten.
+ * <head> (inkl. GTM-Platzhalter + SEO.astro), Header + Footer als Chrome,
+ * globales CSS, Roboto, Consent/GTM-Platzhalter und die Animations-Skripte
+ * (Lenis + GSAP), die prefers-reduced-motion respektieren.
+ */
+import '../styles/global.css';
+import SEO from '../components/seo/SEO.astro';
+import Header from '../components/sections/Header.astro';
+import Footer from '../components/sections/Footer.astro';
+import { GTM_ID } from '../data/site';
+import { getLangFromUrl, useTranslations, hreflangCodes } from '../i18n';
+import type { Locale } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  noindex?: boolean;
+}
+
+const lang: Locale = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const { title, description, canonical, ogImage, noindex } = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    {/* ---- Consent-Banner-Platzhalter (CookieYes) ----
+        TODO(CLAUDE.md): CookieYes-Snippet im <head>, mit Consent Mode v2
+        verknüpft. Default „denied" bis Einwilligung. */}
+    {/* <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/XXXX/script.js"></script> */}
+
+    {/* ---- Google Consent Mode v2 (Default: denied) ---- */}
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+        wait_for_update: 500,
+      });
+    </script>
+
+    {/* ---- Google Tag Manager (Platzhalter — echte ID via site.ts) ---- */}
+    <script is:inline define:vars={{ GTM_ID }}>
+      (function (w, d, s, l, i) {
+        if (!i || i.indexOf('XXXX') !== -1) return; // Platzhalter-ID → nicht feuern
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', GTM_ID);
+    </script>
+
+    {/* ---- Roboto (Regular + Black) ---- */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <SEO
+      title={title}
+      description={description}
+      canonical={canonical}
+      ogImage={ogImage}
+      noindex={noindex}
+      lang={lang}
+    />
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    {/* ---- GTM noscript-Fallback ---- */}
+    <noscript>
+      <iframe
+        src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
+        title="gtm"></iframe>
+    </noscript>
+
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-yellow focus:text-black focus:px-4 focus:py-2 focus:rounded-pill"
+    >
+      {t.nav.skipToContent}
+    </a>
+
+    <Header />
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <Footer />
+
+    {/* ---- Animations-Skripte: Lenis (Smooth Scroll) + GSAP/ScrollTrigger ----
+        Nur clientseitig, respektiert prefers-reduced-motion. */}
+    <script>
+      import '../scripts/animations';
+    </script>
+  </body>
+</html>

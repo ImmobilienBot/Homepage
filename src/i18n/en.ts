@@ -1,0 +1,67 @@
+/**
+ * English strings. Must stay structurally identical to de.ts.
+ */
+import type { Dict } from './de';
+
+export const en: Dict = {
+  meta: {
+    title: 'Immobilien Bot – Find your dream flat before anyone else',
+    description:
+      'Immobilien Bot scans all major German property portals 24/7 and sends you a real-time push the moment a matching flat goes live. Try it free for 7 days.',
+  },
+
+  nav: {
+    bot: 'The Bot',
+    features: 'Features',
+    pricing: 'Pricing',
+    faq: 'FAQ',
+    cta: 'Get the app',
+    skipToContent: 'Skip to content',
+  },
+
+  hero: {
+    headline: 'Find your dream flat before anyone else.',
+    markKeyword: 'before anyone else',
+    subline:
+      '24/7 scanning of all major portals + a real-time alert the moment a matching listing goes online.',
+    trustMicroline: '4.6★ App Store · 5,000+ downloads',
+    notification: {
+      app: 'Immobilien Bot',
+      body: 'New listing: 3-room flat in Berlin – just went online',
+    },
+  },
+
+  sections: {
+    problem: { title: 'The Problem' },
+    solution: { title: 'The Solution' },
+    features: { title: 'Features' },
+    portals: { title: 'All portals in one app' },
+    pricing: { title: 'Pricing' },
+    socialProof: { title: 'What users say' },
+    faq: { title: 'Frequently asked questions' },
+    contact: { title: 'Contact' },
+    finalCta: { title: "Your next flat won't wait." },
+  },
+
+  cta: {
+    appStore: 'Download on the App Store',
+    playStore: 'Get it on Google Play',
+    tryFree: 'Try free for 7 days',
+  },
+
+  footer: {
+    imprint: 'Imprint',
+    privacy: 'Privacy',
+    terms: 'Terms',
+    contact: 'Contact',
+    langSwitch: 'Deutsch',
+    signature: 'The original. Faster than the rest.',
+  },
+
+  legal: {
+    imprint: { title: 'Imprint' },
+    privacy: { title: 'Privacy Policy' },
+    terms: { title: 'Terms & Conditions' },
+    placeholder: 'Content coming soon. [TODO: legal content from Artem]',
+  },
+};

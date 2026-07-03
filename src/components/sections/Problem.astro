@@ -1,0 +1,17 @@
+---
+/**
+ * Problem — stärkster Aufhänger: 43.000 Bewerber · 30 Minuten · 288 Wohnungen.
+ * [Platzhalter — TODO(CLAUDE.md): Berliner-Zeitung-Quelle verlinken.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+---
+
+<Section id="problem" title={t.sections.problem.title} dark>
+  <p class="text-body opacity-80">
+    [Platzhalter] 43.000 Bewerber · 30 Minuten · 288 Wohnungen.
+    <!-- TODO: Quelle (Berliner Zeitung) verlinken -->
+  </p>
+</Section>

@@ -1,0 +1,24 @@
+---
+/**
+ * Portale — 13 Portale als Text-Liste (keine Logos, rechtliche Gründe).
+ * [Platzhalter — TODO(CLAUDE.md): vollständige Liste der 13.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { portals, portalsTotal } from '../../data/site';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+---
+
+<Section id="portale" title={t.sections.portals.title}>
+  <p class="text-body opacity-70">
+    {portals.length} von {portalsTotal} bekannt — vollständige Liste folgt.
+  </p>
+  <ul class="mt-4 flex flex-wrap gap-2">
+    {
+      portals.map((name) => (
+        <li class="rounded-pill bg-offwhite px-4 py-1 text-body">{name}</li>
+      ))
+    }
+  </ul>
+</Section>

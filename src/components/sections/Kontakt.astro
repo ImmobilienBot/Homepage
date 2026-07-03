@@ -1,0 +1,17 @@
+---
+/**
+ * Kontakt — kompakte Sektion unten.
+ * [Platzhalter.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { site } from '../../data/site';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+---
+
+<Section id="kontakt" title={t.sections.contact.title}>
+  <p class="text-body opacity-80">
+    <a href={`mailto:${site.email}`} class="underline">{site.email}</a>
+  </p>
+</Section>

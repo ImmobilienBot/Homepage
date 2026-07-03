@@ -1,0 +1,27 @@
+---
+/**
+ * Features — die 4 Säulen (Finden · Sofort benachrichtigt · Überblick behalten ·
+ * Zuerst bewerben), scroll-animiert, Bento-Grid, je echter Screenshot.
+ * [Platzhalter — Screenshots & Bento-Layout folgen.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+
+// Struktur-Platzhalter der 4 Säulen (Texte später nach i18n auslagern).
+const pillars = ['Finden', 'Sofort benachrichtigt', 'Überblick behalten', 'Zuerst bewerben'];
+---
+
+<Section id="features" title={t.sections.features.title}>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {
+      pillars.map((p) => (
+        <div class="rounded-card bg-offwhite p-6">
+          <p class="font-bold">[{p}]</p>
+          <p class="mt-2 text-body opacity-70">[Screenshot + Text folgt]</p>
+        </div>
+      ))
+    }
+  </div>
+</Section>

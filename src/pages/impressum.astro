@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/Section.astro';
+import { useTranslations } from '../i18n';
+const t = useTranslations('de');
+---
+
+<BaseLayout title={`${t.legal.imprint.title} · Immobilien Bot`} description={t.legal.imprint.title} noindex>
+  <Section title={t.legal.imprint.title}>
+    <p class="text-body opacity-70">{t.legal.placeholder}</p>
+  </Section>
+</BaseLayout>

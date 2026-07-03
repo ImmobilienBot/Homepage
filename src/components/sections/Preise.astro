@@ -1,0 +1,35 @@
+---
+/**
+ * Preise — 3 Karten (Gratis · 7 Tage · 1 Monat) + 4-Vorteile-Streifen.
+ * CTA-Fokus: „7 Tage kostenlos testen – kein Risiko".
+ * [Platzhalter — finales Karten-Design folgt.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { pricing, pricingBenefits } from '../../data/site';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+---
+
+<Section id="preise" title={t.sections.pricing.title}>
+  <div class="grid gap-4 sm:grid-cols-3">
+    {
+      pricing.map((plan) => (
+        <div
+          class:list={[
+            'rounded-card p-6',
+            plan.highlight ? 'bg-yellow text-black' : 'bg-offwhite',
+          ]}
+        >
+          <p class="font-bold">{plan.name}</p>
+          <p class="mt-2 text-subhead font-black">{plan.price}</p>
+          {plan.note && <p class="mt-2 text-body opacity-80">{plan.note}</p>}
+        </div>
+      ))
+    }
+  </div>
+
+  <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-body opacity-80">
+    {pricingBenefits.map((b) => <li>✓ {b}</li>)}
+  </ul>
+</Section>

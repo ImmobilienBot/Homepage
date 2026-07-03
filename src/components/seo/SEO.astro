@@ -1,0 +1,117 @@
+---
+/**
+ * SEO.astro — zentrale Head-SEO-Komponente.
+ * Rendert: Title, Meta-Description, Canonical, OpenGraph, Twitter Card,
+ * robots, hreflang-Alternates, Favicon-Set + JSON-LD-Grundgerüst
+ * (MobileApplication + Organization + WebSite).
+ *
+ * Props laut CLAUDE.md: title, description, canonical, ogImage, noindex.
+ */
+import { site, storeLinks, aggregateRating, pricing } from '../../data/site';
+import { getAlternates, hreflangCodes } from '../../i18n';
+import type { Locale } from '../../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  noindex?: boolean;
+  lang?: Locale;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage = '/og-default.png',
+  noindex = false,
+  lang = 'de',
+} = Astro.props;
+
+const canonicalURL = new URL(canonical ?? Astro.url.pathname, Astro.site);
+const ogImageURL = new URL(ogImage, Astro.site);
+const alternates = getAlternates(Astro.url, Astro.site);
+
+// ---- JSON-LD Grundgerüst -------------------------------------------------
+// MobileApplication mit Store-Links + aggregateRating aus site.ts.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'MobileApplication',
+      name: site.name,
+      operatingSystem: 'iOS, Android',
+      applicationCategory: 'LifestyleApplication',
+      description,
+      url: site.url,
+      downloadUrl: [storeLinks.ios, storeLinks.android],
+      offers: pricing.map((p) => ({
+        '@type': 'Offer',
+        price: p.priceValue.toFixed(2),
+        priceCurrency: p.currency,
+        name: p.name,
+      })),
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: aggregateRating.ratingValue,
+        ratingCount: aggregateRating.ratingCount,
+        bestRating: aggregateRating.bestRating,
+        worstRating: aggregateRating.worstRating,
+      },
+    },
+    {
+      '@type': 'Organization',
+      name: site.name,
+      url: site.url,
+      email: site.email,
+    },
+    {
+      '@type': 'WebSite',
+      name: site.name,
+      url: site.url,
+      inLanguage: hreflangCodes[lang],
+    },
+  ],
+};
+---
+
+{/* Grundlegendes */}
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL.href} />
+<meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+
+{/* hreflang — reziproke DE/EN-Verlinkung + x-default */}
+{
+  alternates.map((alt) => (
+    <link rel="alternate" hreflang={alt.lang} href={alt.href} />
+  ))
+}
+
+{/* OpenGraph */}
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL.href} />
+<meta property="og:image" content={ogImageURL.href} />
+<meta property="og:locale" content={hreflangCodes[lang]} />
+
+{/* Twitter Card */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageURL.href} />
+
+{/* Favicon-Set (Assets folgen — Platzhalter-Pfade) */}
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+{/* JSON-LD strukturierte Daten */}
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify(jsonLd)}
+/>

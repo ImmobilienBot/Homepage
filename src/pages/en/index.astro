@@ -1,0 +1,33 @@
+---
+/**
+ * Home EN (on /en/). Same section order as DE — sections read the locale
+ * from the URL automatically.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { useTranslations } from '../../i18n';
+import Hero from '../../components/sections/Hero.astro';
+import Problem from '../../components/sections/Problem.astro';
+import Loesung from '../../components/sections/Loesung.astro';
+import Features from '../../components/sections/Features.astro';
+import Portale from '../../components/sections/Portale.astro';
+import Preise from '../../components/sections/Preise.astro';
+import SocialProof from '../../components/sections/SocialProof.astro';
+import FAQ from '../../components/sections/FAQ.astro';
+import Kontakt from '../../components/sections/Kontakt.astro';
+import FinalerCTA from '../../components/sections/FinalerCTA.astro';
+
+const t = useTranslations('en');
+---
+
+<BaseLayout title={t.meta.title} description={t.meta.description}>
+  <Hero />
+  <Problem />
+  <Loesung />
+  <Features />
+  <Portale />
+  <Preise />
+  <SocialProof />
+  <FAQ />
+  <Kontakt />
+  <FinalerCTA />
+</BaseLayout>

@@ -1,0 +1,29 @@
+---
+/**
+ * Section.astro — generischer Sektions-Wrapper.
+ * Trägt den einheitlichen Sektions-Rhythmus (py-section) und das
+ * Content-Inset (px-inset) aus den Design-Tokens — zentrales Ordnungsprinzip.
+ */
+interface Props {
+  id?: string;
+  title?: string;
+  dark?: boolean;
+  class?: string;
+}
+const { id, title, dark = false, class: cls = '' } = Astro.props;
+---
+
+<section
+  id={id}
+  data-reveal
+  class:list={[
+    'py-section px-inset',
+    dark ? 'bg-black text-offwhite' : '',
+    cls,
+  ]}
+>
+  <div class="mx-auto w-full max-w-6xl">
+    {title && <h2 class="text-subhead font-black mb-8">{title}</h2>}
+    <slot />
+  </div>
+</section>

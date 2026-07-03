@@ -1,0 +1,39 @@
+---
+/**
+ * Finaler CTA — „Deine nächste Wohnung wartet nicht." Store-Badges + QR-Code (nur Desktop).
+ * Sticky-Bottom-Bar wird ausgeblendet, sobald diese Sektion im Viewport ist.
+ * [Platzhalter — QR-Code & Badges folgen.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { getStoreLinks } from '../../data/site';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+const links = getStoreLinks('final_cta');
+---
+
+<Section id="final-cta" title={t.sections.finalCta.title} dark>
+  <div class="flex flex-wrap items-center gap-3">
+    <a
+      href={links.ios}
+      data-store="ios"
+      class="rounded-pill bg-yellow px-5 py-3 font-bold text-black"
+    >
+      {t.cta.appStore}
+    </a>
+    <a
+      href={links.android}
+      data-store="android"
+      class="rounded-pill bg-yellow px-5 py-3 font-bold text-black"
+    >
+      {t.cta.playStore}
+    </a>
+
+    {/* QR-Code nur Desktop (Platzhalter) */}
+    <div
+      class="hidden h-28 w-28 items-center justify-center rounded-card bg-offwhite text-black md:flex"
+    >
+      [QR]
+    </div>
+  </div>
+</Section>

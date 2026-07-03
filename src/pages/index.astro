@@ -1,0 +1,35 @@
+---
+/**
+ * Startseite DE (auf /).
+ * Sektionen in der Reihenfolge laut CLAUDE.md:
+ * Hero → Problem → Lösung → Features → Portale → Preise → Social Proof
+ * → FAQ → Kontakt → Finaler CTA. (Header/Footer via BaseLayout.)
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { useTranslations } from '../i18n';
+import Hero from '../components/sections/Hero.astro';
+import Problem from '../components/sections/Problem.astro';
+import Loesung from '../components/sections/Loesung.astro';
+import Features from '../components/sections/Features.astro';
+import Portale from '../components/sections/Portale.astro';
+import Preise from '../components/sections/Preise.astro';
+import SocialProof from '../components/sections/SocialProof.astro';
+import FAQ from '../components/sections/FAQ.astro';
+import Kontakt from '../components/sections/Kontakt.astro';
+import FinalerCTA from '../components/sections/FinalerCTA.astro';
+
+const t = useTranslations('de');
+---
+
+<BaseLayout title={t.meta.title} description={t.meta.description}>
+  <Hero />
+  <Problem />
+  <Loesung />
+  <Features />
+  <Portale />
+  <Preise />
+  <SocialProof />
+  <FAQ />
+  <Kontakt />
+  <FinalerCTA />
+</BaseLayout>

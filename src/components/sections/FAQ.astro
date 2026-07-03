@@ -1,0 +1,34 @@
+---
+/**
+ * FAQ — Portale? Kosten? Wie schnell? Seriös/legal? Kündbar? DE/EN? Dark Mode? Telegram?
+ * [Platzhalter — Antworten folgen; später nach i18n auslagern.]
+ */
+import Section from '../Section.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+
+const questions = [
+  'Welche Portale werden durchsucht?',
+  'Was kostet die App?',
+  'Wie schnell werde ich benachrichtigt?',
+  'Ist das seriös und legal?',
+  'Kann ich jederzeit kündigen?',
+  'Gibt es die App auf Deutsch und Englisch?',
+  'Gibt es einen Dark Mode?',
+  'Kann ich Telegram nutzen?',
+];
+---
+
+<Section id="faq" title={t.sections.faq.title}>
+  <ul class="divide-y divide-darkgrey">
+    {
+      questions.map((q) => (
+        <li class="py-4">
+          <p class="font-bold">{q}</p>
+          <p class="mt-1 text-body opacity-60">[Antwort folgt]</p>
+        </li>
+      ))
+    }
+  </ul>
+</Section>
