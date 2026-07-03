@@ -21,13 +21,15 @@ export const en: Dict = {
 
   hero: {
     headline: 'Find your dream flat before anyone else.',
-    markKeyword: 'before anyone else',
+    markKeyword: 'dream flat',
     subline:
       '24/7 scanning of all major portals + a real-time alert the moment a matching listing goes online.',
     trustMicroline: '4.6★ App Store · 5,000+ downloads',
+    mockupAlt: 'Screenshot of the Immobilien Bot app: listings feed with matching flats',
     notification: {
       app: 'Immobilien Bot',
-      body: 'New listing: 3-room flat in Berlin – just went online',
+      time: 'now',
+      body: 'New flat in Berlin: 3 rooms, €890 – Prenzlauer Berg',
     },
   },
 

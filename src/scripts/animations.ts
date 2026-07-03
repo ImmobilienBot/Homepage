@@ -30,6 +30,24 @@ function initSmoothScroll() {
   gsap.ticker.lagSmoothing(0);
 }
 
+function initHeroNotification() {
+  const card = document.querySelector<HTMLElement>('[data-hero-notification]');
+  if (!card) return;
+  // Dezentes, leicht federndes Hereingleiten (CD: einziger Bewegungsmoment im Hero).
+  gsap.fromTo(
+    card,
+    { y: -16, opacity: 0, scale: 0.98 },
+    {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.7,
+      ease: 'back.out(1.5)',
+      delay: 0.35,
+    },
+  );
+}
+
 function initReveals() {
   // Convention: Elemente mit [data-reveal] gleiten dezent herein.
   const targets = gsap.utils.toArray<HTMLElement>('[data-reveal]');
@@ -50,5 +68,6 @@ function initReveals() {
 
 if (!prefersReducedMotion) {
   initSmoothScroll();
+  initHeroNotification();
   initReveals();
 }

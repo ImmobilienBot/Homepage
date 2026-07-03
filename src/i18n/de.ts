@@ -21,13 +21,15 @@ export const de = {
 
   hero: {
     headline: 'Finde deine Traumwohnung, bevor es andere tun.',
-    markKeyword: 'bevor es andere tun',
+    markKeyword: 'Traumwohnung',
     subline:
       '24/7-Scan aller großen Portale + Echtzeit-Benachrichtigung, sobald ein passendes Angebot online geht.',
     trustMicroline: '4,6★ App Store · 5.000+ Downloads',
+    mockupAlt: 'Screenshot der Immobilien-Bot-App: Angebotsliste mit passenden Wohnungen',
     notification: {
       app: 'Immobilien Bot',
-      body: 'Neues Angebot: 3-Zimmer in Berlin – gerade online',
+      time: 'jetzt',
+      body: 'Neue Wohnung in Berlin: 3 Zimmer, 890 € – Prenzlauer Berg',
     },
   },
 
