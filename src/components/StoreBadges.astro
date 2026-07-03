@@ -3,10 +3,6 @@
  * StoreBadges.astro — wiederverwendbare offizielle Store-Badges.
  * Sprachabhängig (DE-Badge auf /, EN-Badge auf /en/), verlinkt auf die
  * Store-Links aus site.ts (UTM via `position`). An mehreren CTA-Stellen nutzbar.
- *
- * HINWEIS: Aktuell liegen nur DE-Badges in src/assets/images/
- * (app-store-badge-de.svg / google-play-badge-de.svg). Sobald EN-Badges
- * vorhanden sind, unten importieren und in `badgeByLang.en` eintragen.
  */
 import { getLangFromUrl, useTranslations } from '../i18n';
 import { getStoreLinks } from '../data/site';
@@ -14,6 +10,8 @@ import type { Locale } from '../data/site';
 
 import AppStoreDe from '../assets/images/app-store-badge-de.svg';
 import GooglePlayDe from '../assets/images/google-play-badge-de.svg';
+import AppStoreEn from '../assets/images/app-store-badge-en.svg';
+import GooglePlayEn from '../assets/images/google-play-badge-en.svg';
 
 interface Props {
   /** CTA-Position für UTM/Tracking (site.ts → getStoreLinks). */
@@ -28,10 +26,9 @@ const lang: Locale = langProp ?? getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const links = getStoreLinks(position);
 
-// TODO: EN-Badges ergänzen — bis dahin Fallback auf die DE-Badges.
 const badgeByLang = {
   de: { apple: AppStoreDe, play: GooglePlayDe },
-  en: { apple: AppStoreDe, play: GooglePlayDe },
+  en: { apple: AppStoreEn, play: GooglePlayEn },
 } as const;
 const AppStore = badgeByLang[lang].apple;
 const GooglePlay = badgeByLang[lang].play;

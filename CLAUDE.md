@@ -333,7 +333,7 @@ Entdeckungs- und Empfehlungsschicht.
 
 - [ ] Frameless App-Screenshots (PNG) — je Säule + Hero
 - [x] Portal-Liste (10, mit Domains) in `site.ts` gepflegt; Anzahl wird abgeleitet
-- [ ] EN-Store-Badges (`app-store-badge-en.svg` / `google-play-badge-en.svg`) — aktuell Fallback auf DE
+- [x] Store-Badges DE + EN (`app-store-badge-{de,en}.svg` / `google-play-badge-{de,en}.svg`), sprachabhängig via `StoreBadges.astro`
 - [ ] Berliner-Zeitung-Quelle (Link) zur 43.000 / 30-Min / 288-Statistik
 - [ ] Testimonials (Text + Name/Stadt) für Social Proof
 - [ ] App-Icon (für die Hero-Notification-Karte)
