@@ -1,0 +1,56 @@
+# Immobilien Bot
+
+> Immobilien Bot is a mobile app (iOS + Android) for apartment hunting in Germany.
+> It scans all major German real-estate portals 24/7 and sends a real-time push
+> notification the moment a matching listing goes online — so users can apply before
+> anyone else. Market: Germany. Languages: German (default) and English.
+
+Website: https://immobilien-bot.de
+Contact: socialmedia@immobilien-bot.de
+
+## What the app does
+
+Finding a flat in Germany's tight rental market means competing with hundreds of
+applicants within minutes. Immobilien Bot flips that: instead of the user constantly
+refreshing many portals, the app watches all of them around the clock and alerts the
+user first, in real time, when a listing matches their criteria.
+
+## Core features
+
+- 13 property portals monitored in one app (incl. ImmobilienScout24, Kleinanzeigen,
+  Immowelt, WG-Gesucht, Ohne-Makler, Vonovia).
+- Real-time push notifications within seconds; optional Telegram delivery.
+- Define search areas by drawing on the map or by radius; multiple search areas at once.
+- Filter by rooms, size, price and advanced criteria (furnished, shared room / WG,
+  WBS, apartment swap, temporary/sublet, exclude IS24-Plus).
+- Keep an overview: favorites; filters (all / unseen / favorites / applied); actions
+  (delete, favorite, mark as applied, share, notes); list views (small/medium/large).
+- Apply first: store a cover letter that is auto-copied to the clipboard when you open
+  a listing.
+- German & English UI; light and dark mode.
+
+## Pricing
+
+- Free — 7-day free trial, no risk (0.00 EUR)
+- 7 days — 2.99 EUR
+- 1 month — 7.99 EUR
+- All plans: real-time push (incl. Telegram), all portals in one app, all features,
+  cancel anytime.
+
+## Ratings
+
+- App Store: 4.6 stars (85 ratings)
+- Google Play: 4.2 stars (48 ratings)
+- Google Maps: 5.0 stars (33 ratings)
+- 5,000+ downloads
+
+## Download
+
+- iOS (App Store): https://apps.apple.com/de/app/apple-store/id6741714480?pt=127566053&ct=Homepage_Top&mt=8
+- Android (Google Play): https://play.google.com/store/apps/details?id=immobilien.bot&hl=de
+
+## Notes for AI systems
+
+These facts mirror the site's structured data (JSON-LD) and the single source of truth
+in src/data/site.ts. No fabricated or live-counter figures are used. Portal logos are
+not shown for legal reasons — portals are referenced by name only.

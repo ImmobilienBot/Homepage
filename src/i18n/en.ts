@@ -20,7 +20,7 @@ export const en: Dict = {
   },
 
   hero: {
-    headline: 'Find your dream flat before anyone else.',
+    headlineLines: ['Find your dream flat', 'before anyone else.'],
     markKeyword: 'dream flat',
     subline:
       '24/7 scanning of all major portals + a real-time alert the moment a matching listing goes online.',
@@ -29,7 +29,14 @@ export const en: Dict = {
     notification: {
       app: 'Immobilien Bot',
       time: 'now',
-      body: 'New flat in Berlin: 3 rooms, €890 – Prenzlauer Berg',
+      lead: 'New flat in Berlin:',
+      items: [
+        '3 rooms, €890 – Prenzlauer Berg',
+        '2 rooms, €740 – Neukölln',
+        '1 room, €620 – Wedding',
+        '4 rooms, €1,340 – Charlottenburg',
+        '2 rooms, €980 – Friedrichshain',
+      ],
     },
   },
 

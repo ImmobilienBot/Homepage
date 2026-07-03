@@ -33,6 +33,13 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
 
+    {/* Markiert JS-Verfügbarkeit synchron (vor dem ersten Paint), damit
+        Animations-Anfangszustände nur bei aktivem JS versteckt werden —
+        ohne JS bleiben Inhalte sichtbar. */}
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
     {/* ---- Consent-Banner-Platzhalter (CookieYes) ----
         TODO(CLAUDE.md): CookieYes-Snippet im <head>, mit Consent Mode v2
         verknüpft. Default „denied" bis Einwilligung. */}

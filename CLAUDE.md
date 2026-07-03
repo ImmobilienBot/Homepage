@@ -85,6 +85,52 @@ App-Screens**, nicht ein Cartoon. Nicht als durchgehender Erzähler verwenden.
 
 ---
 
+## Awwwards Visual Language / Motion-System
+
+Über dem Design-System liegt eine **Awwwards-taugliche Bewegungssprache**. Sie macht aus der
+cleanen Flat-Basis ein preisverdächtiges, kinetisches Erlebnis — **ohne** die Ruhe, Lesbarkeit
+und Conversion-Härte zu opfern. **Jede Sektion erbt diese Sprache** (gleiche Reveal-Muster,
+gleiche Tiefe, gleicher Rhythmus), damit die Seite als *ein* durchkomponiertes Stück wirkt.
+
+### Kinetische Typografie
+- Headlines **riesig**, **Roboto Black**, **enges Tracking** und **enge Zeilenhöhe** (~0,9–0,95).
+- **Mask-Reveal zeilenweise:** jede Zeile sitzt in einem `overflow:hidden`-Container und gleitet
+  von unten herein (gestaffelt, `stagger`). Dramatischer Auftritt, aber schnell.
+- **Animierter Marker:** der gelbe Keyword-Highlight wischt per `scaleX` (transform-origin links)
+  hinter dem Wort herein, *nachdem* die Zeile steht. Der Marker ist der Signature-Move.
+
+### Scroll-Choreografie
+- **Lenis** (Smooth Scroll) + **GSAP ScrollTrigger** treiben die Sektions-Auftritte.
+- **Parallax-Tiefe:** Vordergrund (Mockups, Karten) und Hintergrund (Glow, Deko) bewegen sich mit
+  leicht **unterschiedlicher Geschwindigkeit** → räumliche Tiefe.
+- **Stagger:** Elemente einer Sektion treten versetzt auf (nicht alles gleichzeitig).
+
+### Geschmackvolle Tiefe (statt Flat-Langeweile)
+- **Weiche, große Elevation:** großflächige Schatten mit **niedriger Opacity** (kein harter,
+  kleiner Drop-Shadow). Ergibt „schwebende", edle Karten.
+- **Leichter 3D-Tilt** auf Mockups/Key-Visuals — subtil, reagiert dezent auf **Maus** (Desktop)
+  und **Scroll**. Nie kippelig.
+- **Weiches gelbes Glow** hinter Phone-Mockups/Key-Visuals (großer, stark geblurter Gelb-Verlauf,
+  niedrige Opacity) — hebt das Produkt aus dem Grau.
+- **Optional:** sehr feine **Grain-Textur** als Overlay für analoge Wärme (nur wenn Performance
+  es hergibt).
+
+### Farbwelt
+Bleibt strikt **Gelb / Schwarz / Grau** (die CD-Tokens). Der „Awwwards-Look" kommt aus
+**Bewegung, Typo-Drama und Tiefe** — **nicht** aus neuen Farben oder Verläufen in Fremdtönen.
+
+### Schutzplanken (nicht verhandelbar)
+- **CTA darf nie im Effekt untergehen** — Store-Buttons/Conversion-Elemente bleiben jederzeit
+  klar sichtbar, lesbar und sofort klickbar. Effekte dienen der Führung zum CTA, nicht umgekehrt.
+- **Mobile reduziert:** auf kleinen Screens weniger/kleinere Bewegung, kein Maus-Tilt,
+  günstigere Effekte. Die Choreografie ist Desktop-first-Zugabe, kein Muss.
+- **`prefers-reduced-motion`** strikt respektieren: Reveals/Loops/Tilt aus, Inhalte sofort im
+  Endzustand sichtbar.
+- **Lighthouse ~100** (mobil) bleibt Pflicht. Nur `transform`/`opacity` animieren, kein Layout-
+  Thrash; Performance-Budget je Sektion. Im Zweifel: weniger Effekt.
+
+---
+
 ## Seitenstruktur
 
 One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
@@ -199,6 +245,29 @@ Ohne-Makler, Vonovia. [TODO: vollständige 13]
   `aggregateRating` aus den Bewertungszahlen), `Organization`, `WebSite`.
 - **`@astrojs/sitemap`** (auto sitemap.xml) + `public/robots.txt`.
 - **hreflang**: reziproke DE/EN-Verlinkung auf jeder Seite.
+
+---
+
+## KI-/Agent-Lesbarkeit
+
+Die Seite muss nicht nur für Menschen und Suchmaschinen, sondern auch für **KI-Systeme/Agents**
+(LLM-Crawler, Antwort-Engines, Assistenten) sauber lesbar sein — sie werden zunehmend zur
+Entdeckungs- und Empfehlungsschicht.
+
+- **Semantisches HTML:** echte Landmarks (`header`, `nav`, `main`, `section`, `footer`),
+  `article`/`figure` wo passend. Keine „`div`-Suppe", Bewegung/Styling nie auf Kosten der Semantik.
+- **Saubere Heading-Hierarchie:** genau **ein `h1`** pro Seite (Hero-Headline), danach lückenlos
+  `h2`/`h3`. Reihenfolge = Bedeutung. Mask-Reveal-Wrapper dürfen die Heading-Struktur nicht
+  zerreißen (Text bleibt im `h1`/`h2`, Animation nur auf inneren Spans).
+- **Aussagekräftige Alt-Texte** für alle inhaltlichen Bilder (App-Screens beschreiben, was zu
+  sehen ist) und **sprechende Link-Texte** (kein „hier klicken"); Store-Buttons benennen die
+  Zielplattform.
+- **Umfassendes JSON-LD:** `MobileApplication`/`SoftwareApplication` (Store-Links, Preise/`offers`,
+  `aggregateRating`), `Organization`, `WebSite`, sowie wo sinnvoll `FAQPage` (aus der FAQ-Sektion)
+  und `BreadcrumbList`. Strukturierte Fakten decken sich mit `src/data/site.ts`.
+- **`public/llms.txt`:** kompakte, faktische Kurzbeschreibung der App für KI-Systeme (was sie tut,
+  Kernfeatures, Preise, Store-Links, Sprachen) — Fakten aus `site.ts`, konsistent zu JSON-LD.
+  Bei Faktenänderungen (`site.ts`) **mitpflegen**.
 
 ---
 

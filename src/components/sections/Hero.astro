@@ -1,14 +1,17 @@
 ---
 /**
- * Hero — Layout Variante A.
- * Links: Headline (mit gelbem Marker-Highlight) + Subline + Store-Buttons +
- * Trust-Microline. Rechts: Phone-Mockup = App-Screenshot (frameless) hinter
- * dem Geräterahmen (smartphone-rahmen.svg), darüber eine echte HTML-Push-
- * Benachrichtigungskarte (kein Bild), die per GSAP dezent hereingleitet.
+ * Hero — Awwwards Visual Language (siehe CLAUDE.md → Motion-System).
  *
- * Texte aus i18n, Store-Links aus site.ts, Design-Tokens/Sektions-Rhythmus
- * aus der CLAUDE.md. prefers-reduced-motion wird respektiert (siehe
- * scripts/animations.ts + Style unten).
+ * - Dramatische kinetische Headline: riesig, Roboto Black, enges Tracking/Leading,
+ *   Mask-Reveal zeilenweise + animierter gelber Marker (scaleX-Wisch).
+ * - Phone-Mockup mit weichem gelbem Glow dahinter + leichtem 3D-Tilt
+ *   (reagiert dezent auf Maus/Scroll, nur Desktop).
+ * - Endlosschleife mehrerer schwebender Push-Benachrichtigungen (elevated,
+ *   über den Phone-Rand überlappend), Texte aus i18n.
+ *
+ * Alles mit prefers-reduced-motion-Fallback (Anfangszustände nur unter
+ * `html.js` + no-preference versteckt) und Performance-Budget (nur
+ * transform/opacity). Store-Links aus site.ts, Texte aus i18n.
  */
 import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
@@ -23,25 +26,48 @@ const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const links = getStoreLinks('hero');
 
-// Gelber Marker-Highlight auf dem Keyword in der Headline.
-const { headline, markKeyword } = t.hero;
-const idx = headline.indexOf(markKeyword);
-const headBefore = idx >= 0 ? headline.slice(0, idx) : headline;
-const headMark = idx >= 0 ? markKeyword : '';
-const headAfter = idx >= 0 ? headline.slice(idx + markKeyword.length) : '';
+const { headlineLines, markKeyword, notification } = t.hero;
+
+// Zeile in Segmente zerlegen; das Keyword bekommt den animierten Marker.
+function splitLine(line: string) {
+  const idx = line.indexOf(markKeyword);
+  if (idx < 0) return [{ text: line, mark: false }];
+  return [
+    { text: line.slice(0, idx), mark: false },
+    { text: markKeyword, mark: true },
+    { text: line.slice(idx + markKeyword.length), mark: false },
+  ].filter((s) => s.mark || s.text.length > 0);
+}
 ---
 
-<section id="hero" class="px-inset py-section">
+<section id="hero" class="relative overflow-hidden px-inset py-section">
   <div class="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
-    {/* ---- Links: Text + CTAs ---- */}
+    {/* ---- Links: kinetische Headline + CTAs ---- */}
     <div class="order-2 md:order-1">
-      <h1 class="text-headline font-black text-balance">
-        {headBefore}{headMark && <span class="mark">{headMark}</span>}{headAfter}
+      <h1 class="hero-headline font-black">
+        {
+          headlineLines.map((line) => (
+            <span class="line-mask">
+              <span class="line-inner">
+                {splitLine(line).map((seg) =>
+                  seg.mark ? (
+                    <span class="mark-word">
+                      <span class="mark-hl" aria-hidden="true" />
+                      <span class="mark-text">{seg.text}</span>
+                    </span>
+                  ) : (
+                    <span>{seg.text}</span>
+                  ),
+                )}
+              </span>
+            </span>
+          ))
+        }
       </h1>
 
-      <p class="mt-6 max-w-prose text-subhead">{t.hero.subline}</p>
+      <p class="mt-6 max-w-prose text-subhead" data-hero-sub>{t.hero.subline}</p>
 
-      <div class="mt-8 flex flex-wrap gap-3">
+      <div class="mt-8 flex flex-wrap gap-3" data-hero-cta>
         <a
           href={links.ios}
           data-store="ios"
@@ -58,50 +84,51 @@ const headAfter = idx >= 0 ? headline.slice(idx + markKeyword.length) : '';
         </a>
       </div>
 
-      <p class="mt-4 text-body opacity-70">{t.hero.trustMicroline}</p>
+      <p class="mt-4 text-body opacity-70" data-hero-trust>{t.hero.trustMicroline}</p>
     </div>
 
-    {/* ---- Rechts: Phone-Mockup ---- */}
+    {/* ---- Rechts: Phone-Stage (Glow + Tilt + Notifications) ---- */}
     <div class="order-1 flex justify-center md:order-2">
-      <div class="phone relative w-[clamp(220px,70vw,300px)]">
-        {/* Screenshot hinter dem Rahmen (Ecken sind bereits abgerundet) */}
-        <Image
-          src={screenshot}
-          alt={t.hero.mockupAlt}
-          class="phone-screen"
-          loading="eager"
-          fetchpriority="high"
-        />
+      <div data-phone-stage class="phone-stage relative w-[clamp(230px,72vw,320px)]">
+        {/* Weiches gelbes Glow hinter dem Mockup */}
+        <div class="phone-glow" aria-hidden="true"></div>
 
-        {/* Geräterahmen (transparenter Screen-Ausschnitt) über dem Screenshot */}
-        <PhoneFrame class="phone-frame relative z-10 block h-auto w-full" />
+        {/* Tilt-Ebene: Screenshot hinter dem Rahmen */}
+        <div data-phone class="phone relative w-full">
+          <Image
+            src={screenshot}
+            alt={t.hero.mockupAlt}
+            class="phone-screen"
+            loading="eager"
+            fetchpriority="high"
+          />
+          <PhoneFrame class="relative z-10 block h-auto w-full" />
+        </div>
 
-        {/* Echte HTML-Push-Benachrichtigung */}
-        <div
-          data-hero-notification
-          class="notification absolute inset-x-[6%] top-[13%] z-20 rounded-2xl border border-black/5 bg-offwhite/95 p-3 shadow-lg backdrop-blur-sm"
-          role="status"
-        >
-          <div class="flex items-start gap-3">
-            <Image
-              src={appIcon}
-              alt=""
-              width={96}
-              height={96}
-              class="h-10 w-10 shrink-0 rounded-[24%]"
-            />
-            <div class="min-w-0">
-              <p class="flex items-baseline justify-between gap-2 text-[13px] font-bold leading-tight">
-                <span class="truncate">{t.hero.notification.app}</span>
-                <span class="shrink-0 font-normal opacity-50">
-                  {t.hero.notification.time}
-                </span>
-              </p>
-              <p class="mt-0.5 text-[13px] leading-snug">
-                {t.hero.notification.body}
-              </p>
-            </div>
-          </div>
+        {/* Endlosschleife schwebender Push-Benachrichtigungen (kein Bild) */}
+        <div class="notif-stack" data-notif-stack aria-hidden="true">
+          {
+            notification.items.map((item) => (
+              <div class="notif" data-notif>
+                <div class="flex items-start gap-3">
+                  <Image
+                    src={appIcon}
+                    alt=""
+                    width={96}
+                    height={96}
+                    class="notif-icon"
+                  />
+                  <div class="min-w-0">
+                    <p class="notif-head">
+                      <span class="truncate">{notification.app}</span>
+                      <span class="notif-time">{notification.time}</span>
+                    </p>
+                    <p class="notif-body">{notification.lead} {item}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
         </div>
       </div>
     </div>
@@ -109,12 +136,64 @@ const headAfter = idx >= 0 ? headline.slice(idx + markKeyword.length) : '';
 </section>
 
 <style>
-  /*
-    Screenshot exakt in den transparenten Screen-Ausschnitt des Rahmens legen.
-    Werte aus der Geometrie von smartphone-rahmen.svg (Innen-Screen):
-    left 2.83% · top 1.05% · width 94.1% · height 97.8%. Der dunkle Bezel
-    (z-10) verdeckt die Screenshot-Ecken.
-  */
+  /* ---- Kinetische Typografie ---- */
+  .hero-headline {
+    font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 0.92; /* enge Zeilenhöhe */
+    letter-spacing: -0.02em; /* enges Tracking */
+    text-wrap: balance;
+  }
+  .line-mask {
+    display: block;
+    overflow: hidden;
+    padding-block: 0.03em; /* schützt Ober-/Unterlängen vor dem Clip */
+  }
+  .line-inner {
+    display: block;
+    will-change: transform;
+  }
+  .mark-word {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .mark-hl {
+    position: absolute;
+    inset: 0.08em -0.06em 0.04em -0.06em;
+    background-color: var(--color-yellow);
+    border-radius: 0.08em;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .mark-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- Phone-Stage: Glow + Tilt ---- */
+  .phone-stage {
+    perspective: 1200px;
+  }
+  .phone {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .phone-glow {
+    position: absolute;
+    inset: -14% -20%;
+    z-index: 0;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--color-yellow) 85%, transparent),
+      transparent 72%
+    );
+    filter: blur(48px);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  /* Screenshot exakt in den transparenten Screen-Ausschnitt (Geometrie aus
+     smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken. */
   .phone-screen {
     position: absolute;
     left: 2.83%;
@@ -127,11 +206,79 @@ const headAfter = idx >= 0 ? headline.slice(idx + markKeyword.length) : '';
     z-index: 0;
   }
 
-  /* Anfangszustand der Notification nur, wenn Animation erlaubt ist —
-     unter prefers-reduced-motion bleibt die Karte sofort sichtbar. */
+  /* ---- Schwebende Notifications ---- */
+  .notif-stack {
+    position: absolute;
+    top: 8%;
+    left: -8%;
+    right: -4%;
+    z-index: 30;
+    pointer-events: none;
+  }
+  .notif {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    border-radius: 1rem;
+    background-color: color-mix(in srgb, var(--color-offwhite) 92%, transparent);
+    border: 1px solid rgb(59 59 58 / 0.06);
+    /* weiche, große Elevation mit niedriger Opacity */
+    box-shadow: 0 24px 50px -18px rgb(59 59 58 / 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0.75rem 0.85rem;
+    color: var(--color-black);
+    will-change: transform, opacity;
+  }
+  .notif-icon {
+    height: 2.5rem;
+    width: 2.5rem;
+    flex-shrink: 0;
+    border-radius: 24%;
+  }
+  .notif-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .notif-time {
+    flex-shrink: 0;
+    font-weight: 400;
+    opacity: 0.5;
+  }
+  .notif-body {
+    margin-top: 0.15rem;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  /* ---- Fallback: ohne JS / bei reduzierter Bewegung nur EINE Notification ---- */
+  .notif {
+    opacity: 0;
+  }
+  .notif:first-child {
+    opacity: 1;
+  }
+
+  /* ---- Anfangszustände NUR bei aktivem JS + erlaubter Bewegung verstecken.
+     Sonst bleibt alles sofort sichtbar (kein Content-Verlust). ---- */
   @media (prefers-reduced-motion: no-preference) {
-    .notification {
+    html.js .line-inner {
+      transform: translateY(110%);
+    }
+    html.js .mark-hl {
+      transform: scaleX(0);
+    }
+    html.js [data-hero-sub],
+    html.js [data-hero-trust] {
       opacity: 0;
+    }
+    html.js .notif:first-child {
+      opacity: 0; /* im JS-Fall steuert die GSAP-Schleife alle Karten */
     }
   }
 </style>

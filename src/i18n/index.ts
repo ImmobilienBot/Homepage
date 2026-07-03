@@ -3,7 +3,7 @@
  * Nutzung in .astro:
  *   const lang = getLangFromUrl(Astro.url);
  *   const t = useTranslations(lang);
- *   t.hero.headline
+ *   t.hero.headlineLines
  */
 import { de, type Dict } from './de';
 import { en } from './en';

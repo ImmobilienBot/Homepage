@@ -20,7 +20,8 @@ export const de = {
   },
 
   hero: {
-    headline: 'Finde deine Traumwohnung, bevor es andere tun.',
+    // Zeilenweise für Mask-Reveal (kinetische Typografie, siehe CLAUDE.md).
+    headlineLines: ['Finde deine Traumwohnung,', 'bevor es andere tun.'],
     markKeyword: 'Traumwohnung',
     subline:
       '24/7-Scan aller großen Portale + Echtzeit-Benachrichtigung, sobald ein passendes Angebot online geht.',
@@ -29,7 +30,15 @@ export const de = {
     notification: {
       app: 'Immobilien Bot',
       time: 'jetzt',
-      body: 'Neue Wohnung in Berlin: 3 Zimmer, 890 € – Prenzlauer Berg',
+      lead: 'Neue Wohnung in Berlin:',
+      // Endlosschleife schwebender Push-Benachrichtigungen (variierende Berliner Meldungen).
+      items: [
+        '3 Zimmer, 890 € – Prenzlauer Berg',
+        '2 Zimmer, 740 € – Neukölln',
+        '1 Zimmer, 620 € – Wedding',
+        '4 Zimmer, 1.340 € – Charlottenburg',
+        '2 Zimmer, 980 € – Friedrichshain',
+      ],
     },
   },
 
@@ -66,6 +75,8 @@ export const de = {
     terms: { title: 'AGB' },
     placeholder: 'Inhalte folgen. [TODO: juristische Inhalte von Artem]',
   },
-} as const;
+};
 
+// Kein `as const`: primitive Typen werden geweitet (string statt Literal),
+// damit en.ts strukturgleich mit eigenen Werten zuweisbar ist.
 export type Dict = typeof de;
