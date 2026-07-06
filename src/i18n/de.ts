@@ -5,9 +5,10 @@
  */
 export const de = {
   meta: {
-    title: 'Immobilien Bot – Finde deine Traumwohnung, bevor es andere tun',
+    // Title ~50–60 Zeichen, Keyword vorn (Pagespeed/SEO). Description ~150–160.
+    title: 'Immobilien Bot – Wohnung finden, bevor es andere tun',
     description:
-      'Immobilien Bot scannt 24/7 alle großen Immobilienportale und benachrichtigt dich per Echtzeit-Push, sobald eine passende Wohnung online geht. 7 Tage kostenlos testen.',
+      'Immobilien Bot scannt 24/7 alle großen Immobilienportale und benachrichtigt dich in Echtzeit, sobald eine passende Wohnung online geht. 7 Tage kostenlos testen.',
   },
 
   nav: {

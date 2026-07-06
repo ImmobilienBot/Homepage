@@ -5,7 +5,8 @@ import type { Dict } from './de';
 
 export const en: Dict = {
   meta: {
-    title: 'Immobilien Bot – Find your dream flat before anyone else',
+    // Title ~50–60 chars, keyword first (Pagespeed/SEO). Description ~150–160.
+    title: 'Immobilien Bot – Find your flat before anyone else',
     description:
       'Immobilien Bot scans all major German property portals 24/7 and sends you a real-time push the moment a matching flat goes live. Try it free for 7 days.',
   },
