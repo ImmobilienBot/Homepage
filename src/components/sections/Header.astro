@@ -32,7 +32,9 @@ const navItems = [
     </a>
 
     <nav class="hidden items-center gap-6 text-body font-medium md:flex" aria-label="Hauptnavigation">
-      {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
+      {navItems.map((item) => (
+        <a href={item.href} class="nav-link" data-nav-link>{item.label}</a>
+      ))}
     </nav>
 
     <a
@@ -40,13 +42,14 @@ const navItems = [
       class="nav-cta"
       data-lenis-target="#preise"
     >
-      {t.nav.ctaFree}
+      <span>{t.nav.ctaFree}</span>
+      <span class="nav-cta-arrow" aria-hidden="true">→</span>
     </a>
   </div>
 </header>
 
 <script>
-  // Klassen-Toggle Vollbreite ↔ Pille — rein CSS-getrieben (kein GSAP nötig).
+  // Vollbreite ↔ Pille — rein CSS-getrieben (kein GSAP nötig).
   const header = document.querySelector('[data-header]');
   let ticking = false;
   function update() {
@@ -61,6 +64,54 @@ const navItems = [
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   update();
+
+  // Scroll-Spy: aktiver Menüpunkt je sichtbarer Sektion (gelber Unterstrich).
+  // Läuft unabhängig von prefers-reduced-motion (reiner Zustand, keine Bewegung)
+  // und in beiden Nav-Zuständen (voll/Pille). Ziel-Anchor aus dem href-Hash.
+  const navLinks = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'),
+  );
+  const linkById = new Map<string, HTMLAnchorElement>();
+  for (const a of navLinks) {
+    const href = a.getAttribute('href') || '';
+    const i = href.indexOf('#');
+    if (i >= 0) {
+      const id = href.slice(i + 1);
+      if (id) linkById.set(id, a);
+    }
+  }
+  const sections = [...linkById.keys()]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => !!el);
+
+  if (sections.length) {
+    const visible = new Set<Element>();
+    const spy = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) visible.add(e.target);
+          else visible.delete(e.target);
+        }
+        // Aktiv = die am weitesten oben liegende, aktuell im Mittelband sichtbare Sektion.
+        let active: Element | null = null;
+        let top = Infinity;
+        for (const sec of visible) {
+          const y = sec.getBoundingClientRect().top;
+          if (y < top) {
+            top = y;
+            active = sec;
+          }
+        }
+        for (const a of navLinks) a.classList.remove('is-active');
+        if (active && active instanceof HTMLElement) {
+          linkById.get(active.id)?.classList.add('is-active');
+        }
+      },
+      // schmales Mittelband → i. d. R. genau eine aktive Sektion
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+    );
+    for (const s of sections) spy.observe(s);
+  }
 </script>
 
 <style>
@@ -119,11 +170,44 @@ const navItems = [
     width: auto;
   }
 
-  /* „Kostenlos testen" — gelber Pill-CTA, apple-ruhiger Rollover:
-     hebt sich beim Hover dezent an + weicher größerer Schatten, keine Farbänderung. */
+  /* ---- Menüpunkte — Variante B „Unterstrich" ----
+     Roboto Medium, dunkel. Hover: dünne dunkle Linie zieht von links herein
+     (scaleX 0→1). Aktiv (Scroll-Spy): Linie dauerhaft in Gelb. Kein Layout-Shift
+     (Unterstrich absolut positioniert). */
+  .nav-link {
+    position: relative;
+    color: var(--color-black);
+    padding-bottom: 3px;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--color-black);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.3s ease;
+  }
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after {
+    transform: scaleX(1);
+  }
+  /* Aktiv-Zustand nach den Hover-Regeln → gewinnt bei gleicher Spezifität:
+     dauerhaft sichtbar UND gelb (auch beim Hover). */
+  .nav-link.is-active::after {
+    transform: scaleX(1);
+    background-color: var(--color-yellow);
+  }
+
+  /* „Kostenlos testen" — gelber Pill-CTA mit Pfeil, apple-ruhiger Rollover:
+     hebt sich dezent an (translateY) + Pfeil rutscht nach rechts, keine Farbänderung. */
   .nav-cta {
     display: inline-flex;
     align-items: center;
+    gap: 0.4rem;
     white-space: nowrap;
     border-radius: 9999px;
     background-color: var(--color-yellow);
@@ -136,18 +220,30 @@ const navItems = [
       transform 0.25s ease,
       box-shadow 0.25s ease;
   }
+  .nav-cta-arrow {
+    display: inline-block;
+    transition: transform 0.25s ease;
+  }
   .nav-cta:hover {
     transform: translateY(-2px);
     box-shadow: 0 16px 30px -10px rgb(59 59 58 / 0.35);
+  }
+  .nav-cta:hover .nav-cta-arrow {
+    transform: translateX(3px);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .site-header,
     .nav-inner,
-    .nav-cta {
+    .nav-cta,
+    .nav-cta-arrow,
+    .nav-link::after {
       transition: none;
     }
     .nav-cta:hover {
+      transform: none;
+    }
+    .nav-cta:hover .nav-cta-arrow {
       transform: none;
     }
   }

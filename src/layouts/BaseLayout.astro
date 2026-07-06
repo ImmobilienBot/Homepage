@@ -127,6 +127,8 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
     <div class="cursor" aria-hidden="true">
       <div class="cursor-ring" data-cursor-ring></div>
       <div class="cursor-dot" data-cursor-dot></div>
+      {/* Mitlaufendes Pill-Label (z. B. über Store-Badges statt Invert-Lupe) */}
+      <div class="cursor-label" data-cursor-label-el></div>
     </div>
 
     {/* ---- Animations-Skripte: Lenis (Smooth Scroll) + GSAP/ScrollTrigger ----

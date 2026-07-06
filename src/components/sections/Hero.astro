@@ -49,8 +49,9 @@ function splitLine(line: string) {
 ---
 
 <section id="hero" class="relative overflow-hidden px-inset py-section">
-  {/* Schwebende gelbe Punkte (Desktop-only, per JS befüllt; weichen dem Cursor aus) */}
-  <div class="hero-dots" data-dots aria-hidden="true"></div>
+  {/* Canvas-Partikelfeld (Desktop-only, per JS): dichte gelbe Welle + Cursor-Repel.
+      Hinter Inhalten/Phones, über dem grauen Hintergrund. Mobile/reduced-motion: leer. */}
+  <canvas class="hero-canvas" data-hero-canvas aria-hidden="true"></canvas>
 
   <div class="relative z-10 mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
     {/* ---- Links: kinetische Headline + CTAs ---- */}
@@ -221,7 +222,7 @@ function splitLine(line: string) {
     color: rgb(59 59 58 / 0.55); /* gedämpftes CD-Schwarz-Grau */
   }
   .trust-star {
-    color: var(--color-yellow); /* Brand-Akzent */
+    color: var(--color-black); /* dunkel — gelb ging auf hellem Grau unter */
     font-size: 1.05em;
     line-height: 1;
   }
@@ -240,17 +241,17 @@ function splitLine(line: string) {
     opacity: 0.45;
   }
 
-  /* ---- Schwebende gelbe Punkte (Hero-Hintergrund) ----
-     Nur Desktop; per JS befüllt. Ohne JS bleibt der Layer leer (cleanes Grau). */
-  .hero-dots {
+  /* ---- Canvas-Partikelfeld (Hero-Hintergrund) ----
+     Nur Desktop; per JS bespielt (animations.ts → initHeroCanvas). Ohne JS bleibt
+     das Canvas leer (cleanes Grau). Hinter den Inhalten (z-0), über dem Grau. */
+  .hero-canvas {
     position: absolute;
     inset: 0;
     z-index: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
-    overflow: hidden;
   }
-  /* Die einzelnen .hero-dot werden per JS erzeugt und inline gestylt
-     (animations.ts → initHeroDots) — Astro-scoped CSS würde sie NICHT treffen. */
 
   /* ---- Phone-Cluster: Perspektive (Tilt) + gefächerte Ruhelage ---- */
   .phone-stage {
@@ -284,13 +285,14 @@ function splitLine(line: string) {
     will-change: transform;
   }
 
-  /* Fächer-Ruhelage (Fallback ohne JS = sofort korrekt).
-     Diese Werte spiegeln REST in animations.ts (xPercent/yPercent/rotation/scale). */
+  /* Ruhelage: hintere Phones AUFRECHT (keine Rotation), schauen nur seitlich
+     hinter dem Front-Phone hervor (Peek), leicht kleiner/tiefer = Tiefe.
+     Fallback ohne JS = sofort korrekt. Werte spiegeln REST in animations.ts. */
   .phone--back-left {
-    transform: translate(-34%, 6%) rotate(-8deg) scale(0.84);
+    transform: translate(-22%, 5%) scale(0.9);
   }
   .phone--back-right {
-    transform: translate(33%, 9%) rotate(8deg) scale(0.82);
+    transform: translate(22%, 7%) scale(0.88);
   }
 
   .phone-frame {
@@ -355,6 +357,14 @@ function splitLine(line: string) {
     transform: scale(1.07);
     box-shadow: 0 22px 48px -16px rgb(59 59 58 / 0.45);
   }
+  /* Ohne JS / reduced-motion: nur die erste Notification statisch zeigen.
+     Läuft JS, übernimmt die GSAP-Schleife (autoAlpha) alle Karten. */
+  .notif {
+    opacity: 0;
+  }
+  .notif:first-child {
+    opacity: 1;
+  }
   .notif-icon {
     height: 2.25rem;
     width: 2.25rem;
@@ -384,10 +394,10 @@ function splitLine(line: string) {
   /* Mobile reduziert: engerer Cluster, kompakterer Stapel (nur 3 Karten sichtbar). */
   @media (max-width: 640px) {
     .phone--back-left {
-      transform: translate(-26%, 6%) rotate(-7deg) scale(0.86);
+      transform: translate(-18%, 5%) scale(0.9);
     }
     .phone--back-right {
-      transform: translate(25%, 8%) rotate(7deg) scale(0.85);
+      transform: translate(18%, 7%) scale(0.88);
     }
     .notif-stack {
       left: 0;

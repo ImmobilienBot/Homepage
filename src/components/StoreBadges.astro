@@ -35,10 +35,22 @@ const GooglePlay = badgeByLang[lang].play;
 ---
 
 <div class:list={['store-badges', cls]}>
-  <a href={links.ios} data-store="ios" aria-label={t.cta.appStore} class="badge-link">
+  <a
+    href={links.ios}
+    data-store="ios"
+    aria-label={t.cta.appStore}
+    class="badge-link"
+    data-cursor-label={t.cta.tryFree}
+  >
     <AppStore class="badge badge--apple" aria-hidden="true" />
   </a>
-  <a href={links.android} data-store="android" aria-label={t.cta.playStore} class="badge-link">
+  <a
+    href={links.android}
+    data-store="android"
+    aria-label={t.cta.playStore}
+    class="badge-link"
+    data-cursor-label={t.cta.tryFree}
+  >
     <GooglePlay class="badge badge--play" aria-hidden="true" />
   </a>
 </div>
