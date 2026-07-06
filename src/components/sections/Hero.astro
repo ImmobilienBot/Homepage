@@ -277,6 +277,8 @@ function splitLine(line: string) {
     position: absolute;
     inset: 0;
     z-index: 1;
+    /* Unterkante als Skalier-Ankerpunkt → alle drei Phones stehen unten bündig. */
+    transform-origin: bottom center;
     will-change: transform, opacity;
   }
   .phone--front {
@@ -285,14 +287,15 @@ function splitLine(line: string) {
     will-change: transform;
   }
 
-  /* Ruhelage: hintere Phones AUFRECHT (keine Rotation), schauen nur seitlich
-     hinter dem Front-Phone hervor (Peek), leicht kleiner/tiefer = Tiefe.
-     Fallback ohne JS = sofort korrekt. Werte spiegeln REST in animations.ts. */
+  /* Ruhelage: hintere Phones AUFRECHT (keine Rotation), unten bündig (transform-
+     origin: bottom), schauen deutlich seitlich hervor — ein breiter Streifen des
+     Screenshots ist sichtbar. Fallback ohne JS = sofort korrekt; Werte spiegeln
+     REST in animations.ts. */
   .phone--back-left {
-    transform: translate(-22%, 5%) scale(0.9);
+    transform: translateX(-38%) scale(0.9);
   }
   .phone--back-right {
-    transform: translate(22%, 7%) scale(0.88);
+    transform: translateX(38%) scale(0.88);
   }
 
   .phone-frame {
@@ -394,10 +397,10 @@ function splitLine(line: string) {
   /* Mobile reduziert: engerer Cluster, kompakterer Stapel (nur 3 Karten sichtbar). */
   @media (max-width: 640px) {
     .phone--back-left {
-      transform: translate(-18%, 5%) scale(0.9);
+      transform: translateX(-30%) scale(0.9);
     }
     .phone--back-right {
-      transform: translate(18%, 7%) scale(0.88);
+      transform: translateX(30%) scale(0.88);
     }
     .notif-stack {
       left: 0;

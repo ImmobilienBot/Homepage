@@ -153,10 +153,11 @@ html.has-custom-cursor * {
 .cursor-dot {
   width: 5px;
   height: 5px;
-  background-color: #c0c0c1; /* CD-Grau (grey-yellow), sichtbar auf hell/dunkel */
+  background-color: #3b3b3a; /* CD-Schwarz — genauso dunkel wie der Ring */
 }
-/* Mitlaufendes Pill-Label (Osmo-Referenz): über Store-Badges ersetzt es Ring+
-   Punkt/Lupe. Dunkle Pille, heller Text; folgt dem Cursor (quickTo, animations.ts).
+/* Mitlaufendes Pill-Label (Osmo-Referenz): über Store-Badges läuft es NEBEN dem
+   kleinen dunklen Cursor-Punkt mit (Ring/Lupe aus, Punkt bleibt sichtbar).
+   Gelbe Pille, dunkler Text; folgt dem Cursor (quickTo, animations.ts).
    Standard unsichtbar/geschrumpft — GSAP blendet es ein. */
 .cursor-label {
   position: fixed;
@@ -167,12 +168,12 @@ html.has-custom-cursor * {
   white-space: nowrap;
   padding: 0.4rem 0.85rem;
   border-radius: 9999px;
-  background-color: #3b3b3a;
-  color: #f6f6f6;
+  background-color: #fff03c; /* CD-Gelb */
+  color: #3b3b3a; /* CD-Schwarz */
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1;
-  box-shadow: 0 10px 24px -10px rgb(59 59 58 / 0.5);
+  box-shadow: 0 10px 24px -10px rgb(59 59 58 / 0.45);
   opacity: 0;
   visibility: hidden;
   will-change: transform;
