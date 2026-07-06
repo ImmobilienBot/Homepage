@@ -82,7 +82,14 @@ function splitLine(line: string) {
         <StoreBadges position="hero" lang={lang} />
       </div>
 
-      <p class="mt-4 text-body opacity-70" data-hero-trust>{t.hero.trustMicroline}</p>
+      {/* Trust-Reihe: Stern + Rating + Label · Trenner · Downloads (klein, gedämpft) */}
+      <div class="trust-row mt-6" data-hero-trust>
+        <span class="trust-star" aria-hidden="true">★</span>
+        <span class="trust-rating">{t.hero.trust.rating}</span>
+        <span class="trust-label">{t.hero.trust.ratingLabel}</span>
+        <span class="trust-sep" aria-hidden="true"></span>
+        <span class="trust-downloads">{t.hero.trust.downloads}</span>
+      </div>
     </div>
 
     {/* ---- Rechts: aufgefächerter Phone-Cluster (3 Phones) ---- */}
@@ -130,20 +137,22 @@ function splitLine(line: string) {
                 {
                   notifItems.map((item) => (
                     <div class="notif" data-notif>
-                      <div class="flex items-start gap-2.5">
-                        <Image
-                          src={appIcon}
-                          alt=""
-                          width={96}
-                          height={96}
-                          class="notif-icon"
-                        />
-                        <div class="min-w-0 flex-1">
-                          <p class="notif-head">
-                            <span class="truncate">{notification.app}</span>
-                            <span class="notif-time">{notification.time}</span>
-                          </p>
-                          <p class="notif-body">{notification.lead} {item}</p>
+                      <div class="notif-inner">
+                        <div class="flex items-start gap-2.5">
+                          <Image
+                            src={appIcon}
+                            alt=""
+                            width={96}
+                            height={96}
+                            class="notif-icon"
+                          />
+                          <div class="min-w-0 flex-1">
+                            <p class="notif-head">
+                              <span class="truncate">{notification.app}</span>
+                              <span class="notif-time">{notification.time}</span>
+                            </p>
+                            <p class="notif-body">{notification.lead} {item}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -164,15 +173,20 @@ function splitLine(line: string) {
      WÄHREND der Animation; im Ruhezustand (yPercent 0) ist die Zeile voll da.
      padding/margin-block schützen Ober-/Unterlängen vor dem overflow-Clip. */
   .hero-headline {
-    font-size: clamp(3.5rem, 8vw, 7rem);
-    line-height: 0.9; /* enge Zeilenhöhe */
-    letter-spacing: -0.03em; /* enges Tracking */
+    font-size: var(--text-h1); /* eingepasste Display-Größe (max 4.5rem, fittet die Spalte) */
+    line-height: 0.95; /* enge Zeilenhöhe */
+    letter-spacing: -0.02em; /* enges Tracking */
   }
   .line-mask {
     display: block;
+    /* overflow:hidden klippt NUR die vertikal einfahrende Zeile. Horizontales
+       Breathing (padding/margin-inline) stellt sicher, dass Marker-Überstände
+       und Glyphen NIE horizontal beschnitten werden. */
     overflow: hidden;
     padding-block: 0.12em;
     margin-block: -0.12em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
   }
   .line-inner {
     display: block;
@@ -197,6 +211,35 @@ function splitLine(line: string) {
     z-index: 1;
   }
 
+  /* ---- Trust-Reihe (klein, gedämpftes Grau, leicht letter-spaced) ---- */
+  .trust-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem; /* ~13px */
+    letter-spacing: 0.03em;
+    color: rgb(59 59 58 / 0.55); /* gedämpftes CD-Schwarz-Grau */
+  }
+  .trust-star {
+    color: var(--color-yellow); /* Brand-Akzent */
+    font-size: 1.05em;
+    line-height: 1;
+  }
+  .trust-rating {
+    font-weight: 700;
+  }
+  .trust-label {
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.82em;
+  }
+  .trust-sep {
+    width: 1px;
+    height: 0.95em;
+    background-color: currentColor;
+    opacity: 0.45;
+  }
+
   /* ---- Schwebende gelbe Punkte (Hero-Hintergrund) ----
      Nur Desktop; per JS befüllt. Ohne JS bleibt der Layer leer (cleanes Grau). */
   .hero-dots {
@@ -206,14 +249,8 @@ function splitLine(line: string) {
     pointer-events: none;
     overflow: hidden;
   }
-  .hero-dot {
-    position: absolute;
-    top: 0;
-    left: 0;
-    border-radius: 9999px;
-    background-color: var(--color-yellow);
-    will-change: transform;
-  }
+  /* Die einzelnen .hero-dot werden per JS erzeugt und inline gestylt
+     (animations.ts → initHeroDots) — Astro-scoped CSS würde sie NICHT treffen. */
 
   /* ---- Phone-Cluster: Perspektive (Tilt) + gefächerte Ruhelage ---- */
   .phone-stage {
@@ -295,6 +332,12 @@ function splitLine(line: string) {
     pointer-events: none;
   }
   .notif {
+    /* GSAP steuert transform/opacity der Karte; Hover-Scale liegt auf .notif-inner
+       (kein Konflikt). pointer-events aktiv, damit Hover greift. */
+    pointer-events: auto;
+    will-change: transform, opacity;
+  }
+  .notif-inner {
     border-radius: 1rem;
     background-color: color-mix(in srgb, var(--color-offwhite) 92%, transparent);
     border: 1px solid rgb(59 59 58 / 0.06);
@@ -304,7 +347,13 @@ function splitLine(line: string) {
     -webkit-backdrop-filter: blur(8px);
     padding: 0.6rem 0.7rem;
     color: var(--color-black);
-    will-change: transform, opacity;
+    transform-origin: center;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+  /* Hover: Karte hebt sich leicht an (nur transform — CD-Schutzplanke). */
+  .notif:hover .notif-inner {
+    transform: scale(1.07);
+    box-shadow: 0 22px 48px -16px rgb(59 59 58 / 0.45);
   }
   .notif-icon {
     height: 2.25rem;

@@ -170,53 +170,10 @@ function initHeroNotifications() {
 }
 
 /**
- * Leichter 3D-Tilt des GESAMTEN Clusters auf Mausbewegung — nur Desktop
- * (pointer:fine). Wirkt auf die Fächer-Gruppe, alle drei Phones kippen kohärent.
- */
-function initPhoneTilt() {
-  const stage = document.querySelector<HTMLElement>('[data-phone-stage]');
-  const fan = document.querySelector<HTMLElement>('[data-phone-fan]');
-  if (!stage || !fan) return;
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-
-  const rotX = gsap.quickTo(fan, 'rotationX', { duration: 0.6, ease: 'power3' });
-  const rotY = gsap.quickTo(fan, 'rotationY', { duration: 0.6, ease: 'power3' });
-
-  stage.addEventListener('mousemove', (e) => {
-    const r = stage.getBoundingClientRect();
-    const nx = (e.clientX - r.left) / r.width - 0.5;
-    const ny = (e.clientY - r.top) / r.height - 0.5;
-    rotY(nx * 10);
-    rotX(-ny * 10);
-  });
-  stage.addEventListener('mouseleave', () => {
-    rotX(0);
-    rotY(0);
-  });
-}
-
-/**
- * Dezenter Idle-Float des GESAMTEN Clusters — schwebt/atmet langsam auch ohne
- * Scrollen (alle Geräte, nur transform). y/rotation(z) komponieren mit dem
- * Maus-Tilt (rotationX/Y) auf derselben Fächer-Gruppe.
- */
-function initPhoneIdle() {
-  const fan = document.querySelector<HTMLElement>('#hero [data-phone-fan]');
-  if (!fan) return;
-  gsap.to(fan, {
-    y: -12,
-    rotation: 0.6,
-    duration: 4.5,
-    ease: 'sine.inOut',
-    yoyo: true,
-    repeat: -1,
-  });
-}
-
-/**
- * Scroll-Choreografie des Clusters: leichtes rotateY/rotateX + Skalierung/
- * translateY beim Scrollen (scrub) auf der äußeren Choreo-Ebene. Nur Desktop
- * (Mobile reduziert). Nur transform. Kein Glow mehr (cleaner Grau-Hintergrund).
+ * Sehr dezente Scroll-Parallax des GESAMTEN Clusters (nur translateY + minimale
+ * Skalierung) auf der äußeren Choreo-Ebene. KEIN Idle-Float und KEIN Maus-Tilt
+ * mehr — die Phones bleiben ruhig; Bewegung kommt nur aus Fächer-Einblendung,
+ * Notification-Schleife und dieser leichten Parallax. Nur Desktop, nur transform.
  */
 function initHeroChoreography() {
   if (!window.matchMedia('(pointer: fine)').matches) return;
@@ -225,12 +182,10 @@ function initHeroChoreography() {
 
   gsap.fromTo(
     choreo,
-    { rotationX: 0, rotationY: 0, scale: 1, yPercent: 0 },
+    { yPercent: 0, scale: 1 },
     {
-      rotationY: 8,
-      rotationX: -4,
-      scale: 0.96,
-      yPercent: -6,
+      yPercent: -4,
+      scale: 0.99,
       ease: 'none',
       scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true },
     },
@@ -269,10 +224,19 @@ function initHeroDots() {
   for (let i = 0; i < COUNT; i++) {
     const el = document.createElement('div');
     el.className = 'hero-dot';
-    const size = 4 + Math.random() * 6; // 4–10px
+    const size = 5 + Math.random() * 7; // 5–12px
+    // WICHTIG: Astro-scoped CSS (.hero-dot) greift NICHT bei per JS erzeugten
+    // Elementen (ihnen fehlt das data-astro-cid-Attribut) → deshalb waren die
+    // Punkte transparent/positionslos und unsichtbar. Alles Nötige inline setzen.
+    el.style.position = 'absolute';
+    el.style.top = '0';
+    el.style.left = '0';
     el.style.width = `${size}px`;
     el.style.height = `${size}px`;
-    el.style.opacity = `${0.35 + Math.random() * 0.4}`;
+    el.style.borderRadius = '9999px';
+    el.style.backgroundColor = '#fff03c'; // CD-Gelb
+    el.style.opacity = `${0.5 + Math.random() * 0.4}`;
+    el.style.willChange = 'transform';
     layer.appendChild(el);
     const hx = Math.random() * W;
     const hy = Math.random() * H;
@@ -352,11 +316,13 @@ function initHeroDots() {
 }
 
 /**
- * Eigener Cursor (Signature-Moment) — nur bei pointer:fine. Ring folgt mit
- * Verzögerung (quickTo), Punkt exakt. Ruhezustand: dünne dunkle Kontur + grauer
- * Punkt. Über a/button/[data-cursor]: Ring wird zum vollflächig gefüllten
- * schwarzen Kreis (~1,3×), Punkt weiß (invertiert). Übergänge per GSAP.
- * KEIN mix-blend-mode, KEINE Bounding-Box-Umschließung mehr.
+ * Eigener Cursor (Signature-Moment) — nur bei pointer:fine.
+ * Ruhezustand: dünne Kontur (#3b3b3a) folgt mit leichter, direkter Verzögerung
+ * (quickTo ~0.15s), grauer Punkt (#c0c0c1) exakt an der Zeigerposition.
+ * Hover über a/button/[data-cursor]: der Ring wird zu einer DURCHSICHTIGEN
+ * Invert-Lupe (~2×) — ohne Füllung, ohne Rand, ohne Punkt; backdrop-filter:
+ * invert(1) grayscale(1) invertiert das Darunter neutral (auch über Gelb, KEIN
+ * mix-blend). Übergänge per GSAP. KEINE Bounding-Box-Umschließung.
  */
 function initCursor() {
   if (!window.matchMedia('(pointer: fine)').matches) return;
@@ -367,12 +333,12 @@ function initCursor() {
   document.documentElement.classList.add('has-custom-cursor');
   gsap.set([ring, dot], { xPercent: -50, yPercent: -50 });
 
-  const ringX = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3' });
-  const ringY = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3' });
-  const dotX = gsap.quickTo(dot, 'x', { duration: 0.08, ease: 'power3' });
-  const dotY = gsap.quickTo(dot, 'y', { duration: 0.08, ease: 'power3' });
+  // Ring: leichte, aber direkte Verzögerung. Punkt: quasi exakt.
+  const ringX = gsap.quickTo(ring, 'x', { duration: 0.15, ease: 'power3' });
+  const ringY = gsap.quickTo(ring, 'y', { duration: 0.15, ease: 'power3' });
+  const dotX = gsap.quickTo(dot, 'x', { duration: 0.05, ease: 'power2' });
+  const dotY = gsap.quickTo(dot, 'y', { duration: 0.05, ease: 'power2' });
 
-  // Ring folgt IMMER dem Cursor (keine Umschließungs-Logik mehr).
   window.addEventListener(
     'mousemove',
     (e) => {
@@ -384,25 +350,44 @@ function initCursor() {
     { passive: true },
   );
 
+  const LENS = 'invert(1) grayscale(1)';
+  let hovering: Element | null = null;
+
   const setHover = (on: boolean) => {
-    gsap.to(ring, {
-      scale: on ? 1.3 : 1,
-      backgroundColor: on ? 'rgba(59,59,58,1)' : 'rgba(59,59,58,0)',
-      borderColor: on ? 'rgba(59,59,58,0)' : 'rgba(59,59,58,1)',
-      duration: 0.25,
-      ease: 'power3',
-      overwrite: 'auto',
-    });
-    gsap.to(dot, {
-      backgroundColor: on ? '#ffffff' : '#eaebeb',
-      duration: 0.25,
-      ease: 'power3',
-      overwrite: 'auto',
-    });
+    if (on) {
+      // Invert-Lupe: sofort Filter an, dann weich vergrößern; Rand/Füllung weg.
+      ring.style.backdropFilter = LENS;
+      (ring.style as unknown as { webkitBackdropFilter: string }).webkitBackdropFilter = LENS;
+      gsap.to(ring, {
+        scale: 2,
+        borderColor: 'rgba(59,59,58,0)',
+        backgroundColor: 'rgba(59,59,58,0)',
+        duration: 0.25,
+        ease: 'power3',
+        overwrite: 'auto',
+      });
+      gsap.to(dot, { autoAlpha: 0, duration: 0.15, ease: 'power2', overwrite: 'auto' });
+    } else {
+      gsap.to(ring, {
+        scale: 1,
+        borderColor: 'rgba(59,59,58,1)',
+        duration: 0.25,
+        ease: 'power3',
+        overwrite: 'auto',
+        onComplete: () => {
+          // Filter erst nach dem Zurückschrumpfen entfernen (weicher Ausklang),
+          // aber nur wenn nicht sofort wieder gehovert wurde.
+          if (!hovering) {
+            ring.style.backdropFilter = 'none';
+            (ring.style as unknown as { webkitBackdropFilter: string }).webkitBackdropFilter = 'none';
+          }
+        },
+      });
+      gsap.to(dot, { autoAlpha: 1, duration: 0.25, ease: 'power2', overwrite: 'auto' });
+    }
   };
 
   const sel = 'a, button, [data-cursor], input, textarea, select, label, summary';
-  let hovering: Element | null = null;
   document.addEventListener('mouseover', (e) => {
     const el = (e.target as Element).closest?.(sel);
     if (!el || el === hovering) return;
@@ -469,8 +454,6 @@ if (!prefersReducedMotion) {
   initHeroReveal();
   initPhoneFan();
   initHeroNotifications();
-  initPhoneTilt();
-  initPhoneIdle();
   initHeroChoreography();
   initHeroDots();
   initProblemFill();

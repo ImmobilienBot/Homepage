@@ -20,16 +20,35 @@
     Arial, sans-serif;
 
   /*
-    Proportionale Type-Skala aus dem CD (Headline = Anker):
-    SubHead ≈ 35 % der Headline · Body ≈ 25 % der Headline.
-    Web: responsive via clamp(), Proportionen beibehalten.
+    Proportionale Type-Skala aus dem CD (Anker = H1). Eine zentrale Skala für
+    H1/H2/H3/Body; Proportionen: SubHead/H2 ≈ 35 % der H1 · Body ≈ 25 % der H1.
+    Zeilenhöhen: H1 ~0.95, SubHead ~1.1, Body ~1.2. Web: responsive via clamp().
+
+    Desktop-Maxima (Referenz):
+      H1      4.5rem = 72px   (LH 0.95)
+      H2/Sub  1.6rem = 25.6px (≈ 36 % · LH 1.1)
+      H3      1.5rem = 24px   (≈ 33 % · LH 1.1)
+      Body    1.15rem = 18.4px(≈ 26 % · LH 1.2)
+
+    Hinweis Hero-H1: die Hero-Headline nutzt --text-h1 als auf die Textspalte
+    eingepasste Display-Größe. Max 4.5rem hält das längste (unbrechbare) Wort
+    „Traumwohnung" innerhalb der Spalte → kein horizontales Clipping; lange
+    Zeilen brechen sauber um.
   */
-  --text-headline: clamp(2.5rem, 6vw, 4.5rem);
-  --text-headline--line-height: 1.03; /* Headline eng (~1,0–1,05) */
+  --text-h1: clamp(2.25rem, 5.2vw, 4.5rem);
+  --text-h1--line-height: 0.95;
+  --text-h1--font-weight: 900;
+
+  /* Nominale Anker-Headline (Referenz für die Proportionen). */
+  --text-headline: clamp(2.25rem, 5.2vw, 4.5rem);
+  --text-headline--line-height: 0.95;
   --text-headline--font-weight: 900;
 
   --text-subhead: clamp(1.35rem, 2.4vw, 1.6rem);
   --text-subhead--line-height: 1.1;
+
+  --text-h3: clamp(1.25rem, 1.9vw, 1.5rem);
+  --text-h3--line-height: 1.1;
 
   --text-body: clamp(1rem, 1.4vw, 1.15rem);
   --text-body--line-height: 1.2;
@@ -98,11 +117,11 @@
 
   KEIN mix-blend-mode (erzeugte über Gelb Farb-Artefakte).
   Ruhezustand: Ring = dünne Kontur in CD-Schwarz (#3b3b3a), Punkt in Grau
-  (#eaebeb). Auf hellem Grund trägt der dunkle Ring, auf dunklem Grund der
-  helle Punkt — komplementär, ohne Blend.
-  Hover (a/button/[data-cursor]): Ring wird zu einem vollflächig gefüllten
-  schwarzen Kreis (~1,3×), Punkt weiß → invertiert, sauber auch über Gelb.
-  Übergänge komplett per GSAP (animations.ts).
+  (#c0c0c1). Ring folgt leicht verzögert (quickTo ~0.15s), Punkt exakt.
+  Hover (a/button/[data-cursor]): Ring wird zu einer durchsichtigen Invert-Lupe
+  (~2×) — ohne Füllung, ohne Rand, ohne Punkt; backdrop-filter: invert(1)
+  grayscale(1) invertiert Button/Text darunter neutral (auch über Gelb).
+  Übergänge per GSAP (animations.ts).
 */
 .cursor {
   opacity: 0;
@@ -134,5 +153,5 @@ html.has-custom-cursor * {
 .cursor-dot {
   width: 5px;
   height: 5px;
-  background-color: #eaebeb; /* CD-Grau */
+  background-color: #c0c0c1; /* CD-Grau (grey-yellow), sichtbar auf hell/dunkel */
 }

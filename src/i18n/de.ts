@@ -26,7 +26,11 @@ export const de = {
     markKeyword: 'Traumwohnung',
     subline:
       '24/7-Scan aller großen Portale + Echtzeit-Benachrichtigung, sobald ein passendes Angebot online geht.',
-    trustMicroline: '4,6★ App Store · 5.000+ Downloads',
+    trust: {
+      rating: '4,6',
+      ratingLabel: 'App Store',
+      downloads: '5.000+ Downloads',
+    },
     mockupAlt: 'Screenshot der Immobilien-Bot-App: Angebotsliste mit passenden Wohnungen',
     mapAlt: 'Screenshot der Immobilien-Bot-App: Suchbereich per Zeichnung auf der Karte festlegen',
     configAlt: 'Screenshot der Immobilien-Bot-App: Suche mit Zimmern, Größe und Preis konfigurieren',

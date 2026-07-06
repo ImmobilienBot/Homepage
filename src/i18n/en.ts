@@ -25,7 +25,11 @@ export const en: Dict = {
     markKeyword: 'dream flat',
     subline:
       '24/7 scanning of all major portals + a real-time alert the moment a matching listing goes online.',
-    trustMicroline: '4.6★ App Store · 5,000+ downloads',
+    trust: {
+      rating: '4.6',
+      ratingLabel: 'App Store',
+      downloads: '5,000+ downloads',
+    },
     mockupAlt: 'Screenshot of the Immobilien Bot app: listings feed with matching flats',
     mapAlt: 'Screenshot of the Immobilien Bot app: drawing a search area on the map',
     configAlt: 'Screenshot of the Immobilien Bot app: configuring the search by rooms, size and price',
