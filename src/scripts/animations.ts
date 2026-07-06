@@ -108,12 +108,14 @@ function initHeroReveal() {
  * die Werte hier MÜSSEN dazu passen.
  */
 const FAN_REST = {
-  // Exakt spiegelgleich: identischer yPercent (gleiche Höhe zueinander),
-  // identische Skalierung, symmetrischer Peek ±38. yPercent leicht negativ =
-  // hintere Phones etwas höher als das Haupt-Phone (Tiefe). MUSS zur CSS-Ruhelage
-  // in Hero.astro passen.
-  left: { xPercent: -38, yPercent: -7, scale: 0.9 },
-  right: { xPercent: 38, yPercent: -7, scale: 0.9 },
+  // Exakt spiegelgleich (nur Vorzeichen von xPercent unterschiedlich): identischer
+  // vertikaler Versatz, identische Skalierung. transform-origin OBEN (siehe Tween)
+  // + POSITIVER yPercent → hintere Phones sitzen etwas TIEFER; ihre Oberkanten
+  // liegen unter der Notch des Front-Phones (kein Ecken-Fragment), und sie bleiben
+  // in der Vertikalen des Front-Phones → nur ein sauberer seitlicher Streifen ragt
+  // heraus. MUSS exakt zur CSS-Ruhelage in Hero.astro passen.
+  left: { xPercent: -34, yPercent: 12, scale: 0.86 },
+  right: { xPercent: 34, yPercent: 12, scale: 0.86 },
 } as const;
 
 function initPhoneCluster() {
@@ -132,21 +134,21 @@ function initPhoneCluster() {
 
   // b) Danach hintere Phones aufrecht seitlich hervorfahren (gestaffelt).
   //    Start = deckungsgleich hinter dem Front-Phone (xPercent 0), aufrecht.
-  //    transform-origin unten → beim Skalieren bleiben die Unterkanten bündig
-  //    (alle drei Phones stehen auf EINER Linie). Muss zur Hero.astro-CSS passen.
-  //    x:0/y:0 neutralisieren den aus CSS-translate(%) geerbten px-Versatz.
+  //    transform-origin OBEN (50% 0%) → beim Skalieren bleibt die Oberkante
+  //    verankert; mit positivem yPercent liegen die Oberkanten unter der Notch.
+  //    Muss zur Hero.astro-CSS passen. x:0/y:0 neutralisieren geerbten px-Versatz.
   backs.forEach((el, i) => {
     const rest = FAN_REST[el.dataset.fan as keyof typeof FAN_REST];
     if (!rest) return;
     gsap.fromTo(
       el,
-      { x: 0, y: 0, xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 0, transformOrigin: '50% 100%' },
+      { x: 0, y: 0, xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 0, transformOrigin: '50% 0%' },
       {
         xPercent: rest.xPercent,
         yPercent: rest.yPercent,
         scale: rest.scale,
         autoAlpha: 1,
-        transformOrigin: '50% 100%',
+        transformOrigin: '50% 0%',
         duration: 0.8,
         ease: 'power3.out',
         delay: 0.7 + i * 0.15, // nach dem Haupt-Phone, gestaffelt

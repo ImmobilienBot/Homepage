@@ -265,9 +265,11 @@ function splitLine(line: string) {
     pointer-events: none;
   }
 
-  /* ---- Phone-Cluster: Perspektive (Tilt) + gefächerte Ruhelage ---- */
+  /* ---- Phone-Cluster: Perspektive + gefächerte Ruhelage ---- */
   .phone-stage {
     perspective: 1200px;
+    /* Gesamter Cluster etwas tiefer (statisch, kein Layout-Shift). */
+    transform: translateY(24px);
   }
 
   /* Großes, kräftiges gelbes Glühen hinter dem GESAMTEN 3-Phone-Cluster (statisch).
@@ -278,12 +280,12 @@ function splitLine(line: string) {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 210%;
-    height: 140%;
+    width: 220%;
+    height: 145%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 72%);
-    filter: blur(70px);
-    opacity: 0.55;
+    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 74%);
+    filter: blur(72px);
+    opacity: 0.7;
     z-index: 0;
     pointer-events: none;
   }
@@ -301,9 +303,10 @@ function splitLine(line: string) {
   .phone--back {
     position: absolute;
     inset: 0;
-    z-index: 1;
-    /* Unterkante als Skalier-Ankerpunkt → alle drei Phones stehen unten bündig. */
-    transform-origin: bottom center;
+    z-index: 1; /* beide hinteren Phones identischer z-index (hinter dem Front) */
+    /* Oberkante als Skalier-Ankerpunkt: mit positivem yPercent liegt die Oberkante
+       unter der Notch des Front-Phones → keine Ecken-Fragmente oben. */
+    transform-origin: top center;
     will-change: transform, opacity;
   }
   .phone--front {
@@ -312,15 +315,17 @@ function splitLine(line: string) {
     will-change: transform;
   }
 
-  /* Ruhelage: hintere Phones AUFRECHT (Rotation 0), EXAKT spiegelgleich —
-     identischer vertikaler Versatz (-7%), identische Skalierung (0.9), symmetrischer
-     Peek ±38 %. transform-origin bottom → Unterkanten auf gleicher Höhe. Fallback
-     ohne JS = sofort korrekt; Werte spiegeln FAN_REST in animations.ts. */
+  /* Ruhelage: hintere Phones AUFRECHT (Rotation 0), EXAKT spiegelgleich (nur
+     Vorzeichen X unterschiedlich) — identischer vertikaler Versatz (+12 %),
+     identische Skalierung (0.86), symmetrischer Peek ±34 %. transform-origin oben
+     → Oberkanten unter der Notch, Phone bleibt in der Vertikalen des Front-Phones
+     → sauberer seitlicher Streifen statt Eck-Fragment. Fallback ohne JS = sofort
+     korrekt; Werte spiegeln FAN_REST in animations.ts. */
   .phone--back-left {
-    transform: translate(-38%, -7%) scale(0.9);
+    transform: translate(-34%, 12%) scale(0.86);
   }
   .phone--back-right {
-    transform: translate(38%, -7%) scale(0.9);
+    transform: translate(34%, 12%) scale(0.86);
   }
 
   .phone-frame {
@@ -419,13 +424,14 @@ function splitLine(line: string) {
     line-height: 1.3;
   }
 
-  /* Mobile reduziert: engerer Cluster (spiegelgleich), kompakterer Stapel (3 Karten). */
+  /* Mobile reduziert: engerer Cluster (spiegelgleich, gleiches Schema wie Desktop:
+     origin oben, tiefer versetzt), kompakterer Stapel (3 Karten). */
   @media (max-width: 640px) {
     .phone--back-left {
-      transform: translateX(-30%) scale(0.9);
+      transform: translate(-28%, 10%) scale(0.86);
     }
     .phone--back-right {
-      transform: translateX(30%) scale(0.9);
+      transform: translate(28%, 10%) scale(0.86);
     }
     .notif-stack {
       left: 0;
