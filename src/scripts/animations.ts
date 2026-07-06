@@ -111,11 +111,12 @@ const FAN_REST = {
   // Exakt spiegelgleich (nur Vorzeichen von xPercent unterschiedlich): identischer
   // vertikaler Versatz, identische Skalierung. transform-origin OBEN (siehe Tween)
   // + POSITIVER yPercent → hintere Phones sitzen tiefer; Oberkanten unter der Notch.
-  // Größerer Außen-Versatz (±44) → mehr Fläche sichtbar UND die hinteren Rahmen
-  // stoßen hinter dem Front-Phone nicht mehr zusammen (klarer Spalt in der Mitte).
+  // Größerer Außen-Versatz (±44) → mehr Fläche sichtbar UND klarer Spalt zwischen
+  // den hinteren Phones. yPercent +12 (statt 16) hält die Unterkanten INNERHALB des
+  // Front-Phones (bottom ≈ 98 %) → keine überstehenden/gekreuzten Rahmen unten.
   // MUSS exakt zur CSS-Ruhelage in Hero.astro passen.
-  left: { xPercent: -44, yPercent: 16, scale: 0.86 },
-  right: { xPercent: 44, yPercent: 16, scale: 0.86 },
+  left: { xPercent: -44, yPercent: 12, scale: 0.86 },
+  right: { xPercent: 44, yPercent: 12, scale: 0.86 },
 } as const;
 
 // Gesamt-Start der Phone-Cluster-/Notification-Sequenz nach hinten schieben

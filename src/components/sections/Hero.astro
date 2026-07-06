@@ -316,16 +316,17 @@ function splitLine(line: string) {
   }
 
   /* Ruhelage: hintere Phones AUFRECHT (Rotation 0), EXAKT spiegelgleich (nur
-     Vorzeichen X unterschiedlich) — identischer vertikaler Versatz (+16 %),
+     Vorzeichen X unterschiedlich) — identischer vertikaler Versatz (+12 %),
      identische Skalierung (0.86), symmetrischer Peek ±44 %. transform-origin oben
-     → Oberkanten unter der Notch. Größerer Außen-Versatz → mehr Fläche sichtbar
-     und die hinteren Rahmen berühren sich hinter dem Front-Phone nicht mehr
-     (klarer Spalt). Fallback ohne JS = sofort korrekt; spiegelt FAN_REST. */
+     → Oberkanten unter der Notch; +12 % hält die Unterkanten INNERHALB des Front-
+     Phones (bottom ≈ 98 %) → keine überstehenden/gekreuzten Rahmen unten. Größerer
+     Außen-Versatz (±44) → klarer Spalt zwischen den hinteren Phones. Fallback ohne
+     JS = sofort korrekt; spiegelt FAN_REST. */
   .phone--back-left {
-    transform: translate(-44%, 16%) scale(0.86);
+    transform: translate(-44%, 12%) scale(0.86);
   }
   .phone--back-right {
-    transform: translate(44%, 16%) scale(0.86);
+    transform: translate(44%, 12%) scale(0.86);
   }
 
   .phone-frame {
@@ -336,20 +337,23 @@ function splitLine(line: string) {
     width: 100%;
   }
 
-  /* Screenshot exakt in den transparenten Screen-Ausschnitt (Geometrie aus
-     smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken. */
+  /* Screenshot füllt die transparente Screen-Aussparung (Geometrie aus
+     smartphone-rahmen.svg: Innenfläche ~2.83%/1.05%, r≈56px). Der Screenshot ist
+     bewusst LEICHT größer als die Aussparung (Übermaß ~0.5% rundum, verschwindet
+     hinter dem dunklen Bezel z-10) → kein heller Spalt zwischen Bild und Rahmen.
+     border-radius als Zwei-Wert-Syntax → RUNDE ~58px-Ecken (statt vorher 9% =
+     elliptisch 45×98px, das die Ecken zu stark abrundete und Lücken hinterließ). */
   .phone-screen {
     position: absolute;
-    left: 2.83%;
-    top: 1.05%;
-    width: 94.1%;
-    height: 97.8%;
+    left: 2.4%;
+    top: 0.6%;
+    width: 95.4%;
+    height: 98.9%;
     object-fit: cover;
     object-position: top center;
-    border-radius: 9%;
+    border-radius: 11.5% / 5.3%;
     z-index: 0;
-    /* Kein harter Schlagschatten mehr — die Tiefe kommt jetzt vom gelben
-       Glühen hinter dem Cluster (.phone-glow). */
+    /* Tiefe kommt vom gelben Glühen hinter dem Cluster (.phone-glow), kein Schatten. */
   }
 
   /* ---- Notification-Stapel: oben am Front-Phone, überlagert die Liste ----
