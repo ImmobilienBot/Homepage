@@ -110,25 +110,32 @@ function initHeroReveal() {
 const FAN_REST = {
   // Exakt spiegelgleich (nur Vorzeichen von xPercent unterschiedlich): identischer
   // vertikaler Versatz, identische Skalierung. transform-origin OBEN (siehe Tween)
-  // + POSITIVER yPercent → hintere Phones sitzen etwas TIEFER; ihre Oberkanten
-  // liegen unter der Notch des Front-Phones (kein Ecken-Fragment), und sie bleiben
-  // in der Vertikalen des Front-Phones → nur ein sauberer seitlicher Streifen ragt
-  // heraus. MUSS exakt zur CSS-Ruhelage in Hero.astro passen.
-  left: { xPercent: -34, yPercent: 12, scale: 0.86 },
-  right: { xPercent: 34, yPercent: 12, scale: 0.86 },
+  // + POSITIVER yPercent → hintere Phones sitzen tiefer; Oberkanten unter der Notch.
+  // Größerer Außen-Versatz (±44) → mehr Fläche sichtbar UND die hinteren Rahmen
+  // stoßen hinter dem Front-Phone nicht mehr zusammen (klarer Spalt in der Mitte).
+  // MUSS exakt zur CSS-Ruhelage in Hero.astro passen.
+  left: { xPercent: -44, yPercent: 16, scale: 0.86 },
+  right: { xPercent: 44, yPercent: 16, scale: 0.86 },
 } as const;
+
+// Gesamt-Start der Phone-Cluster-/Notification-Sequenz nach hinten schieben
+// (kurze Ruhe am Anfang). Reihenfolge/Dauern/Easings bleiben unverändert; NUR
+// der Cluster + Notifications — die Headline/Text-Reveal ist davon unberührt.
+const HERO_START_DELAY = 0.5;
 
 function initPhoneCluster() {
   const front = document.querySelector<HTMLElement>('#hero [data-phone-front]');
   const backs = gsap.utils.toArray<HTMLElement>('#hero [data-phone-back]');
 
   // a) Haupt-Phone zuerst: Fade + Scale von leicht klein/transparent auf voll.
+  //    (Start um HERO_START_DELAY verzögert — kurze Ruhe am Anfang.)
   if (front) {
     gsap.from(front, {
       autoAlpha: 0,
       scale: 0.9,
       duration: 0.7,
       ease: 'power3.out',
+      delay: HERO_START_DELAY,
     });
   }
 
@@ -151,7 +158,7 @@ function initPhoneCluster() {
         transformOrigin: '50% 0%',
         duration: 0.8,
         ease: 'power3.out',
-        delay: 0.7 + i * 0.15, // nach dem Haupt-Phone, gestaffelt
+        delay: HERO_START_DELAY + 0.7 + i * 0.15, // nach dem Haupt-Phone, gestaffelt
       },
     );
   });
@@ -169,7 +176,8 @@ function initHeroNotifications() {
   if (!cards.length) return;
 
   // Start nach Haupt-Phone (a) + hinteren Phones (b), damit es nicht unruhig wird.
-  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, delay: 1.8 });
+  // Um HERO_START_DELAY mitverschoben (gleiche Ruhe am Anfang wie der Cluster).
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, delay: 1.8 + HERO_START_DELAY });
 
   // Zyklusstart: Stapel leeren.
   tl.set(cards, { autoAlpha: 0, y: -14, scale: 0.96 });

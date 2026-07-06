@@ -316,16 +316,16 @@ function splitLine(line: string) {
   }
 
   /* Ruhelage: hintere Phones AUFRECHT (Rotation 0), EXAKT spiegelgleich (nur
-     Vorzeichen X unterschiedlich) — identischer vertikaler Versatz (+12 %),
-     identische Skalierung (0.86), symmetrischer Peek ±34 %. transform-origin oben
-     → Oberkanten unter der Notch, Phone bleibt in der Vertikalen des Front-Phones
-     → sauberer seitlicher Streifen statt Eck-Fragment. Fallback ohne JS = sofort
-     korrekt; Werte spiegeln FAN_REST in animations.ts. */
+     Vorzeichen X unterschiedlich) — identischer vertikaler Versatz (+16 %),
+     identische Skalierung (0.86), symmetrischer Peek ±44 %. transform-origin oben
+     → Oberkanten unter der Notch. Größerer Außen-Versatz → mehr Fläche sichtbar
+     und die hinteren Rahmen berühren sich hinter dem Front-Phone nicht mehr
+     (klarer Spalt). Fallback ohne JS = sofort korrekt; spiegelt FAN_REST. */
   .phone--back-left {
-    transform: translate(-34%, 12%) scale(0.86);
+    transform: translate(-44%, 16%) scale(0.86);
   }
   .phone--back-right {
-    transform: translate(34%, 12%) scale(0.86);
+    transform: translate(44%, 16%) scale(0.86);
   }
 
   .phone-frame {
