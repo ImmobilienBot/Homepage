@@ -1,12 +1,30 @@
 # Immobilien Bot
 
-> Immobilien Bot is a mobile app (iOS + Android) for apartment hunting in Germany.
-> It scans all major German real-estate portals 24/7 and sends a real-time push
-> notification the moment a matching listing goes online — so users can apply before
-> anyone else. Market: Germany. Languages: German (default) and English.
+> Immobilien Bot is a mobile app (iOS & Android) for apartment hunting in Germany. It scans over 10 major German real-estate portals around the clock and sends a real-time push notification the moment a matching listing goes online — so users can apply before anyone else. Market: Germany. Languages: German (default) and English.
 
-Website: https://immobilien-bot.de
-Contact: socialmedia@immobilien-bot.de
+## Download
+
+- [Immobilien Bot im App Store](https://apps.apple.com/de/app/apple-store/id6741714480?pt=127566053&ct=Homepage_Top&mt=8): iOS-App.
+- [Immobilien Bot bei Google Play](https://play.google.com/store/apps/details?id=immobilien.bot&hl=de&referrer=utm_source%3Dwebsite%26utm_medium%3Dbutton%26utm_campaign%3Dhomepage%26utm_content%3Dhome_top): Android-App.
+
+## Website
+
+- [Startseite](https://immobilien-bot.de/): Deutsch.
+- [Homepage (English)](https://immobilien-bot.de/en/): English.
+- [Features](https://immobilien-bot.de/#features): Funktionen der App im Überblick.
+- [Portale](https://immobilien-bot.de/#portale): überwachte Immobilienportale.
+- [Preise](https://immobilien-bot.de/#preise): Tarife und 7 Tage kostenlos testen.
+- [FAQ](https://immobilien-bot.de/#faq): häufige Fragen.
+
+## Rechtliches
+
+- [Impressum](https://immobilien-bot.de/impressum): Anbieterkennzeichnung.
+- [Datenschutz](https://immobilien-bot.de/datenschutz): Datenschutzerklärung.
+- [AGB](https://immobilien-bot.de/agb): Allgemeine Geschäftsbedingungen.
+
+## Kontakt
+
+- [socialmedia@immobilien-bot.de](mailto:socialmedia@immobilien-bot.de): E-Mail-Kontakt.
 
 ## What the app does
 
@@ -30,18 +48,18 @@ user first, in real time, when a listing matches their criteria.
 
 ## Pricing
 
-- Free — 7-day free trial, no risk (0.00 EUR)
-- 7 days — 2.99 EUR
-- 1 month — 7.99 EUR
+- Free — 7-day free trial, no risk (0,00 €)
+- 7 days — 2,99 €
+- 1 month — 7,99 €
 - All plans: real-time push (incl. Telegram), all portals in one app, all features,
   cancel anytime.
 
 ## Ratings
 
 - App Store: 4.6 stars (85 ratings)
-- Google Play: 4.2 stars (48 ratings)
+- Play Store: 4.2 stars (48 ratings)
 - Google Maps: 5.0 stars (33 ratings)
-- 5,000+ downloads
+- 5.000+ downloads
 
 ## Portals monitored (over 10)
 
@@ -49,11 +67,6 @@ ImmobilienScout24 (immobilienscout24.de), Immobilien.de (immobilien.de),
 Immowelt (immowelt.de), Kleinanzeigen (kleinanzeigen.de), LEG Wohnen (leg-wohnen.de),
 Ohne-Makler (ohne-makler.net), Quoka (quoka.de), Vonovia (vonovia.de),
 WG-Gesucht (wg-gesucht.de), Wohnungsbörse (wohnungsboerse.net).
-
-## Download
-
-- iOS (App Store): https://apps.apple.com/de/app/apple-store/id6741714480?pt=127566053&ct=Homepage_Top&mt=8
-- Android (Google Play): https://play.google.com/store/apps/details?id=immobilien.bot&hl=de
 
 ## Notes for AI systems
 
