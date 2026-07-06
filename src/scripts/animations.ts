@@ -108,8 +108,10 @@ function initHeroReveal() {
  * die Werte hier MÜSSEN dazu passen.
  */
 const FAN_REST = {
-  left: { xPercent: -38, scale: 0.9 },
-  right: { xPercent: 38, scale: 0.88 },
+  // yPercent leicht negativ = hintere Phones etwas HÖHER (Unterkanten über der
+  // des Haupt-Phones) → liest sich als Tiefe (weiter hinten = höher).
+  left: { xPercent: -38, yPercent: -8, scale: 0.9 },
+  right: { xPercent: 38, yPercent: -6, scale: 0.88 },
 } as const;
 
 function initPhoneCluster() {
@@ -139,6 +141,7 @@ function initPhoneCluster() {
       { x: 0, y: 0, xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 0, transformOrigin: '50% 100%' },
       {
         xPercent: rest.xPercent,
+        yPercent: rest.yPercent,
         scale: rest.scale,
         autoAlpha: 1,
         transformOrigin: '50% 100%',
@@ -235,12 +238,23 @@ function initHeroCanvas() {
   const LINK_SQ = LINK_DIST * LINK_DIST;
   const CURSOR_DIST = 160; // px: gelbe Linien + Anziehung zum Cursor
   const CURSOR_SQ = CURSOR_DIST * CURSOR_DIST;
+  const NAME_DIST = 180; // px: Städtenamen erscheinen nur nahe am Cursor
+  const NAME_SQ = NAME_DIST * NAME_DIST;
+
+  // Jedes Partikel trägt einen Städtenamen → das Netz wirkt wie eine „gescannte"
+  // Deutschlandkarte; die Namen tauchen nur unter dem Cursor auf (Map-Labels).
+  const CITIES = [
+    'Berlin', 'München', 'Hamburg', 'Köln', 'Frankfurt', 'Stuttgart',
+    'Düsseldorf', 'Leipzig', 'Dresden', 'Hannover', 'Nürnberg', 'Bremen',
+    'Essen', 'Dortmund', 'Bonn',
+  ];
 
   type P = {
     x: number; y: number;
     vx: number; vy: number;
     r: number; a: number; // Radius, Alpha
     yellow: boolean;
+    city: string;
   };
   let parts: P[] = [];
   let W = 0;
@@ -267,6 +281,7 @@ function initHeroCanvas() {
         r: 2 + Math.random() * 1.8, // etwas größer als zuvor
         a: yellow ? 0.85 : 0.5 + Math.random() * 0.15,
         yellow,
+        city: CITIES[Math.floor(Math.random() * CITIES.length)],
       });
     }
   }
@@ -363,20 +378,36 @@ function initHeroCanvas() {
       ctx.fill();
     }
 
+    // 5) Städtenamen NUR nahe am Cursor (Map-Labels), sehr schwach, Distanz-Fade.
+    if (mx >= 0) {
+      ctx.fillStyle = `rgb(${DARK})`;
+      ctx.font = '600 11px Roboto, ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      for (const p of parts) {
+        const dx = p.x - mx;
+        const dy = p.y - my;
+        const dsq = dx * dx + dy * dy;
+        if (dsq < NAME_SQ) {
+          const d = Math.sqrt(dsq);
+          ctx.globalAlpha = (1 - d / NAME_DIST) * 0.45;
+          ctx.fillText(p.city, p.x + p.r + 5, p.y);
+        }
+      }
+    }
+
     ctx.globalAlpha = 1;
     requestAnimationFrame(tick);
   }
 }
 
 /**
- * Eigener Cursor (Signature-Moment) — nur bei pointer:fine. Drei Modi:
- *  - none : dünne Kontur (#3b3b3a) folgt mit leichter Verzögerung (quickTo 0.15s),
- *           dunkler Punkt (#3b3b3a) exakt.
- *  - lens : über a/button/[data-cursor] → durchsichtige Invert-Lupe (~2×,
- *           backdrop-filter invert+grayscale, ohne Füllung/Rand/Punkt).
- *  - label: über [data-cursor-label] (Store-Badges) → mitlaufendes gelbes Pill-
- *           Label mit Text aus dem Attribut; Ring/Lupe aus, aber der dunkle Punkt
- *           bleibt sichtbar (Label läuft darunter mit). (Osmo-Referenz.)
+ * Eigener Cursor (Signature-Moment) — nur bei pointer:fine.
+ *  - Ruhezustand: dünne Kontur (#3b3b3a) folgt leicht verzögert (quickTo 0.15s),
+ *    dunkler Punkt (#3b3b3a) exakt.
+ *  - Über a/button/[data-cursor]: durchsichtige Invert-Lupe (~2×, backdrop-filter
+ *    invert+grayscale, ohne Füllung/Rand/Punkt).
+ *  - Über [data-cursor-label] (Store-Badges): Invert-Lupe UND zusätzlich das
+ *    mitlaufende gelbe Pill-Label — GLEICHZEITIG.
  * Übergänge per GSAP. KEIN mix-blend.
  */
 function initCursor() {
@@ -419,33 +450,29 @@ function initCursor() {
     (ring.style as unknown as { webkitBackdropFilter: string }).webkitBackdropFilter = v;
   };
 
-  type Mode = 'none' | 'lens' | 'label';
-  let mode: Mode = 'none';
   let hovering: Element | null = null;
 
-  const applyMode = (next: Mode, text?: string) => {
-    if (next === mode) return;
-    mode = next;
-    if (next === 'label') {
-      if (label && text != null) label.textContent = text;
-      setFilter('none');
-      // Ring/Lupe aus, aber der kleine dunkle Punkt bleibt sichtbar.
-      gsap.to(ring, { autoAlpha: 0, scale: 1, borderColor: 'rgba(59,59,58,1)', duration: 0.2, ease: 'power3', overwrite: 'auto' });
-      gsap.to(dot, { autoAlpha: 1, duration: 0.15, overwrite: 'auto' });
-      if (label) gsap.fromTo(label, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: 0.22, ease: 'power3', overwrite: 'auto' });
-    } else if (next === 'lens') {
-      if (label) gsap.to(label, { autoAlpha: 0, scale: 0.85, duration: 0.15, overwrite: 'auto' });
+  // Lupe für ALLE interaktiven Elemente; das gelbe Label zusätzlich, wenn das
+  // Element ein data-cursor-label trägt (Store-Badges). Beide gleichzeitig aktiv.
+  const setState = (interactive: boolean, labelText: string | null) => {
+    if (interactive) {
       setFilter(LENS);
       gsap.to(ring, { autoAlpha: 1, scale: 2, borderColor: 'rgba(59,59,58,0)', backgroundColor: 'rgba(59,59,58,0)', duration: 0.25, ease: 'power3', overwrite: 'auto' });
       gsap.to(dot, { autoAlpha: 0, duration: 0.15, overwrite: 'auto' });
     } else {
-      // none — zurück zum Default; Lupe erst nach dem Zurückschrumpfen entfernen.
-      if (label) gsap.to(label, { autoAlpha: 0, scale: 0.85, duration: 0.15, overwrite: 'auto' });
       gsap.to(ring, {
         autoAlpha: 1, scale: 1, borderColor: 'rgba(59,59,58,1)', duration: 0.25, ease: 'power3', overwrite: 'auto',
-        onComplete: () => { if (mode === 'none') setFilter('none'); },
+        onComplete: () => { if (!hovering) setFilter('none'); }, // Lupe nach Ausklang entfernen
       });
       gsap.to(dot, { autoAlpha: 1, duration: 0.25, overwrite: 'auto' });
+    }
+    if (label) {
+      if (labelText != null) {
+        label.textContent = labelText;
+        gsap.fromTo(label, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: 0.22, ease: 'power3', overwrite: 'auto' });
+      } else {
+        gsap.to(label, { autoAlpha: 0, scale: 0.85, duration: 0.15, overwrite: 'auto' });
+      }
     }
   };
 
@@ -457,9 +484,8 @@ function initCursor() {
     const el = (e.target as Element).closest?.(selAll);
     if (!el || el === hovering) return;
     hovering = el;
-    const labelText = el.closest(selLabel)?.getAttribute('data-cursor-label');
-    if (labelText != null) applyMode('label', labelText);
-    else applyMode('lens');
+    const labelText = el.closest(selLabel)?.getAttribute('data-cursor-label') ?? null;
+    setState(true, labelText);
   });
   document.addEventListener('mouseout', (e) => {
     const el = (e.target as Element).closest?.(selAll);
@@ -467,7 +493,7 @@ function initCursor() {
     const related = (e as MouseEvent).relatedTarget as Node | null;
     if (related && el.contains(related)) return; // noch im selben Element
     hovering = null;
-    applyMode('none');
+    setState(false, null);
   });
 }
 

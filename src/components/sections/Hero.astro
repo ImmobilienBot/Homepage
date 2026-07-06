@@ -96,6 +96,9 @@ function splitLine(line: string) {
     {/* ---- Rechts: aufgefächerter Phone-Cluster (3 Phones) ---- */}
     <div class="order-1 flex justify-center md:order-2">
       <div data-phone-stage class="phone-stage relative w-[clamp(230px,74vw,320px)]">
+        {/* Sanftes gelbes Glühen hinter dem Cluster (statisch, warmer Fokus) */}
+        <div class="phone-glow" aria-hidden="true"></div>
+
         {/* Scroll-Choreografie-Ebene (rotate/scale/translate beim Scrollen) */}
         <div data-phone-choreo class="phone-choreo relative w-full">
           {/* Cluster-Ebene: Idle-Float + Maus-Tilt gelten für ALLE Phones als Gruppe */}
@@ -257,6 +260,23 @@ function splitLine(line: string) {
   .phone-stage {
     perspective: 1200px;
   }
+
+  /* Sehr sanftes, großes gelbes Glühen hinter dem Cluster (statisch). Ersetzt den
+     harten Schlagschatten — warmer Fokus, hebt die Phones vom Netz ab. z-0 (hinter
+     den Phones, über dem Canvas/Grau). Deutlich größer als der Cluster. */
+  .phone-glow {
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    width: 160%;
+    height: 118%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 70%);
+    filter: blur(60px);
+    opacity: 0.28;
+    z-index: 0;
+    pointer-events: none;
+  }
   /* Zwei verschachtelte 3D-Ebenen: außen Scroll-Choreografie, innen Maus-Tilt/Idle. */
   .phone-choreo {
     transform-style: preserve-3d;
@@ -292,10 +312,10 @@ function splitLine(line: string) {
      Screenshots ist sichtbar. Fallback ohne JS = sofort korrekt; Werte spiegeln
      REST in animations.ts. */
   .phone--back-left {
-    transform: translateX(-38%) scale(0.9);
+    transform: translate(-38%, -8%) scale(0.9);
   }
   .phone--back-right {
-    transform: translateX(38%) scale(0.88);
+    transform: translate(38%, -6%) scale(0.88);
   }
 
   .phone-frame {
@@ -307,8 +327,7 @@ function splitLine(line: string) {
   }
 
   /* Screenshot exakt in den transparenten Screen-Ausschnitt (Geometrie aus
-     smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken.
-     box-shadow = phone-förmige, weiche große Elevation (hebt das Phone vom Grau ab). */
+     smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken. */
   .phone-screen {
     position: absolute;
     left: 2.83%;
@@ -319,7 +338,8 @@ function splitLine(line: string) {
     object-position: top center;
     border-radius: 9%;
     z-index: 0;
-    box-shadow: 0 28px 44px -14px rgb(59 59 58 / 0.32);
+    /* Kein harter Schlagschatten mehr — die Tiefe kommt jetzt vom gelben
+       Glühen hinter dem Cluster (.phone-glow). */
   }
 
   /* ---- Notification-Stapel: oben am Front-Phone, überlagert die Liste ----
