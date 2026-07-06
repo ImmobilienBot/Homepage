@@ -96,10 +96,13 @@
   am <html> setzt, wird der native Cursor ausgeblendet und der Custom-Cursor
   sichtbar. Ring folgt verzögert, Punkt exakt (Ansteuerung in animations.ts).
 
-  KEIN mix-blend-mode (erzeugte über Gelb ein blau-magenta Invertieren).
-  Stattdessen klar Weiß/Schwarz mit dünnem Kontrast-Halo → gut sichtbar auf
-  Gelb, Schwarz UND Grau. Beim Hover umschließt der Ring das Zielelement
-  (Ansteuerung per Breite/Höhe in animations.ts — position:fixed, kein Reflow).
+  KEIN mix-blend-mode (erzeugte über Gelb Farb-Artefakte).
+  Ruhezustand: Ring = dünne Kontur in CD-Schwarz (#3b3b3a), Punkt in Grau
+  (#eaebeb). Auf hellem Grund trägt der dunkle Ring, auf dunklem Grund der
+  helle Punkt — komplementär, ohne Blend.
+  Hover (a/button/[data-cursor]): Ring wird zu einem vollflächig gefüllten
+  schwarzen Kreis (~1,3×), Punkt weiß → invertiert, sauber auch über Gelb.
+  Übergänge komplett per GSAP (animations.ts).
 */
 .cursor {
   opacity: 0;
@@ -125,15 +128,11 @@ html.has-custom-cursor * {
 .cursor-ring {
   width: 30px;
   height: 30px;
-  border: 2px solid #fff;
-  background-color: rgb(255 255 255 / 0.1); /* dezente weiße Füllung */
-  /* dünner dunkler Halo → weißer Ring auch auf hellem Grau sichtbar */
-  box-shadow: 0 0 0 1px rgb(59 59 58 / 0.28);
+  border: 2px solid #3b3b3a; /* dünne Kontur, CD-Schwarz */
+  background-color: rgb(59 59 58 / 0); /* Ruhezustand: keine Füllung */
 }
 .cursor-dot {
-  width: 6px;
-  height: 6px;
-  background-color: #3b3b3a; /* CD-Schwarz */
-  /* heller Halo → schwarzer Punkt auch auf Schwarz sichtbar */
-  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.75);
+  width: 5px;
+  height: 5px;
+  background-color: #eaebeb; /* CD-Grau */
 }

@@ -56,8 +56,12 @@ function initAnchorScroll(lenis: Lenis) {
 /**
  * Kinetische Headline-Enthüllung: Zeilen-Mask-Reveal + animierter Marker,
  * danach gestaffelt Subline, CTA und Trust-Microline.
- * Die CTA wird bewusst per gsap.from (kein CSS-Vorverstecken) animiert —
- * sie bleibt so auch bei JS-Fehler garantiert sichtbar (CLAUDE.md-Schutzplanke).
+ *
+ * WICHTIG (CLAUDE.md-Schutzplanke / Headline-Bug-Fix): KEIN CSS-Vorverstecken.
+ * Alles wird rein additiv per gsap.from() enthüllt — die Funktionen setzen den
+ * Startzustand selbst und animieren zum natürlichen, sichtbaren Endzustand.
+ * Läuft dieses Skript nicht (Fehler/kein JS), steht die gesamte Hero-Kopie
+ * sofort vollständig da.
  */
 function initHeroReveal() {
   const hero = document.querySelector('#hero');
@@ -72,96 +76,111 @@ function initHeroReveal() {
 
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
+  // a) Headline: Zeilen gleiten von unten aus der Maske herein.
   if (lines.length) {
-    tl.fromTo(
-      lines,
-      { yPercent: 110 },
-      { yPercent: 0, duration: 0.9, stagger: 0.12 },
-      0,
-    );
+    tl.from(lines, { yPercent: 110, duration: 0.9, stagger: 0.12 }, 0);
   }
+  // Marker wischt hinter dem Keyword herein, nachdem die Zeile steht.
   if (marks.length) {
-    tl.fromTo(
+    tl.from(
       marks,
-      { scaleX: 0 },
-      { scaleX: 1, duration: 0.5, ease: 'power2.out', stagger: 0.12 },
+      { scaleX: 0, duration: 0.5, ease: 'power2.out', stagger: 0.12 },
       0.35,
     );
   }
+  // Subline + Trust-Microline gestaffelt.
   if (fades.length) {
-    tl.fromTo(
-      fades,
-      { autoAlpha: 0, y: 18 },
-      { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.12 },
-      0.5,
-    );
+    tl.from(fades, { autoAlpha: 0, y: 18, duration: 0.6, stagger: 0.12 }, 0.5);
   }
+  // CTA (Store-Badges) — nie im Effekt untergehen: additiv, kurzer Versatz.
   if (cta) {
-    gsap.from(cta, {
-      autoAlpha: 0,
-      y: 18,
-      duration: 0.6,
-      delay: 0.6,
-      ease: 'power3.out',
-    });
+    tl.from(cta, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.55);
   }
 }
 
 /**
- * Schwebende Push-Benachrichtigungen UM das Phone herum: jede Karte hat einen
- * eigenen, zeitversetzten Loop (herein → ~3 s halten → hinaus), sodass 2–3
- * gleichzeitig an unterschiedlichen Positionen schweben. Endlos, nahtlos.
- * Zusätzlich dezente Scroll-Parallax je Karte (unterschiedliche Tiefen).
- * Nur transform/opacity — Loop nutzt yPercent, Parallax nutzt y (px) → komponiert.
+ * Aufgefächerter Phone-Cluster: die beiden hinteren Phones fahren beim Laden
+ * aus der Front-Position (deckungsgleich, ungedreht) in ihre gefächerte
+ * Ruhelage heraus (gestaffelt). Die Ruhelage steht auch in Hero.astro-CSS
+ * (Fallback ohne JS); die Werte hier MÜSSEN dazu passen.
+ * Rein additiv (gsap.from): ohne JS sitzen die Phones sofort im Fächer.
+ */
+const FAN_REST = {
+  left: { xPercent: -34, yPercent: 6, rotation: -8, scale: 0.84 },
+  right: { xPercent: 33, yPercent: 9, rotation: 8, scale: 0.82 },
+} as const;
+
+function initPhoneFan() {
+  const backs = gsap.utils.toArray<HTMLElement>('#hero [data-phone-back]');
+  if (!backs.length) return;
+
+  backs.forEach((el, i) => {
+    const rest = FAN_REST[el.dataset.fan as keyof typeof FAN_REST];
+    if (!rest) return;
+    // Startzustand = Front-Position (deckungsgleich, ungedreht, volle Größe).
+    // x:0/y:0 neutralisieren den aus dem CSS-translate(%) geerbten px-Versatz;
+    // der Fächer wird über xPercent/yPercent gefahren (= identisch zur CSS-Ruhelage).
+    // Endzustand entspricht exakt der CSS-Fallback-Position → nahtloser Übergang.
+    gsap.fromTo(
+      el,
+      { x: 0, y: 0, xPercent: 0, yPercent: 0, rotation: 0, scale: 1 },
+      {
+        xPercent: rest.xPercent,
+        yPercent: rest.yPercent,
+        rotation: rest.rotation,
+        scale: rest.scale,
+        duration: 0.9,
+        ease: 'power3.out',
+        delay: 0.5 + i * 0.14, // nach dem Headline-Auftakt, gestaffelt
+      },
+    );
+  });
+}
+
+/**
+ * Notification-Stapel oben am Front-Phone: die Karten sitzen in festen Slots
+ * (flex column, kein Reflow) und poppen per Endlosschleife NACHEINANDER herein,
+ * stapeln sich untereinander, halten kurz und faden dann GEMEINSAM weg.
+ * Start bewusst verzögert (nach Headline + Fächer), damit es nicht unruhig wird.
+ * Nur transform/opacity.
  */
 function initHeroNotifications() {
   const cards = gsap.utils.toArray<HTMLElement>('#hero [data-notif]');
   if (!cards.length) return;
 
-  const IN = 0.6;
-  const HOLD = 3;
-  const OUT = 0.5;
-  const life = IN + HOLD + OUT;
-  const STAGGER = 1.3;
-  const period = cards.length * STAGGER;
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, delay: 1.5 });
 
-  cards.forEach((card, i) => {
-    const tl = gsap.timeline({
-      repeat: -1,
-      delay: i * STAGGER,
-      repeatDelay: Math.max(0, period - life),
-    });
-    tl.fromTo(
-      card,
-      { yPercent: -40, autoAlpha: 0, scale: 0.94 },
-      { yPercent: 0, autoAlpha: 1, scale: 1, duration: IN, ease: 'back.out(1.6)' },
-    )
-      .to(card, { autoAlpha: 1, duration: HOLD })
-      .to(card, { yPercent: 18, autoAlpha: 0, scale: 0.96, duration: OUT, ease: 'power2.in' });
-  });
-
-  // Unterschiedliche Tiefen: dezente Scroll-Parallax je Karte (nur Desktop).
-  if (window.matchMedia('(pointer: fine)').matches) {
-    cards.forEach((card, i) => {
-      const depth = (i - (cards.length - 1) / 2) * 26; // px; komponiert mit yPercent
-      gsap.to(card, {
-        y: depth,
-        ease: 'none',
-        scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true },
-      });
-    });
-  }
+  // Zyklusstart: Stapel leeren.
+  tl.set(cards, { autoAlpha: 0, y: -14, scale: 0.96 });
+  // Karten nacheinander in ihren Slot ploppen.
+  tl.to(
+    cards,
+    {
+      autoAlpha: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.5,
+      ease: 'back.out(1.5)',
+      stagger: 0.55,
+    },
+    0.1,
+  );
+  // Kurz halten, dann gemeinsam wegfaden.
+  tl.to(cards, { autoAlpha: 0, duration: 0.5, ease: 'power2.in' }, '+=2.4');
 }
 
-/** Leichter 3D-Tilt des Phones auf Mausbewegung — nur Desktop (pointer:fine). */
+/**
+ * Leichter 3D-Tilt des GESAMTEN Clusters auf Mausbewegung — nur Desktop
+ * (pointer:fine). Wirkt auf die Fächer-Gruppe, alle drei Phones kippen kohärent.
+ */
 function initPhoneTilt() {
   const stage = document.querySelector<HTMLElement>('[data-phone-stage]');
-  const phone = document.querySelector<HTMLElement>('[data-phone]');
-  if (!stage || !phone) return;
+  const fan = document.querySelector<HTMLElement>('[data-phone-fan]');
+  if (!stage || !fan) return;
   if (!window.matchMedia('(pointer: fine)').matches) return;
 
-  const rotX = gsap.quickTo(phone, 'rotationX', { duration: 0.6, ease: 'power3' });
-  const rotY = gsap.quickTo(phone, 'rotationY', { duration: 0.6, ease: 'power3' });
+  const rotX = gsap.quickTo(fan, 'rotationX', { duration: 0.6, ease: 'power3' });
+  const rotY = gsap.quickTo(fan, 'rotationY', { duration: 0.6, ease: 'power3' });
 
   stage.addEventListener('mousemove', (e) => {
     const r = stage.getBoundingClientRect();
@@ -177,14 +196,14 @@ function initPhoneTilt() {
 }
 
 /**
- * Dezenter Idle-Float des Phones — schwebt/atmet langsam auch ohne Scrollen
- * (alle Geräte, nur transform). y/rotation komponieren mit dem Maus-Tilt
- * (rotationX/Y) auf demselben Element.
+ * Dezenter Idle-Float des GESAMTEN Clusters — schwebt/atmet langsam auch ohne
+ * Scrollen (alle Geräte, nur transform). y/rotation(z) komponieren mit dem
+ * Maus-Tilt (rotationX/Y) auf derselben Fächer-Gruppe.
  */
 function initPhoneIdle() {
-  const phone = document.querySelector<HTMLElement>('#hero [data-phone]');
-  if (!phone) return;
-  gsap.to(phone, {
+  const fan = document.querySelector<HTMLElement>('#hero [data-phone-fan]');
+  if (!fan) return;
+  gsap.to(fan, {
     y: -12,
     rotation: 0.6,
     duration: 4.5,
@@ -195,55 +214,149 @@ function initPhoneIdle() {
 }
 
 /**
- * Hero-Choreografie: atmendes Glow (~10s Loop, immer aktiv) + scroll-gescrubte
- * Bewegung des Phones (leichtes rotateY/rotateX + Skalierung/translateY) und
- * langsamere Glow-Parallax für Tiefe. Scroll-Teil nur Desktop (Mobile reduziert).
- * Nur transform/opacity.
+ * Scroll-Choreografie des Clusters: leichtes rotateY/rotateX + Skalierung/
+ * translateY beim Scrollen (scrub) auf der äußeren Choreo-Ebene. Nur Desktop
+ * (Mobile reduziert). Nur transform. Kein Glow mehr (cleaner Grau-Hintergrund).
  */
 function initHeroChoreography() {
-  const glow = document.querySelector<HTMLElement>('#hero [data-phone-glow]');
-  const glowWrap = document.querySelector<HTMLElement>('#hero [data-glow-wrap]');
+  if (!window.matchMedia('(pointer: fine)').matches) return;
   const choreo = document.querySelector<HTMLElement>('#hero [data-phone-choreo]');
+  if (!choreo) return;
 
-  // „Atmendes" Glow — 5s hin, yoyo zurück ≈ 10s Zyklus. Nur Gelb, satt.
-  if (glow) {
-    gsap.to(glow, {
-      scale: 1.14,
-      xPercent: 4,
-      yPercent: -4,
-      opacity: 0.9,
-      duration: 5,
-      ease: 'sine.inOut',
-      yoyo: true,
-      repeat: -1,
+  gsap.fromTo(
+    choreo,
+    { rotationX: 0, rotationY: 0, scale: 1, yPercent: 0 },
+    {
+      rotationY: 8,
+      rotationX: -4,
+      scale: 0.96,
+      yPercent: -6,
+      ease: 'none',
+      scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true },
+    },
+  );
+}
+
+/**
+ * Schwebende gelbe Punkte im Hero-Hintergrund — driften langsam und WEICHEN
+ * dem Mauszeiger aus (Repel bei Nähe, weich zurückfedernd). Nur Desktop
+ * (pointer:fine); auf Mobile & bei prefers-reduced-motion komplett aus (die
+ * Funktion wird dann gar nicht erst aufgerufen). Eine einzige rAF-Schleife,
+ * günstige quadratische Distanzprüfung, transform-only.
+ */
+function initHeroDots() {
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+  const layer = document.querySelector<HTMLElement>('#hero [data-dots]');
+  const hero = document.querySelector<HTMLElement>('#hero');
+  if (!layer || !hero) return;
+
+  const COUNT = 30;
+  const REPEL = 130; // px Wirkradius des Cursors
+  const REPEL_SQ = REPEL * REPEL;
+
+  type Dot = {
+    el: HTMLElement;
+    hx: number; hy: number;   // Heimatposition (px, relativ zum Hero)
+    x: number; y: number;     // aktuelle Position
+    vx: number; vy: number;   // Geschwindigkeit
+    ph: number; amp: number; sp: number; // Drift-Phase/Amplitude/Speed
+  };
+
+  const dots: Dot[] = [];
+  let W = hero.clientWidth;
+  let H = hero.clientHeight;
+
+  for (let i = 0; i < COUNT; i++) {
+    const el = document.createElement('div');
+    el.className = 'hero-dot';
+    const size = 4 + Math.random() * 6; // 4–10px
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.opacity = `${0.35 + Math.random() * 0.4}`;
+    layer.appendChild(el);
+    const hx = Math.random() * W;
+    const hy = Math.random() * H;
+    dots.push({
+      el,
+      hx, hy,
+      x: hx, y: hy,
+      vx: 0, vy: 0,
+      ph: Math.random() * Math.PI * 2,
+      amp: 8 + Math.random() * 16,
+      sp: 0.4 + Math.random() * 0.5,
     });
   }
 
-  // Scroll-Choreografie nur auf Desktop.
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-  const st = { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } as const;
-  if (choreo) {
-    gsap.fromTo(
-      choreo,
-      { rotationX: 0, rotationY: 0, scale: 1, yPercent: 0 },
-      {
-        rotationY: 8,
-        rotationX: -4,
-        scale: 0.96,
-        yPercent: -6,
-        ease: 'none',
-        scrollTrigger: { ...st },
-      },
-    );
+  // Cursor relativ zum Hero; -1 = außerhalb (kein Repel).
+  let mx = -1, my = -1;
+  hero.addEventListener('mousemove', (e) => {
+    const r = hero.getBoundingClientRect();
+    mx = e.clientX - r.left;
+    my = e.clientY - r.top;
+  }, { passive: true });
+  hero.addEventListener('mouseleave', () => { mx = -1; my = -1; });
+
+  const onResize = () => {
+    const nW = hero.clientWidth;
+    const nH = hero.clientHeight;
+    // Heimatpositionen proportional mitskalieren, damit sie im Bild bleiben.
+    for (const d of dots) {
+      d.hx = (d.hx / W) * nW;
+      d.hy = (d.hy / H) * nH;
+    }
+    W = nW; H = nH;
+  };
+  window.addEventListener('resize', onResize);
+
+  // rAF nur, während der Hero sichtbar ist (spart CPU).
+  let running = false;
+  let t = 0;
+  const io = new IntersectionObserver((entries) => {
+    const vis = entries[0]?.isIntersecting ?? false;
+    if (vis && !running) { running = true; requestAnimationFrame(tick); }
+    if (!vis) running = false;
+  });
+  io.observe(hero);
+
+  function tick() {
+    if (!running) return;
+    t += 0.016;
+    for (const d of dots) {
+      // Langsame Drift um die Heimatposition (Sinus).
+      const tx = d.hx + Math.cos(t * d.sp + d.ph) * d.amp;
+      const ty = d.hy + Math.sin(t * d.sp * 0.9 + d.ph) * d.amp;
+      // Federkraft zurück zum Drift-Ziel.
+      d.vx += (tx - d.x) * 0.02;
+      d.vy += (ty - d.y) * 0.02;
+      // Cursor-Repel (nur innerhalb des Radius; quadratisch, keine sqrt außer im Treffer).
+      if (mx >= 0) {
+        const dx = d.x - mx;
+        const dy = d.y - my;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < REPEL_SQ && distSq > 0.01) {
+          const dist = Math.sqrt(distSq);
+          const force = (1 - dist / REPEL) * 6;
+          d.vx += (dx / dist) * force;
+          d.vy += (dy / dist) * force;
+        }
+      }
+      // Dämpfung + Integration.
+      d.vx *= 0.86;
+      d.vy *= 0.86;
+      d.x += d.vx;
+      d.y += d.vy;
+      d.el.style.transform = `translate(${d.x}px, ${d.y}px)`;
+    }
+    requestAnimationFrame(tick);
   }
-  // Glow parallaxt langsamer als das Phone (Tiefe). Notifications parallaxen je Karte.
-  if (glowWrap) gsap.to(glowWrap, { yPercent: 16, ease: 'none', scrollTrigger: { ...st } });
 }
 
 /**
  * Eigener Cursor (Signature-Moment) — nur bei pointer:fine. Ring folgt mit
- * Verzögerung (quickTo), Punkt exakt; über interaktiven Elementen wächst der
- * Ring (~1,8×) und füllt sich. Ohne pointer:fine bleibt der native Cursor.
+ * Verzögerung (quickTo), Punkt exakt. Ruhezustand: dünne dunkle Kontur + grauer
+ * Punkt. Über a/button/[data-cursor]: Ring wird zum vollflächig gefüllten
+ * schwarzen Kreis (~1,3×), Punkt weiß (invertiert). Übergänge per GSAP.
+ * KEIN mix-blend-mode, KEINE Bounding-Box-Umschließung mehr.
  */
 function initCursor() {
   if (!window.matchMedia('(pointer: fine)').matches) return;
@@ -259,43 +372,42 @@ function initCursor() {
   const dotX = gsap.quickTo(dot, 'x', { duration: 0.08, ease: 'power3' });
   const dotY = gsap.quickTo(dot, 'y', { duration: 0.08, ease: 'power3' });
 
-  const BASE = 30;
-  const PAD = 14;
-  let hovering: Element | null = null;
-
+  // Ring folgt IMMER dem Cursor (keine Umschließungs-Logik mehr).
   window.addEventListener(
     'mousemove',
     (e) => {
       dotX(e.clientX);
       dotY(e.clientY);
-      // Ring folgt dem Cursor nur, wenn er nicht gerade ein Element umschließt.
-      if (!hovering) {
-        ringX(e.clientX);
-        ringY(e.clientY);
-      }
+      ringX(e.clientX);
+      ringY(e.clientY);
     },
     { passive: true },
   );
 
+  const setHover = (on: boolean) => {
+    gsap.to(ring, {
+      scale: on ? 1.3 : 1,
+      backgroundColor: on ? 'rgba(59,59,58,1)' : 'rgba(59,59,58,0)',
+      borderColor: on ? 'rgba(59,59,58,0)' : 'rgba(59,59,58,1)',
+      duration: 0.25,
+      ease: 'power3',
+      overwrite: 'auto',
+    });
+    gsap.to(dot, {
+      backgroundColor: on ? '#ffffff' : '#eaebeb',
+      duration: 0.25,
+      ease: 'power3',
+      overwrite: 'auto',
+    });
+  };
+
   const sel = 'a, button, [data-cursor], input, textarea, select, label, summary';
+  let hovering: Element | null = null;
   document.addEventListener('mouseover', (e) => {
     const el = (e.target as Element).closest?.(sel);
     if (!el || el === hovering) return;
     hovering = el;
-    const r = el.getBoundingClientRect();
-    // Ring dockt an die Element-Mitte und UMSCHLIESST es (Breite/Höhe + Padding).
-    // width/height statt scale → dünner Rand bleibt konstant; position:fixed → kein Reflow.
-    ringX(r.left + r.width / 2);
-    ringY(r.top + r.height / 2);
-    gsap.to(ring, {
-      width: r.width + PAD * 2,
-      height: r.height + PAD * 2,
-      borderRadius: 12,
-      backgroundColor: 'rgba(255,255,255,0)', // nur Umriss → verdeckt den Text nicht
-      duration: 0.3,
-      ease: 'power3',
-      overwrite: 'auto',
-    });
+    setHover(true);
   });
   document.addEventListener('mouseout', (e) => {
     const el = (e.target as Element).closest?.(sel);
@@ -303,16 +415,7 @@ function initCursor() {
     const related = (e as MouseEvent).relatedTarget as Node | null;
     if (related && el.contains(related)) return; // noch innerhalb desselben Elements
     hovering = null;
-    gsap.to(ring, {
-      width: BASE,
-      height: BASE,
-      borderRadius: 9999,
-      backgroundColor: 'rgba(255,255,255,0.1)',
-      duration: 0.3,
-      ease: 'power3',
-      overwrite: 'auto',
-    });
-    // Ring folgt ab der nächsten Mausbewegung wieder dem Cursor.
+    setHover(false);
   });
 }
 
@@ -364,10 +467,12 @@ if (!prefersReducedMotion) {
   initAnchorScroll(lenis);
   initCursor();
   initHeroReveal();
+  initPhoneFan();
   initHeroNotifications();
   initPhoneTilt();
   initPhoneIdle();
   initHeroChoreography();
+  initHeroDots();
   initProblemFill();
   initReveals();
 }

@@ -1,17 +1,21 @@
 ---
 /**
- * Hero — Awwwards Visual Language (siehe CLAUDE.md → Motion-System).
+ * Hero — Awwwards Visual Language (siehe CLAUDE.md → Motion-System), Layout A:
+ * kinetische Headline links, aufgefächerter 3-Phone-Cluster rechts.
  *
- * - Dramatische kinetische Headline: riesig, Roboto Black, enges Tracking/Leading,
- *   Mask-Reveal zeilenweise + animierter gelber Marker (scaleX-Wisch).
- * - Phone-Mockup mit weichem gelbem Glow dahinter + leichtem 3D-Tilt
- *   (reagiert dezent auf Maus/Scroll, nur Desktop).
- * - Endlosschleife mehrerer schwebender Push-Benachrichtigungen (elevated,
- *   über den Phone-Rand überlappend), Texte aus i18n.
+ * OBERSTES GEBOT: Inhalte sind IMMER sichtbar, auch ohne JS/GSAP.
+ * - Headline steht per Default vollständig da (KEIN CSS-Vorverstecken); der
+ *   Reveal ist rein additiv via gsap.from() in animations.ts.
+ * - Phone-Cluster: Front-Phone (Angebotsliste) vorne, zwei kleinere Phones
+ *   dahinter aufgefächert (Karte links, Suche rechts). Die Fächer-Ruhelage
+ *   liegt in CSS → ohne JS sofort korrekt; JS fährt sie nur additiv heraus.
+ * - Notifications: echter vertikaler Stapel oben am Front-Phone, ploppen
+ *   nacheinander rein, halten, faden gemeinsam weg — Endlosschleife (JS).
+ * - Hintergrund: cleanes Grau. Gelb kommt NUR von den schwebenden Punkten
+ *   (Desktop-only, weichen dem Cursor aus — in animations.ts).
  *
- * Alles mit prefers-reduced-motion-Fallback (Anfangszustände nur unter
- * `html.js` + no-preference versteckt) und Performance-Budget (nur
- * transform/opacity). Store-Links aus site.ts, Texte aus i18n.
+ * Alles prefers-reduced-motion-fest (JS-Guard) und Performance-Budget
+ * (nur transform/opacity). Store-Links aus site.ts, Texte aus i18n.
  */
 import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
@@ -19,13 +23,18 @@ import type { Locale } from '../../data/site';
 import StoreBadges from '../StoreBadges.astro';
 
 import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
-import screenshot from '../../assets/images/immobilien-bot-app-angebotsliste.png';
+import screenList from '../../assets/images/immobilien-bot-app-angebotsliste.png';
+import screenMap from '../../assets/images/immobilien-bot-suchbereich-karte-zeichnen.png';
+import screenConfig from '../../assets/images/immobilien-bot-suche-konfigurieren.png';
 import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
 const { headlineLines, markKeyword, notification } = t.hero;
+
+// Höchstens 4 Karten im Stapel (i18n liefert mehr Meldungen als gezeigt werden).
+const notifItems = notification.items.slice(0, 4);
 
 // Zeile in Segmente zerlegen; das Keyword bekommt den animierten Marker.
 function splitLine(line: string) {
@@ -40,7 +49,10 @@ function splitLine(line: string) {
 ---
 
 <section id="hero" class="relative overflow-hidden px-inset py-section">
-  <div class="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
+  {/* Schwebende gelbe Punkte (Desktop-only, per JS befüllt; weichen dem Cursor aus) */}
+  <div class="hero-dots" data-dots aria-hidden="true"></div>
+
+  <div class="relative z-10 mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
     {/* ---- Links: kinetische Headline + CTAs ---- */}
     <div class="order-2 md:order-1">
       <h1 class="hero-headline font-black">
@@ -73,56 +85,73 @@ function splitLine(line: string) {
       <p class="mt-4 text-body opacity-70" data-hero-trust>{t.hero.trustMicroline}</p>
     </div>
 
-    {/* ---- Rechts: Phone-Stage (Glow + Tilt + Notifications) ---- */}
+    {/* ---- Rechts: aufgefächerter Phone-Cluster (3 Phones) ---- */}
     <div class="order-1 flex justify-center md:order-2">
-      <div data-phone-stage class="phone-stage relative w-[clamp(250px,80vw,360px)]">
-        {/* Weiches gelbes Glow (atmend) — eigener Wrapper für Scroll-Parallax */}
-        <div class="glow-wrap" data-glow-wrap aria-hidden="true">
-          <div class="phone-glow" data-phone-glow></div>
-        </div>
-
-        {/* Kräftige gelbe CD-Winkelform (Störer-Ästhetik), auf der das Phone „sitzt" */}
-        <div class="cd-shape" aria-hidden="true"></div>
-
+      <div data-phone-stage class="phone-stage relative w-[clamp(230px,74vw,320px)]">
         {/* Scroll-Choreografie-Ebene (rotate/scale/translate beim Scrollen) */}
         <div data-phone-choreo class="phone-choreo relative w-full">
-          {/* Tilt-Ebene: Screenshot hinter dem Rahmen (Maus-Tilt) */}
-          <div data-phone class="phone relative w-full">
-            <Image
-              src={screenshot}
-              alt={t.hero.mockupAlt}
-              class="phone-screen"
-              loading="eager"
-              fetchpriority="high"
-            />
-            <PhoneFrame class="relative z-10 block h-auto w-full" />
-          </div>
-        </div>
+          {/* Cluster-Ebene: Idle-Float + Maus-Tilt gelten für ALLE Phones als Gruppe */}
+          <div data-phone-fan class="phone-fan relative w-full">
+            {/* Hinteres Phone links: Karte / Suchbereich zeichnen */}
+            <div class="phone phone--back phone--back-left" data-phone-back data-fan="left">
+              <Image
+                src={screenMap}
+                alt={t.hero.mapAlt}
+                class="phone-screen"
+                loading="eager"
+              />
+              <PhoneFrame class="phone-frame" />
+            </div>
 
-        {/* Endlosschleife schwebender Push-Benachrichtigungen (kein Bild) */}
-        <div class="notif-stack" data-notif-stack aria-hidden="true">
-          {
-            notification.items.map((item) => (
-              <div class="notif" data-notif>
-                <div class="flex items-start gap-3">
-                  <Image
-                    src={appIcon}
-                    alt=""
-                    width={96}
-                    height={96}
-                    class="notif-icon"
-                  />
-                  <div class="min-w-0">
-                    <p class="notif-head">
-                      <span class="truncate">{notification.app}</span>
-                      <span class="notif-time">{notification.time}</span>
-                    </p>
-                    <p class="notif-body">{notification.lead} {item}</p>
-                  </div>
-                </div>
+            {/* Hinteres Phone rechts: Suche konfigurieren */}
+            <div class="phone phone--back phone--back-right" data-phone-back data-fan="right">
+              <Image
+                src={screenConfig}
+                alt={t.hero.configAlt}
+                class="phone-screen"
+                loading="eager"
+              />
+              <PhoneFrame class="phone-frame" />
+            </div>
+
+            {/* Front-Phone: Angebotsliste + Notification-Stapel */}
+            <div class="phone phone--front" data-phone-front>
+              <Image
+                src={screenList}
+                alt={t.hero.mockupAlt}
+                class="phone-screen"
+                loading="eager"
+                fetchpriority="high"
+              />
+              <PhoneFrame class="phone-frame" />
+
+              {/* Echter vertikaler Notification-Stapel (oben, überlagert die Liste) */}
+              <div class="notif-stack" data-notif-stack aria-hidden="true">
+                {
+                  notifItems.map((item) => (
+                    <div class="notif" data-notif>
+                      <div class="flex items-start gap-2.5">
+                        <Image
+                          src={appIcon}
+                          alt=""
+                          width={96}
+                          height={96}
+                          class="notif-icon"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <p class="notif-head">
+                            <span class="truncate">{notification.app}</span>
+                            <span class="notif-time">{notification.time}</span>
+                          </p>
+                          <p class="notif-body">{notification.lead} {item}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                }
               </div>
-            ))
-          }
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -130,7 +159,10 @@ function splitLine(line: string) {
 </section>
 
 <style>
-  /* ---- Kinetische Typografie (der Blickfang) ---- */
+  /* ---- Kinetische Typografie (der Blickfang, links) ----
+     Sichtbar per Default. Die Maske klippt nur die von unten einfahrende Zeile
+     WÄHREND der Animation; im Ruhezustand (yPercent 0) ist die Zeile voll da.
+     padding/margin-block schützen Ober-/Unterlängen vor dem overflow-Clip. */
   .hero-headline {
     font-size: clamp(3.5rem, 8vw, 7rem);
     line-height: 0.9; /* enge Zeilenhöhe */
@@ -138,6 +170,9 @@ function splitLine(line: string) {
   }
   .line-mask {
     display: block;
+    overflow: hidden;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
   }
   .line-inner {
     display: block;
@@ -155,63 +190,83 @@ function splitLine(line: string) {
     border-radius: 0.08em;
     transform-origin: left center;
     z-index: 0;
+    /* Default: voll sichtbar. gsap.from() wischt beim Reveal von scaleX(0) herein. */
   }
   .mark-text {
     position: relative;
     z-index: 1;
   }
 
-  /* ---- Phone-Stage: Glow + CD-Form + Choreografie + Tilt ---- */
-  .phone-stage {
-    perspective: 1200px;
-  }
-  /* zwei verschachtelte 3D-Ebenen: Scroll-Choreografie außen, Maus-Tilt innen */
-  .phone-choreo {
-    position: relative;
-    z-index: 2;
-    transform-style: preserve-3d;
-    will-change: transform;
-  }
-  .phone {
-    position: relative;
-    transform-style: preserve-3d;
-    will-change: transform;
-  }
-  .glow-wrap {
+  /* ---- Schwebende gelbe Punkte (Hero-Hintergrund) ----
+     Nur Desktop; per JS befüllt. Ohne JS bleibt der Layer leer (cleanes Grau). */
+  .hero-dots {
     position: absolute;
     inset: 0;
     z-index: 0;
     pointer-events: none;
+    overflow: hidden;
   }
-  .phone-glow {
+  .hero-dot {
     position: absolute;
-    inset: -18% -24%;
-    background: radial-gradient(
-      closest-side,
-      color-mix(in srgb, var(--color-yellow) 92%, transparent),
-      transparent 72%
-    );
-    filter: blur(52px);
-    opacity: 0.7; /* satteres Glow */
-    transform-origin: center;
-    will-change: transform, opacity;
+    top: 0;
+    left: 0;
+    border-radius: 9999px;
+    background-color: var(--color-yellow);
+    will-change: transform;
   }
 
-  /* Kräftige gelbe CD-Winkelform (Störer-Ästhetik) hinter/unter dem Phone.
-     Bold, aber reine Deko (aria-hidden). Das Phone „sitzt" darauf. */
-  .cd-shape {
+  /* ---- Phone-Cluster: Perspektive (Tilt) + gefächerte Ruhelage ---- */
+  .phone-stage {
+    perspective: 1200px;
+  }
+  /* Zwei verschachtelte 3D-Ebenen: außen Scroll-Choreografie, innen Maus-Tilt/Idle. */
+  .phone-choreo {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .phone-fan {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  /* Front-Phone definiert die Cluster-Größe (in-flow), hintere Phones liegen
+     absolut deckungsgleich darüber und werden per transform aufgefächert. */
+  .phone {
+    position: relative;
+    width: 100%;
+  }
+  .phone--back {
     position: absolute;
-    inset: 6% -16% -8% -14%;
+    inset: 0;
     z-index: 1;
-    background-color: #fff03c;
-    clip-path: polygon(4% 16%, 100% 0, 94% 100%, 0 82%);
-    border-radius: 8px;
-    pointer-events: none;
+    will-change: transform, opacity;
+  }
+  .phone--front {
+    position: relative;
+    z-index: 2;
+    will-change: transform;
+  }
+
+  /* Fächer-Ruhelage (Fallback ohne JS = sofort korrekt).
+     Diese Werte spiegeln REST in animations.ts (xPercent/yPercent/rotation/scale). */
+  .phone--back-left {
+    transform: translate(-34%, 6%) rotate(-8deg) scale(0.84);
+  }
+  .phone--back-right {
+    transform: translate(33%, 9%) rotate(8deg) scale(0.82);
+  }
+
+  .phone-frame {
+    position: relative;
+    z-index: 10;
+    display: block;
+    height: auto;
+    width: 100%;
   }
 
   /* Screenshot exakt in den transparenten Screen-Ausschnitt (Geometrie aus
      smartphone-rahmen.svg). Der dunkle Bezel (z-10) verdeckt die Ecken.
-     box-shadow = phone-förmige, weiche große Elevation über der CD-Form. */
+     box-shadow = phone-förmige, weiche große Elevation (hebt das Phone vom Grau ab). */
   .phone-screen {
     position: absolute;
     left: 2.83%;
@@ -225,51 +280,35 @@ function splitLine(line: string) {
     box-shadow: 0 28px 44px -14px rgb(59 59 58 / 0.32);
   }
 
-  /* ---- Schwebende Notifications: UM das Phone herum, über die Ränder ---- */
+  /* ---- Notification-Stapel: oben am Front-Phone, überlagert die Liste ----
+     Feste Slots im Fluss (flex column): Karten poppen per JS nacheinander in
+     ihre Position, kein Reflow. Leichter Überhang über den Rahmenrand (Tiefe). */
   .notif-stack {
     position: absolute;
-    inset: 0;
+    top: 5%;
+    left: -3%;
+    right: -3%;
     z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     pointer-events: none;
   }
   .notif {
-    position: absolute;
-    width: clamp(10.5rem, 66%, 14.5rem);
     border-radius: 1rem;
     background-color: color-mix(in srgb, var(--color-offwhite) 92%, transparent);
     border: 1px solid rgb(59 59 58 / 0.06);
     /* weiche, große Elevation mit niedriger Opacity */
-    box-shadow: 0 24px 50px -18px rgb(59 59 58 / 0.35);
+    box-shadow: 0 18px 40px -16px rgb(59 59 58 / 0.4);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    padding: 0.7rem 0.8rem;
+    padding: 0.6rem 0.7rem;
     color: var(--color-black);
     will-change: transform, opacity;
   }
-  /* verschiedene Anker rund ums Phone (über die Ränder ragend) */
-  .notif:nth-child(1) {
-    top: -4%;
-    left: -16%;
-  }
-  .notif:nth-child(2) {
-    top: 20%;
-    right: -18%;
-  }
-  .notif:nth-child(3) {
-    bottom: 9%;
-    left: -18%;
-  }
-  .notif:nth-child(4) {
-    top: 54%;
-    right: -12%;
-  }
-  .notif:nth-child(5) {
-    top: -2%;
-    right: -8%;
-  }
   .notif-icon {
-    height: 2.5rem;
-    width: 2.5rem;
+    height: 2.25rem;
+    width: 2.25rem;
     flex-shrink: 0;
     border-radius: 24%;
   }
@@ -278,7 +317,7 @@ function splitLine(line: string) {
     align-items: baseline;
     justify-content: space-between;
     gap: 0.5rem;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     line-height: 1.1;
   }
@@ -288,50 +327,25 @@ function splitLine(line: string) {
     opacity: 0.5;
   }
   .notif-body {
-    margin-top: 0.15rem;
-    font-size: 13px;
+    margin-top: 0.1rem;
+    font-size: 12.5px;
     line-height: 1.3;
   }
 
-  /* ---- Fallback: ohne JS / bei reduzierter Bewegung nur EINE Notification ---- */
-  .notif {
-    opacity: 0;
-  }
-  .notif:first-child {
-    opacity: 1;
-  }
-
-  /* ---- Anfangszustände NUR bei aktivem JS + erlaubter Bewegung verstecken.
-     Ohne JS / bei reduced-motion bleibt ALLES sofort in voller Größe sichtbar:
-     das Headline-Mask-Clipping wird nur hier aktiviert (sonst kein overflow). */
-  @media (prefers-reduced-motion: no-preference) {
-    html.js .line-mask {
-      overflow: hidden;
-      padding-block: 0.1em;
-      margin-block: -0.1em;
-    }
-    html.js .line-inner {
-      transform: translateY(110%);
-    }
-    html.js .mark-hl {
-      transform: scaleX(0);
-    }
-    html.js [data-hero-sub],
-    html.js [data-hero-trust] {
-      opacity: 0;
-    }
-    html.js .notif:first-child {
-      opacity: 0; /* im JS-Fall steuert die GSAP-Schleife alle Karten */
-    }
-  }
-
-  /* CD-Form + Notifications auf kleinen Screens zurücknehmen */
+  /* Mobile reduziert: engerer Cluster, kompakterer Stapel (nur 3 Karten sichtbar). */
   @media (max-width: 640px) {
-    .cd-shape {
-      inset: 8% -8% -6% -8%;
+    .phone--back-left {
+      transform: translate(-26%, 6%) rotate(-7deg) scale(0.86);
     }
-    .notif {
-      width: clamp(9rem, 60%, 12rem);
+    .phone--back-right {
+      transform: translate(25%, 8%) rotate(7deg) scale(0.85);
+    }
+    .notif-stack {
+      left: 0;
+      right: 0;
+    }
+    .notif:nth-child(4) {
+      display: none;
     }
   }
 </style>
