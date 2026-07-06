@@ -108,10 +108,12 @@ function initHeroReveal() {
  * die Werte hier MÜSSEN dazu passen.
  */
 const FAN_REST = {
-  // yPercent leicht negativ = hintere Phones etwas HÖHER (Unterkanten über der
-  // des Haupt-Phones) → liest sich als Tiefe (weiter hinten = höher).
-  left: { xPercent: -38, yPercent: -8, scale: 0.9 },
-  right: { xPercent: 38, yPercent: -6, scale: 0.88 },
+  // Exakt spiegelgleich: identischer yPercent (gleiche Höhe zueinander),
+  // identische Skalierung, symmetrischer Peek ±38. yPercent leicht negativ =
+  // hintere Phones etwas höher als das Haupt-Phone (Tiefe). MUSS zur CSS-Ruhelage
+  // in Hero.astro passen.
+  left: { xPercent: -38, yPercent: -7, scale: 0.9 },
+  right: { xPercent: 38, yPercent: -7, scale: 0.9 },
 } as const;
 
 function initPhoneCluster() {

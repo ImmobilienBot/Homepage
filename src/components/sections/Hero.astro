@@ -77,7 +77,7 @@ function splitLine(line: string) {
         }
       </h1>
 
-      <p class="mt-6 max-w-prose text-subhead" data-hero-sub>{t.hero.subline}</p>
+      <p class="hero-sub mt-6" data-hero-sub>{t.hero.subline}</p>
 
       <div class="mt-8" data-hero-cta>
         <StoreBadges position="hero" lang={lang} />
@@ -99,10 +99,8 @@ function splitLine(line: string) {
         {/* Sanftes gelbes Glühen hinter dem Cluster (statisch, warmer Fokus) */}
         <div class="phone-glow" aria-hidden="true"></div>
 
-        {/* Scroll-Choreografie-Ebene (rotate/scale/translate beim Scrollen) */}
+        {/* Scroll-Choreografie-Ebene (scale/translate beim Scrollen) — enthält alle 3 Phones */}
         <div data-phone-choreo class="phone-choreo relative w-full">
-          {/* Cluster-Ebene: Idle-Float + Maus-Tilt gelten für ALLE Phones als Gruppe */}
-          <div data-phone-fan class="phone-fan relative w-full">
             {/* Hinteres Phone links: Karte / Suchbereich zeichnen */}
             <div class="phone phone--back phone--back-left" data-phone-back data-fan="left">
               <Image
@@ -164,7 +162,6 @@ function splitLine(line: string) {
                 }
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -215,6 +212,17 @@ function splitLine(line: string) {
     z-index: 1;
   }
 
+  /* ---- Subline: bewusster Sekundär-Block (nicht Fließtext) ----
+     Etwas größer, luftige Zeilenhöhe, engere max-Breite (sauberer 2–3-Zeiler),
+     kräftiger Grauton — präsent, aber klar sekundär zur schwarzen Headline.
+     Gilt DE + EN (Text aus i18n). */
+  .hero-sub {
+    font-size: clamp(1.25rem, 1.8vw, 1.4rem);
+    line-height: 1.5;
+    max-width: 34rem;
+    color: rgb(59 59 58 / 0.8);
+  }
+
   /* ---- Trust-Reihe (klein, gedämpftes Grau, leicht letter-spaced) ---- */
   .trust-row {
     display: inline-flex;
@@ -222,7 +230,8 @@ function splitLine(line: string) {
     gap: 0.5rem;
     font-size: 0.8125rem; /* ~13px */
     letter-spacing: 0.03em;
-    color: rgb(59 59 58 / 0.55); /* gedämpftes CD-Schwarz-Grau */
+    /* WCAG AA: 0.78-Deckkraft ≈ #616160 auf #eaebeb ≈ 5,2:1 (vorher 0.55 ≈ 2,9:1). */
+    color: rgb(59 59 58 / 0.78);
   }
   .trust-star {
     color: var(--color-black); /* dunkel — gelb ging auf hellem Grau unter */
@@ -261,29 +270,25 @@ function splitLine(line: string) {
     perspective: 1200px;
   }
 
-  /* Sehr sanftes, großes gelbes Glühen hinter dem Cluster (statisch). Ersetzt den
-     harten Schlagschatten — warmer Fokus, hebt die Phones vom Netz ab. z-0 (hinter
-     den Phones, über dem Canvas/Grau). Deutlich größer als der Cluster. */
+  /* Großes, kräftiges gelbes Glühen hinter dem GESAMTEN 3-Phone-Cluster (statisch).
+     Ersetzt den harten Schlagschatten — warmer Fokus, hebt die Phones vom Netz ab.
+     z-0 (hinter den Phones, über dem Canvas/Grau). Deutlich größer als der Cluster,
+     damit es auch im Endzustand (alle 3 Phones) klar sichtbar bleibt. */
   .phone-glow {
     position: absolute;
     left: 50%;
-    top: 52%;
-    width: 160%;
-    height: 118%;
+    top: 50%;
+    width: 210%;
+    height: 140%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 70%);
-    filter: blur(60px);
-    opacity: 0.28;
+    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 72%);
+    filter: blur(70px);
+    opacity: 0.55;
     z-index: 0;
     pointer-events: none;
   }
-  /* Zwei verschachtelte 3D-Ebenen: außen Scroll-Choreografie, innen Maus-Tilt/Idle. */
+  /* Scroll-Choreografie-Ebene (scale/translate beim Scrollen) — umfasst alle 3 Phones. */
   .phone-choreo {
-    transform-style: preserve-3d;
-    will-change: transform;
-  }
-  .phone-fan {
-    transform-style: preserve-3d;
     will-change: transform;
   }
 
@@ -307,15 +312,15 @@ function splitLine(line: string) {
     will-change: transform;
   }
 
-  /* Ruhelage: hintere Phones AUFRECHT (keine Rotation), unten bündig (transform-
-     origin: bottom), schauen deutlich seitlich hervor — ein breiter Streifen des
-     Screenshots ist sichtbar. Fallback ohne JS = sofort korrekt; Werte spiegeln
-     REST in animations.ts. */
+  /* Ruhelage: hintere Phones AUFRECHT (Rotation 0), EXAKT spiegelgleich —
+     identischer vertikaler Versatz (-7%), identische Skalierung (0.9), symmetrischer
+     Peek ±38 %. transform-origin bottom → Unterkanten auf gleicher Höhe. Fallback
+     ohne JS = sofort korrekt; Werte spiegeln FAN_REST in animations.ts. */
   .phone--back-left {
-    transform: translate(-38%, -8%) scale(0.9);
+    transform: translate(-38%, -7%) scale(0.9);
   }
   .phone--back-right {
-    transform: translate(38%, -6%) scale(0.88);
+    transform: translate(38%, -7%) scale(0.9);
   }
 
   .phone-frame {
@@ -414,13 +419,13 @@ function splitLine(line: string) {
     line-height: 1.3;
   }
 
-  /* Mobile reduziert: engerer Cluster, kompakterer Stapel (nur 3 Karten sichtbar). */
+  /* Mobile reduziert: engerer Cluster (spiegelgleich), kompakterer Stapel (3 Karten). */
   @media (max-width: 640px) {
     .phone--back-left {
       transform: translateX(-30%) scale(0.9);
     }
     .phone--back-right {
-      transform: translateX(30%) scale(0.88);
+      transform: translateX(30%) scale(0.9);
     }
     .notif-stack {
       left: 0;

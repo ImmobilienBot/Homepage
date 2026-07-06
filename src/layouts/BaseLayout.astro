@@ -6,12 +6,15 @@
  * (Lenis + GSAP), die prefers-reduced-motion respektieren.
  */
 // Roboto (CD-Schrift) selbst gehostet via @fontsource — kein Google-Fonts-CDN
-// (garantiertes Laden + DSGVO-konform). Nur Latin-Subset (DE/EN), Gewichte
-// 400/500/700/900.
+// (garantiertes Laden + DSGVO-konform, KEIN render-blockender externer Request).
+// Nur Latin-Subset (DE/EN), Gewichte 400/500/700/900; font-display: swap.
 import '@fontsource/roboto/latin-400.css';
 import '@fontsource/roboto/latin-500.css';
 import '@fontsource/roboto/latin-700.css';
 import '@fontsource/roboto/latin-900.css';
+// Das für die Hero-Headline genutzte Gewicht (900/Black) preloaden → Font ist
+// vor dem First Paint da, der swap verursacht KEINEN Layout-Shift (Desktop-CLS ~0).
+import robotoBlackWoff2 from '@fontsource/roboto/files/roboto-latin-900-normal.woff2?url';
 import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
 import Header from '../components/sections/Header.astro';
@@ -39,6 +42,15 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+
+    {/* Roboto Black (Hero-Headline) früh preloaden → kein Font-Swap-Shift. */}
+    <link
+      rel="preload"
+      href={robotoBlackWoff2}
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
 
     {/* Markiert JS-Verfügbarkeit synchron (vor dem ersten Paint), damit
         Animations-Anfangszustände nur bei aktivem JS versteckt werden —

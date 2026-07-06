@@ -116,8 +116,8 @@
   sichtbar. Ring folgt verzögert, Punkt exakt (Ansteuerung in animations.ts).
 
   KEIN mix-blend-mode (erzeugte über Gelb Farb-Artefakte).
-  Ruhezustand: Ring = dünne Kontur in CD-Schwarz (#3b3b3a), Punkt in Grau
-  (#c0c0c1). Ring folgt leicht verzögert (quickTo ~0.15s), Punkt exakt.
+  Ruhezustand: Ring = dünne Kontur in CD-Schwarz (#3b3b3a), Punkt ebenfalls
+  in CD-Schwarz (#3b3b3a). Ring folgt leicht verzögert (quickTo ~0.15s), Punkt exakt.
   Hover (a/button/[data-cursor]): Ring wird zu einer durchsichtigen Invert-Lupe
   (~2×) — ohne Füllung, ohne Rand, ohne Punkt; backdrop-filter: invert(1)
   grayscale(1) invertiert Button/Text darunter neutral (auch über Gelb).
