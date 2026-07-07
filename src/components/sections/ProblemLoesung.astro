@@ -1,19 +1,18 @@
 ---
 /**
- * Problem → Lösung — cinematischer Dark-to-Light-Scroll (Storytelling-Bogen).
+ * Problem → Lösung — gepinnte Dark-to-Light-Scroll-Story.
  *
- * ZWEI eigenständige <section>-Elemente (#problem, #loesung) für SEO/Struktur.
- * Jeder Story-Beat + der Lösungs-Screen ist ein eigenes 100svh-Panel; sanftes
- * Einrasten NUR via CSS-Scroll-Snap (scroll-snap-type: y proximity) — KEIN
- * JS-Snapping, KEIN wheel/touch-preventDefault → volle Scroll-Kontrolle bleibt.
- *
- * Dunkel→Hell via fixe Overlay-Ebene, deren OPACITY gescrubbt wird: 0→1 (spät &
- * stark), halten, 1→0 (harter, schneller „Licht-an"-Cut + kurzer Weiß-Blitz).
+ * Die dunklen Beats liegen in EINEM gepinnten 100svh-Stage („mitte mitte"),
+ * absolut gestapelt; beim Scrollen wird per GSAP ScrollTrigger (pin + scrub,
+ * sauber über Lenis) durch die Beats GESCRUBBT — alter Beat blendet unscharf
+ * (Desktop) + transparent nach oben aus, neuer scharf von unten in die Mitte
+ * (Crossfade). Ein schlanker Fortschrittsbalken hängt am Scrub. Am Ende: harter
+ * „Licht-an"-Cut → Lösung. KEIN Scroll-Hijack (kein preventDefault), frei scrollbar.
  *
  * OBERSTES GEBOT (Guardrails): Ruhezustand = HELL. Ohne JS / prefers-reduced-
- * motion: Overlay-Opacity 0, kein Snap, kein Counter, kein Dimm-/Licht-Wechsel,
- * kein Blitz, keine Kette; alle Beats + Zahlen (ENDWERT) + Lösung + CTA sichtbar.
- * Snap/Cursor-Invert/Counter/Kette/Flash = reine JS-Zugabe (initProblemStory).
+ * motion sind die Beats einfach statisch UNTEREINANDER (voller Kontrast, Zahlen
+ * ENDWERT), die Lösung + CTA sichtbar — KEIN Pin/Scrub/Blur/Counter/Blitz/Kette.
+ * Die gepinnte Mechanik ist reine JS-Zugabe (animations.ts: initProblemStory).
  *
  * Genau EINE H1 bleibt im Hero; dieser Block nutzt H2. Fakten aus site.ts.
  */
@@ -27,7 +26,7 @@ const t = useTranslations(lang);
 const P = t.sections.problem;
 const S = t.sections.solution;
 
-/* --- Dunkle Beats: in Wort-Einheiten zerlegen; **…** = reine Zahl (gelb + Counter). --- */
+/* --- Beats in Wort-Einheiten zerlegen; **…** = reine Zahl (gelb + Counter). --- */
 type Unit = { text: string; em: boolean };
 function tokenize(src: string): Unit[] {
   let plain = '';
@@ -60,7 +59,6 @@ function splitEmphasis(src: string) {
 }
 const solSegs = splitEmphasis(solText);
 
-/* Headline mit gelbem Keyword-Marker. */
 function splitMark(line: string, keyword: string) {
   const idx = line.indexOf(keyword);
   if (idx < 0) return [{ text: line, mark: false }];
@@ -71,23 +69,25 @@ function splitMark(line: string, keyword: string) {
   ].filter((s) => s.mark || s.text.length > 0);
 }
 const headlineSegs = splitMark(S.headline, S.headlineMark);
+
+// Zahl als eigenes, zählbares Element rendern (Rest = Klartext).
+const LAMP_LINKS = 6; // gestapelte Kettenglieder → biegbare Welle
 ---
 
 <div class="story" data-story>
-  {/* Dunkle Overlay-Ebene (fixed): Opacity gescrubbt (0→1→0). Default 0. */}
+  {/* Fixe Overlay-Ebene (dimmen) + Weiß-Blitz (Licht-Cut). Default aus. */}
   <div class="story-overlay" data-story-overlay aria-hidden="true"></div>
-  {/* Weiß-Blitz für den „Licht-an"-Cut (EIN kurzer Impuls, kein Stroboskop). */}
   <div class="story-flash" data-story-flash aria-hidden="true"></div>
 
-  {/* ---- PROBLEM (dunkle 100svh-Panels) ---- */}
+  {/* ---- PROBLEM (gepinnte Beat-Story) ---- */}
   <section id="problem" class="story-sec story-dark">
     <h2 class="sr-only">{P.title}</h2>
 
-    <div class="beats" data-problem>
-      {
-        beatUnits.map((units, bi) => (
-          <div class="panel" data-panel-first={bi === 0 ? true : undefined}>
-            <div class="panel-inner">
+    <div class="pin-stage" data-pin-stage>
+      <div class="beat-track" data-problem>
+        {
+          beatUnits.map((units, bi) => (
+            <div class="beat-slide" data-beat>
               <p class="beat">
                 {units.map((u, i) => (
                   <>
@@ -101,7 +101,7 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
                         {u.text}
                       </span>
                     ) : (
-                      <span class="fill-word">{u.text}</span>
+                      u.text
                     )}
                   </>
                 ))}
@@ -115,56 +115,51 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
                   </a>
                 )}
               </p>
-
               {bi === 1 && (
                 <p class="beat-sub">
                   {subUnits.map((u, i) => (
-                    <>
-                      {i > 0 && ' '}
-                      <span class="fill-word">{u.text}</span>
-                    </>
+                    <>{i > 0 && ' '}{u.text}</>
                   ))}
                 </p>
               )}
             </div>
+          ))
+        }
 
-            {/* Dezenter Scroll-Cue am unteren Panel-Rand (hell auf dunkel). */}
-            <span class="scroll-cue scroll-cue--beat" aria-hidden="true">
-              <span class="scroll-cue-dot"></span>
-            </span>
-          </div>
-        ))
-      }
-
-      {/* Wendepunkt-Panel — alle Wörter weiß; unten die Lampenkette. */}
-      <div class="panel panel--turn">
-        <div class="panel-inner">
+        {/* Wendepunkt-Beat + Lampenkette */}
+        <div class="beat-slide beat-slide--turn" data-beat>
           <p class="beat beat-turn">
             {turnUnits.map((u, i) => (
-              <>
-                {i > 0 && ' '}
-                <span class="fill-word">{u.text}</span>
-              </>
+              <>{i > 0 && ' '}{u.text}</>
             ))}
           </p>
-        </div>
 
-        {/* Lampenkette (Licht-an) — nur mit JS+Motion sichtbar (CSS-gated).
-            Klick ODER Weiterscrollen schalten das Licht an. */}
-        <button class="lamp" data-lamp type="button" aria-label={S.lightOn}>
-          <span class="lamp-swing" aria-hidden="true">
-            <span class="lamp-cord"></span>
-            <span class="lamp-knob"><span class="lamp-glow"></span></span>
-          </span>
-          <span class="lamp-hint" aria-hidden="true">
-            {S.clickHint}<span class="lamp-hint-arrow">↓</span>
-          </span>
-        </button>
+          <button class="lamp" data-lamp type="button" aria-label={S.lightOn}>
+            <span class="lamp-chain" aria-hidden="true">
+              {
+                Array.from({ length: LAMP_LINKS }).map((_, i) => (
+                  <span class="lamp-link" style={`--i:${i}`}></span>
+                ))
+              }
+              <span class="lamp-knob" style={`--i:${LAMP_LINKS}`}>
+                <span class="lamp-glow"></span>
+              </span>
+            </span>
+            <span class="lamp-hint" aria-hidden="true">
+              {S.clickHint}<span class="lamp-hint-arrow">↓</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Fortschrittsbalken (nur JS+Motion, hängt am Scrub der gepinnten Story). */}
+      <div class="story-progress" data-progress aria-hidden="true">
+        <span class="story-progress-fill" data-progress-fill></span>
       </div>
     </div>
   </section>
 
-  {/* ---- LÖSUNG (Licht an, 100svh-Panel, zentriert) ---- */}
+  {/* ---- LÖSUNG (Licht an, 100svh, zentriert) ---- */}
   <section id="loesung" class="story-sec story-light">
     <div class="panel">
       <div class="panel-inner">
@@ -175,7 +170,6 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
             )
           }
         </h2>
-
         <p class="sol-text" data-sol-item>
           {
             solSegs.map((seg) =>
@@ -183,7 +177,6 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
             )
           }
         </p>
-
         <div class="sol-cta" data-sol-item>
           <StoreBadges position="loesung" lang={lang} />
           <span class="sol-cta-note">{t.cta.tryFree}</span>
@@ -197,18 +190,17 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
   /* ---- Bühne + Ebenen ---- */
   .story {
     position: relative;
-    background-color: var(--color-grey); /* #eaebeb — heller Ruhezustand */
+    background-color: var(--color-grey);
   }
   .story-overlay {
     position: fixed;
     inset: 0;
     z-index: 5;
-    background-color: var(--color-black); /* #3b3b3a */
+    background-color: var(--color-black);
     opacity: 0;
     pointer-events: none;
     will-change: opacity;
   }
-  /* Weiß-Blitz: über dem Story-Text (z-20), unter der Nav (z-40). Default aus. */
   .story-flash {
     position: fixed;
     inset: 0;
@@ -223,27 +215,23 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     z-index: 20;
   }
 
-  /* ---- 100svh-Panels + sanftes CSS-Scroll-Snap (proximity, kein Hijack) ---- */
-  .panel {
+  /* ---- Pin-Stage / Beats ----
+     DEFAULT (ohne JS / reduced-motion): normaler Fluss, Beats UNTEREINANDER,
+     voll sichtbar & lesbar. Kein Pin. */
+  .pin-stage {
     position: relative;
-    min-height: 100svh;
-    display: flex;
-    align-items: center; /* mitte-mitte */
-    justify-content: center;
-    padding-block: clamp(4rem, 10vh, 7rem);
+    padding-block: var(--spacing-section);
     padding-inline: var(--spacing-inset);
   }
-  .panel-inner {
-    width: 100%;
+  .beat-track {
     max-width: 52rem;
     margin-inline: auto;
-    text-align: center; /* Content horizontal + (via flex) vertikal zentriert */
+    text-align: center;
   }
-  /* KEIN CSS-Scroll-Snap: kollidiert mit Lenis (Totzone/„plopp"). Freie
-     Lenis-Scrollbewegung; jedes 100svh-Panel enthüllt seinen Inhalt beim
-     Eintritt (on-enter reveal in animations.ts), nicht scroll-gescrubbt. */
+  .beat-slide + .beat-slide {
+    margin-top: clamp(3rem, 10vh, 6rem);
+  }
 
-  /* ---- Beats (Roboto Black, zentriert, fluten Wort für Wort ein) ---- */
   .beat {
     font-size: clamp(1.9rem, 5.4vw, 3.6rem);
     font-weight: 900;
@@ -252,6 +240,7 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     text-wrap: balance;
     max-width: 22ch;
     margin-inline: auto;
+    color: var(--color-black); /* Default dunkel (lesbar auf hell) */
   }
   .beat-sub {
     margin: clamp(1rem, 2.5vw, 1.5rem) auto 0;
@@ -259,20 +248,14 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     font-weight: 400;
     line-height: 1.35;
     max-width: 36rem;
+    color: var(--color-black);
   }
   .beat-turn {
     font-size: clamp(2.1rem, 6vw, 4rem);
     max-width: 20ch;
   }
-
-  /* Reguläre Wörter: Default dunkel (lesbar auf hell). JS+Motion → flood auf WEISS. */
-  .fill-word {
-    color: var(--color-black);
-  }
-  /* Reine ZAHL: Default dunkel; JS+Motion → gelb + Counter. tabular-nums +
-     reservierte Breite (inline min-width) → kein CLS beim Hochzählen. */
   .fill-num {
-    color: var(--color-black);
+    color: var(--color-black); /* Default dunkel; JS+Motion → gelb (Counter) */
     font-weight: 900;
     display: inline-block;
     text-align: center;
@@ -287,92 +270,112 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     opacity: 0.7;
   }
 
-  /* Pre-Mute NUR bei JS + Motion. Ohne JS / reduced-motion → voller Kontrast. */
+  /* JS + Motion: gepinnter, absolut gestapelter Crossfade-Stage + weißer Text. */
   @media (prefers-reduced-motion: no-preference) {
-    html.js .story-dark .fill-word {
-      color: rgb(246 246 246 / 0.16);
+    html.js .pin-stage {
+      height: 100svh;
+      padding-block: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden; /* Blur-Bleed am Rand klippen */
+    }
+    html.js .beat-track {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    html.js .beat-slide {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-inline: var(--spacing-inset);
+      will-change: transform, opacity;
+    }
+    /* Vor GSAP-Init: nur der erste Beat sichtbar (kein Überlappungs-Blitz). */
+    html.js .beat-slide:not(:first-child) {
+      opacity: 0;
+    }
+    html.js .story-dark .beat,
+    html.js .story-dark .beat-sub {
+      color: var(--color-offwhite); /* #f6f6f6 auf Dunkel */
     }
     html.js .story-dark .fill-num {
       color: var(--color-yellow);
     }
   }
 
-  /* ---- Scroll-Cue („Maus"-Kontur mit gleitendem Punkt), unten im Beat-Panel ---- */
-  .scroll-cue--beat {
+  /* ---- Fortschrittsbalken (nur JS+Motion; hängt am Scrub) ---- */
+  .story-progress {
+    display: none;
     position: absolute;
-    left: 50%;
-    bottom: clamp(1.5rem, 4vh, 2.5rem);
-    transform: translateX(-50%);
-    display: block;
-    width: 20px;
-    height: 32px;
-    border: 2px solid var(--color-offwhite);
-    border-radius: 12px;
-    color: var(--color-offwhite);
-    opacity: 0.35;
+    right: clamp(10px, 2.5vw, 22px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: clamp(84px, 24vh, 190px);
+    border-radius: 999px;
+    background-color: rgb(246 246 246 / 0.2);
+    overflow: hidden;
+    opacity: 0; /* per JS ein-/ausgeblendet */
+    z-index: 22;
+    pointer-events: none;
   }
-  .scroll-cue-dot {
+  .story-progress-fill {
     position: absolute;
-    left: 50%;
-    top: 6px;
-    width: 4px;
-    height: 7px;
-    border-radius: 2px;
-    background-color: currentColor;
-    transform: translateX(-50%);
+    inset: 0;
+    display: block;
+    background-color: var(--color-yellow);
+    transform: scaleY(0);
+    transform-origin: top center;
   }
   @media (prefers-reduced-motion: no-preference) {
-    .scroll-cue-dot {
-      animation: cueDot 1.8s ease-in-out infinite;
+    html.js .story-progress {
+      display: block;
     }
   }
-  @keyframes cueDot {
-    0% { opacity: 0; transform: translate(-50%, 0); }
-    25% { opacity: 1; }
-    75% { opacity: 1; }
-    100% { opacity: 0; transform: translate(-50%, 10px); }
-  }
 
-  /* ---- Lampenkette (Licht-an-Trigger) ----
-     Nur mit JS + Motion sichtbar; ohne JS / reduced-motion ausgeblendet
-     (Lösung dort ohnehin statisch sichtbar → niemand hängt fest). */
+  /* ---- Lampenkette (Licht-an-Trigger) — nur JS+Motion sichtbar ---- */
   .lamp {
     display: none;
     position: absolute;
     left: 50%;
-    bottom: clamp(1.5rem, 5vh, 3.5rem);
+    bottom: clamp(1.5rem, 6vh, 4rem);
     transform: translateX(-50%);
     flex-direction: column;
     align-items: center;
     background: none;
     border: 0;
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
     cursor: pointer;
-    z-index: 21;
+    z-index: 23;
   }
-  .lamp-swing {
+  .lamp-chain {
     display: flex;
     flex-direction: column;
     align-items: center;
-    transform-origin: top center;
+    gap: 4px;
   }
-  .lamp-cord {
-    width: 2px;
-    height: clamp(36px, 8vw, 60px);
-    background-image: repeating-linear-gradient(
-      to bottom,
-      var(--color-grey-yellow) 0 4px,
-      transparent 4px 7px
-    );
+  .lamp-link {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background-color: var(--color-grey-yellow);
+    will-change: transform;
   }
   .lamp-knob {
     position: relative;
     width: 18px;
     height: 18px;
+    margin-top: 2px;
     border-radius: 9999px;
     background-color: var(--color-yellow);
+    will-change: transform;
   }
-  /* Dezenter, weicher Gelb-Schimmer um den Knauf (KEIN greller Leucht-Ball). */
   .lamp-glow {
     position: absolute;
     left: 50%;
@@ -385,7 +388,6 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     z-index: -1;
     opacity: 0.4;
   }
-  /* Mikro-Label „Klick" + Pfeil — gut lesbar (heller, leichter Schatten). */
   .lamp-hint {
     margin-top: 0.7rem;
     font-size: 0.72rem;
@@ -401,30 +403,31 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
   .lamp-hint-arrow {
     font-size: 0.9em;
   }
-  @media (prefers-reduced-motion: no-preference) {
-    html.js .lamp {
-      display: flex;
-    }
-    /* Periodischer vertikaler „Zupfer" (ziehen/klicken) statt Deko-Schaukeln. */
-    html.js .lamp-swing {
-      animation: lampTug 3s ease-in-out infinite;
-    }
-    /* Sehr dezenter Schimmer-Puls (klein). */
-    html.js .lamp-glow {
-      animation: lampGlowPulse 2.8s ease-in-out infinite;
-    }
-  }
   .lamp:focus-visible {
     outline: 2px solid var(--color-yellow);
     outline-offset: 4px;
     border-radius: 6px;
   }
-  /* „Zupfer": kurz nach unten ziehen, mit leichtem Überschwingen zurück. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .lamp {
+      display: flex;
+    }
+    /* Idle „Zupfer" als WELLE: jedes Glied gleiche Bewegung, nach unten gestaffelt
+       (animation-delay über --i) → die Kette biegt sich (nur transform). */
+    html.js .lamp-link,
+    html.js .lamp-knob {
+      animation: lampTug 3.2s ease-in-out infinite;
+      animation-delay: calc(var(--i) * 0.045s);
+    }
+    html.js .lamp-glow {
+      animation: lampGlowPulse 2.8s ease-in-out infinite;
+    }
+  }
   @keyframes lampTug {
-    0%, 62% { transform: translateY(0); }
-    72% { transform: translateY(8px); }
-    84% { transform: translateY(-2px); }
-    92% { transform: translateY(1px); }
+    0%, 58% { transform: translateY(0); }
+    70% { transform: translateY(6px); }
+    84% { transform: translateY(-1.5px); } /* Überschwingen zurück */
+    92% { transform: translateY(0.5px); }
     100% { transform: translateY(0); }
   }
   @keyframes lampGlowPulse {
@@ -432,7 +435,22 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     50% { opacity: 0.55; transform: translate(-50%, -50%) scale(1.12); }
   }
 
-  /* ---- Heller Lösungs-Teil (zentriert) ---- */
+  /* ---- Heller Lösungs-Teil (100svh, zentriert) ---- */
+  .panel {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: clamp(4rem, 10vh, 7rem);
+    padding-inline: var(--spacing-inset);
+  }
+  .panel-inner {
+    width: 100%;
+    max-width: 52rem;
+    margin-inline: auto;
+    text-align: center;
+  }
   .sol-headline {
     font-size: clamp(2rem, 5.5vw, 3.75rem);
     font-weight: 900;

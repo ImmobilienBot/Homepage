@@ -573,26 +573,23 @@ function initHeroScrollCue() {
 /**
  * Problem → Lösung: cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
  *
- * KEIN Scroll-Snap (kollidierte mit Lenis → Totzone/„plopp") und KEIN wheel/
- * touch-Hijack: freie Lenis-Scrollbewegung, 100svh-Panels enthüllen ihren Inhalt
- * beim EINTRITT (getriggert, nicht scroll-gescrubbt) → nichts blockiert sich.
- *  1a) DIM-IN (onEnter erstes Panel): Overlay 0→1 (zügig), hält dunkel; reverse
- *      erst beim Zurückscrollen über den Story-Anfang.
- *  1b) LICHT-AN (paused Timeline): HARTER, schneller Cut 1→0 (~140ms) + EIN kurzer
- *      Weiß-Blitz (kein Stroboskop); danach treten die Lösungs-Inhalte auf —
- *      VORHER komplett verborgen (gsap.set). Startet über ZWEI Wege zuverlässig:
- *      Scroll-Eintritt (ScrollTrigger) ODER Ketten-Klick (Timeline direkt) —
- *      KEINE gecachten Scroll-Pixel (das behebt den Klick-Bug).
- *  2) Text-Fill je Panel beim Eintritt: reguläre Beats fluten auf WEISS (reverse
- *     beim Zurückscrollen). Zahlen bleiben gelb (CSS). Farbe = Paint-Ausnahme.
- *  3) Zahlen-Counter: echte, belegte Statistik (KEIN Live-Zähler) — zählt EINMAL
- *     0 → Endwert und bleibt. tabular-nums + reservierte Breite → kein CLS.
- *  4) Lampenkette: Klick spielt die Licht-Timeline sofort + gleitet per Lenis
- *     aufs Lösungs-Panel; reines Weiterscrollen schaltet es ebenso. Ein Ziel.
+ * GEPINNTE Scroll-Story via GSAP ScrollTrigger (pin + scrub), sauber über Lenis
+ * (ScrollTrigger.update hängt an Lenis' scroll; KEIN wheel/touch-preventDefault,
+ * KEIN Auto-Jump — frei scrollbar):
+ *  - DIM-IN (onEnter #problem, vor dem Pin): Overlay 0→1; reverse nur nach oben.
+ *  - PIN+SCRUB: der 100svh-Stage wird gepinnt; beim Scrubben Crossfade zwischen
+ *    den absolut gestapelten Beats (alter Beat unscharf[Desktop]+transparent nach
+ *    oben, neuer scharf von unten). Fortschrittsbalken = Scrub-Progress.
+ *  - Zahlen-Counter: echte Statistik (KEIN Live-Zähler) — je Zahl EINMAL beim
+ *    Erreichen des Beats (tl.call + Latch), tabular-nums/feste Breite → kein CLS.
+ *  - LICHT-AN: HARTER, schneller Cut 1→0 (~140ms) + EIN Weiß-Blitz (kein
+ *    Stroboskop); Lösung vorher verborgen (gsap.set), erscheint erst danach.
+ *    Zwei Wege: Scroll bis Lösungs-Panel ODER Ketten-Klick (Zustand direkt,
+ *    KEINE gecachten Pixel → Klick-Bug bleibt behoben).
  *
  * Guardrail: läuft NUR im (prefers-reduced-motion:no-preference)-Block. Bei
- * reduced-motion / ohne JS: Overlay 0 (hell), Text volle Farbe, Zahlen Endwert,
- * Lösung sichtbar, keine Kette/kein Counter/kein Blitz, kein Snap.
+ * reduced-motion / ohne JS: kein Pin/Scrub/Blur, Beats statisch untereinander,
+ * Overlay 0 (hell), Zahlen Endwert, Lösung sichtbar, keine Kette/kein Blitz.
  */
 function initProblemStory(lenis: Lenis) {
   const story = document.querySelector<HTMLElement>('[data-story]');
@@ -600,40 +597,47 @@ function initProblemStory(lenis: Lenis) {
   const flash = document.querySelector<HTMLElement>('[data-story-flash]');
   if (!story || !overlay) return;
 
-  const firstPanel = document.querySelector<HTMLElement>('#problem [data-panel-first]');
+  const pinStage = document.querySelector<HTMLElement>('[data-pin-stage]');
+  const beats = gsap.utils.toArray<HTMLElement>('#problem [data-beat]');
+  const progress = document.querySelector<HTMLElement>('[data-progress]');
+  const progressFill = document.querySelector<HTMLElement>('[data-progress-fill]');
   const solPanel = document.querySelector<HTMLElement>('#loesung');
   const solItems = gsap.utils.toArray<HTMLElement>('#loesung [data-sol-item]');
 
   // Lösung vor dem Licht-an komplett verbergen (kein Durchscheinen auf Dunkel).
   if (solItems.length) gsap.set(solItems, { autoAlpha: 0, y: 24 });
 
-  // Zustandsgesteuert per diskreter Tweens (overwrite:'auto' → jeder Übergang
-  // killt den vorherigen; keine zwei Timelines konkurrieren um dieselbe Opacity).
-  // Latches verhindern Mehrfach-Feuern. Nur transform/opacity.
-  let darkOn = false;
-  let lightOn = false;
+  const nf = new Intl.NumberFormat(
+    document.documentElement.lang === 'en' ? 'en-US' : 'de-DE',
+  );
+  // Blur (ausscrollender Beat) NUR Desktop/pointer:fine — sonst nur opacity/transform.
+  const canBlur = window.matchMedia('(pointer: fine)').matches;
 
-  // 1a) DIM-IN beim Eintritt ins erste Panel: Overlay 0→1 (zügig), hält dunkel.
-  //     Reverse nur beim Zurückscrollen über den Story-Anfang → Hero wieder hell.
-  const turnDark = () => {
-    if (darkOn) return;
-    darkOn = true;
-    gsap.to(overlay, { opacity: 1, duration: 0.5, ease: 'power2.in', overwrite: 'auto' });
-  };
-  const undimAtStart = () => {
-    if (!darkOn) return;
-    darkOn = false;
-    gsap.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
-  };
-  if (firstPanel) {
-    ScrollTrigger.create({
-      trigger: firstPanel,
-      start: 'top 68%',
-      onEnter: turnDark,
-      onEnterBack: turnDark, // wieder nach unten reinscrollen → dunkel bleibt
-      onLeaveBack: undimAtStart,
+  // Zahlen initial auf 0 (Beats sind beim Laden unter dem Falz → kein Flash).
+  gsap.utils.toArray<HTMLElement>('#problem .fill-num').forEach((el) => {
+    el.textContent = nf.format(0);
+  });
+  // Counter läuft je Zahl EINMAL (Latch via dataset), wenn der Beat eintrifft.
+  const fireCounters = (beatEl: HTMLElement) => {
+    beatEl.querySelectorAll<HTMLElement>('.fill-num').forEach((el) => {
+      if (el.dataset.counted) return;
+      el.dataset.counted = '1';
+      const target = parseInt(el.dataset.countTo || '0', 10);
+      if (!target) return;
+      const proxy = { v: 0 };
+      gsap.to(proxy, {
+        v: target,
+        duration: 1.1,
+        ease: 'power2.out',
+        onUpdate: () => {
+          el.textContent = nf.format(Math.round(proxy.v));
+        },
+        onComplete: () => {
+          el.textContent = nf.format(target);
+        },
+      });
     });
-  }
+  };
 
   // Weiß-Blitz: GENAU EIN kurzer Hell-Impuls beim Licht-an (kein Stroboskop).
   let flashed = false;
@@ -645,16 +649,43 @@ function initProblemStory(lenis: Lenis) {
       .to(flash, { opacity: 0.6, duration: 0.06, ease: 'power1.out' })
       .to(flash, { opacity: 0, duration: 0.18, ease: 'power1.in' });
   };
+  const showProgress = (on: boolean) => {
+    if (progress) gsap.to(progress, { opacity: on ? 1 : 0, duration: 0.3, overwrite: 'auto' });
+  };
 
-  // 1b) LICHT-AN: HARTER, schneller Cut 1→0 (~140ms, Schalter) + Blitz; danach
-  //     treten die Lösungs-Inhalte auf (vorher via gsap.set verborgen). Startet
-  //     über ZWEI Wege zuverlässig — Scroll-Eintritt ODER Ketten-Klick (direkt);
-  //     KEINE gecachten Scroll-Pixel (das behebt den Klick-Bug).
+  // Zustandsgesteuerte Overlay-Übergänge (overwrite:'auto', Latches).
+  let darkOn = false;
+  let lightOn = false;
+
+  // DIM: dunkel beim Eintritt in die Story (vor dem Pin); reverse nur nach oben raus.
+  const turnDark = () => {
+    if (darkOn) return;
+    darkOn = true;
+    gsap.to(overlay, { opacity: 1, duration: 0.5, ease: 'power2.in', overwrite: 'auto' });
+    showProgress(true);
+  };
+  const undimAtStart = () => {
+    if (!darkOn) return;
+    darkOn = false;
+    gsap.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
+    showProgress(false);
+  };
+  ScrollTrigger.create({
+    trigger: '#problem',
+    start: 'top 70%',
+    onEnter: turnDark,
+    onEnterBack: turnDark,
+    onLeaveBack: undimAtStart,
+  });
+
+  // LICHT-AN: HARTER, schneller Cut (~140ms) + Blitz; danach Lösung auf. Startet
+  // zuverlässig über ZWEI Wege — Scroll bis Lösungs-Panel ODER Ketten-Klick.
   const turnOnLight = () => {
     if (lightOn) return;
     lightOn = true;
     doFlash();
     gsap.to(overlay, { opacity: 0, duration: 0.14, ease: 'power2.in', overwrite: 'auto' });
+    showProgress(false);
     if (solItems.length) {
       gsap.to(solItems, {
         autoAlpha: 1,
@@ -670,6 +701,7 @@ function initProblemStory(lenis: Lenis) {
     if (!lightOn) return;
     lightOn = false;
     gsap.to(overlay, { opacity: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
+    showProgress(true);
     if (solItems.length) {
       gsap.to(solItems, { autoAlpha: 0, y: 24, duration: 0.2, overwrite: 'auto' });
     }
@@ -679,59 +711,68 @@ function initProblemStory(lenis: Lenis) {
       trigger: solPanel,
       start: 'top 55%',
       onEnter: turnOnLight,
-      onLeaveBack: turnOffLight, // zurückscrollen → wieder dunkel/verborgen
+      onLeaveBack: turnOffLight,
     });
   }
 
-  // 2) Text-Fill je Panel beim EINTRITT (nicht gescrubbt): reguläre Wörter fluten
-  //    dunkel → weiß; reverse beim Zurückscrollen. Zahlen bleiben gelb (Counter).
-  gsap.utils.toArray<HTMLElement>('#problem .panel').forEach((panel) => {
-    const words = gsap.utils.toArray<HTMLElement>('.fill-word', panel);
-    if (!words.length) return;
-    gsap.fromTo(
-      words,
-      { color: 'rgb(246 246 246 / 0.16)' },
-      {
-        color: '#f6f6f6',
-        duration: 0.8,
-        ease: 'power1.out',
-        stagger: 0.06,
-        scrollTrigger: { trigger: panel, start: 'top 62%', toggleActions: 'play none none reverse' },
-      },
-    );
-  });
+  // PIN + SCRUB: gepinnte Beat-Story. Die Beats liegen absolut gestapelt in der
+  // Mitte; beim Scrubben blendet der alte Beat unscharf (Desktop) + transparent
+  // nach oben aus, der neue scharf von unten herein (Crossfade „mitte mitte").
+  // Sauber über Lenis (ScrollTrigger.update hängt an Lenis' scroll). Kein Hijack.
+  if (pinStage && beats.length > 1) {
+    gsap.set(beats[0], { autoAlpha: 1, yPercent: 0 });
+    if (canBlur) gsap.set(beats, { filter: 'blur(0px)' });
 
-  // 3) Zahlen-Counter: 0 → Endwert (einmal, echte Statistik). Format nach Sprache.
-  const nf = new Intl.NumberFormat(
-    document.documentElement.lang === 'en' ? 'en-US' : 'de-DE',
-  );
-  gsap.utils.toArray<HTMLElement>('#problem .fill-num').forEach((el) => {
-    const target = parseInt(el.dataset.countTo || '0', 10);
-    if (!target) return;
-    el.textContent = nf.format(0);
-    const proxy = { v: 0 };
-    gsap.to(proxy, {
-      v: target,
-      duration: 1.1,
-      ease: 'power2.out',
-      onUpdate: () => {
-        el.textContent = nf.format(Math.round(proxy.v));
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: pinStage,
+        start: 'top top',
+        end: () => '+=' + Math.round(window.innerHeight * (beats.length + 0.5)),
+        pin: true,
+        scrub: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          if (progressFill) gsap.set(progressFill, { scaleY: self.progress });
+        },
       },
-      onComplete: () => {
-        el.textContent = nf.format(target);
-      },
-      scrollTrigger: { trigger: el, start: 'top 62%', once: true },
     });
-  });
 
-  // 4) Lampenkette: Klick schaltet das Licht SOFORT an (Timeline direkt spielen —
-  //    kein Warten auf Scroll, keine gecachten Pixel) UND gleitet per Lenis aufs
-  //    Lösungs-Panel. Reines Weiterscrollen löst dasselbe via ScrollTrigger aus.
+    tl.call(fireCounters, [beats[0]], 0.05);
+    let pos = 0.8;
+    for (let i = 1; i < beats.length; i++) {
+      const prev = beats[i - 1];
+      const cur = beats[i];
+      tl.to(
+        prev,
+        {
+          autoAlpha: 0,
+          yPercent: -12,
+          ...(canBlur ? { filter: 'blur(6px)' } : {}),
+          duration: 0.5,
+          ease: 'power1.in',
+        },
+        pos,
+      );
+      tl.fromTo(
+        cur,
+        { autoAlpha: 0, yPercent: 12 },
+        { autoAlpha: 1, yPercent: 0, duration: 0.5, ease: 'power1.out' },
+        pos,
+      );
+      tl.call(fireCounters, [cur], pos + 0.3);
+      pos += 1.5;
+    }
+    tl.to({}, { duration: 0.8 }); // Auslauf-Dwell für den letzten Beat (Kette)
+  }
+
+  // Kette: Klick schaltet das Licht SOFORT an (Timeline-Zustand direkt) und
+  // gleitet per Lenis aufs Lösungs-Panel (Position frisch gelesen). Reines
+  // Weiterscrollen bis ans Ende der Story löst dasselbe via ScrollTrigger aus.
   const lamp = document.querySelector<HTMLElement>('[data-lamp]');
   if (lamp && solPanel) {
     lamp.addEventListener('click', () => {
       turnOnLight();
-      lenis.scrollTo(solPanel, { offset: -40, duration: 0.7 });
+      lenis.scrollTo(solPanel, { offset: -40, duration: 0.8 });
     });
   }
 }
