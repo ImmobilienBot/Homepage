@@ -132,16 +132,29 @@ function initPhoneCluster() {
   const front = document.querySelector<HTMLElement>('#hero [data-phone-front]');
   const backs = gsap.utils.toArray<HTMLElement>('#hero [data-phone-back]');
 
-  // a) Haupt-Phone zuerst: Fade + Scale von leicht klein/transparent auf voll.
+  // a) Haupt-Phone zuerst: Auftritt von leicht transparent auf voll.
   //    (Start um HERO_START_DELAY verzögert — kurze Ruhe am Anfang.)
+  //    Desktop: Fade + Scale (unverändert). Mobile: dezenter Rise von +24px
+  //    (ohne Scale) — Teil der komponierten Mobile-Auftritts-Sequenz
+  //    (Headline → Marker → Phone-Rise → Notification).
   if (front) {
-    gsap.from(front, {
-      autoAlpha: 0,
-      scale: 0.9,
-      duration: 0.7,
-      ease: 'power3.out',
-      delay: HERO_START_DELAY,
-    });
+    if (isDesktopHero) {
+      gsap.from(front, {
+        autoAlpha: 0,
+        scale: 0.9,
+        duration: 0.7,
+        ease: 'power3.out',
+        delay: HERO_START_DELAY,
+      });
+    } else {
+      gsap.from(front, {
+        autoAlpha: 0,
+        y: 24,
+        duration: 0.6,
+        ease: 'power3.out',
+        delay: HERO_START_DELAY,
+      });
+    }
   }
 
   // b) Danach hintere Phones aufrecht seitlich hervorfahren (gestaffelt).

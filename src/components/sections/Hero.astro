@@ -448,9 +448,10 @@ function splitLine(line: string) {
       display: flex;
       flex-direction: column;
       min-height: 100svh;
-      /* py-section (riesig) mobil ersetzen: oben Platz für die sticky Nav,
-         unten 0, damit das Phone bis an die Viewport-Kante angeschnitten wird. */
-      padding-block: 5.5rem 0;
+      /* Header ist position:sticky → reserviert seine Höhe bereits im Flow.
+         Daher nur ein kleiner Abstand (~24px) zwischen Header und H1 statt
+         großem Padding. Unten 0 → Phone bleibt an der Viewport-Kante angeschnitten. */
+      padding-block: 1.5rem 0;
     }
 
     /* Grid → Flex-Spalte in Quell-Reihenfolge (Text-Block → Phone). */
@@ -507,8 +508,11 @@ function splitLine(line: string) {
       transform: translateX(-50%);
     }
 
-    /* Nur EINE Notification (echter iOS-Push oben am Screen), volle Breite. */
+    /* Nur EINE Notification (echter iOS-Push oben am Screen), volle Breite.
+       ~11% unter der Oberkante → authentischer iOS-Banner-Abstand, klar unter
+       der Notch (statt der 5%-Desktop-Ruhelage, die zu hoch klebte). */
     .notif-stack {
+      top: 11%;
       left: 0;
       right: 0;
     }
@@ -516,12 +520,36 @@ function splitLine(line: string) {
       display: none;
     }
 
-    /* Weiches gelbes Glow etwas kompakter/ruhiger hinter dem einen Phone. */
+    /* Weiches gelbes Glow etwas kompakter/ruhiger hinter dem einen Phone.
+       Dezentes, langsames „Atmen" (leichtere Variante der Desktop-Aurora):
+       kleine translate+scale+opacity-Amplitude, ~9s ease-in-out-Loop.
+       Nur transform/opacity (composited), kein Layout. Basis-Transform
+       (Zentrierung) bleibt in den Keyframes erhalten. */
     .phone-glow {
       width: 175%;
       height: 120%;
       opacity: 0.6;
       filter: blur(60px);
+      animation: heroGlowBreath 9s ease-in-out infinite;
+    }
+  }
+
+  @keyframes heroGlowBreath {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.55;
+    }
+    50% {
+      transform: translate(-50%, -53%) scale(1.07);
+      opacity: 0.7;
+    }
+  }
+
+  /* Ruhezustand bei prefers-reduced-motion: kein Loop, Glow statisch sichtbar. */
+  @media (max-width: 767.98px) and (prefers-reduced-motion: reduce) {
+    .phone-glow {
+      animation: none;
     }
   }
 </style>
