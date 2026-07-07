@@ -455,14 +455,15 @@ function splitLine(line: string) {
     }
 
     /* Grid → Flex-Spalte in Quell-Reihenfolge (Text-Block → Phone).
-       gap = Rhythmus Trust-Zeile → Phone (~28px, Teil des 8px-Systems). */
+       gap = Rhythmus Trust-Zeile → Phone (~36px) — etwas mehr Luft, damit die
+       obere Copy atmet, jetzt wo das Phone schlanker steht. */
     .hero-grid {
       display: flex;
       flex-direction: column;
       align-items: stretch;
       width: 100%;
       flex: 1;
-      gap: 1.75rem;
+      gap: 2.25rem;
     }
 
     /* ---- Text-Block: kompakterer 8px-Rhythmus, damit Badges + Trust
@@ -501,19 +502,18 @@ function splitLine(line: string) {
       flex: 1 1 0;
       min-height: 30svh;
     }
-    /* Phone als mittige „Bühne": VOLLE Content-Breite (Viewport − 2× Einschub),
-       zentriert → Seitenkanten fluchten exakt mit der linken/rechten Copy-Kante.
-       Groß & dominant, „Produkt vorn". top:0 → Abstand zur Trust-Zeile kommt
-       ausschließlich aus dem .hero-grid gap (sauberer, einzelner Knopf). */
+    /* Phone als mittige, SCHLANKERE „Bühne": ~82–83% der Content-Breite (statt
+       voll) → sichtbare Luft an den Seiten, ruhiger/premiumiger. Weiterhin
+       zentriert. top:0 → Abstand zur Trust-Zeile kommt aus dem .hero-grid gap. */
     .phone-stage {
       position: absolute;
       left: 50%;
       top: 0;
-      width: 100%;
+      width: clamp(220px, 72vw, 300px);
       transform: translateX(-50%);
     }
 
-    /* Nur EINE Notification (echter iOS-Push oben am Screen), volle Breite.
+    /* Nur EINE reale Notification (echter iOS-Push oben am Screen), volle Breite.
        ~11% unter der Oberkante → authentischer iOS-Banner-Abstand, klar unter
        der Notch (statt der 5%-Desktop-Ruhelage, die zu hoch klebte). */
     .notif-stack {
@@ -524,18 +524,55 @@ function splitLine(line: string) {
     .notif:not(:first-child) {
       display: none;
     }
+    /* B2 FEED-HINT: rein dekorative zweite Karte HINTER der realen (iOS-Gruppen-
+       Push). Als ::after-Pseudo → kein Markup/keine Semantik (nicht im a11y-Tree),
+       verändert Heading-Struktur nicht. Minimal schmaler (5% je Seite) + nach unten
+       versetzt → nur die abgedunkelte Unterkante lugt hervor. Bewegt sich mit der
+       realen Karte mit (ein Layer). B1 (strikt reduziert): diesen Block entfernen. */
+    .notif:first-child {
+      position: relative;
+    }
+    .notif:first-child::after {
+      content: '';
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      top: 9px;
+      bottom: -9px;
+      z-index: -1; /* hinter .notif-inner, über dem Phone-Screen */
+      border-radius: 0.85rem;
+      background-color: var(--color-darkgrey);
+      box-shadow: 0 10px 24px -14px rgb(59 59 58 / 0.35);
+    }
 
-    /* Weiches gelbes Glow etwas kompakter/ruhiger hinter dem einen Phone.
-       Dezentes, langsames „Atmen" (leichtere Variante der Desktop-Aurora):
-       kleine translate+scale+opacity-Amplitude, ~9s ease-in-out-Loop.
-       Nur transform/opacity (composited), kein Layout. Basis-Transform
-       (Zentrierung) bleibt in den Keyframes erhalten. */
+    /* Breites, weiches gelbes Aurora-Glow hinter dem schlankeren Phone: größerer
+       Radius + stärkerer Blur, niedrige Opacity → hellt das Grau spürbar auf und
+       trägt das Phone, ohne hart zu werden. Dezentes „Atmen" (~9s ease-in-out).
+       Nur transform/opacity (composited); Basis-Zentrierung in den Keyframes. */
     .phone-glow {
-      width: 200%;
-      height: 130%;
+      width: 240%;
+      height: 150%;
       opacity: 0.55;
-      filter: blur(80px);
+      filter: blur(90px);
       animation: heroGlowBreath 9s ease-in-out infinite;
+    }
+
+    /* „Lebendiger" Ruhezustand: das Phone (nur die Phone-Ebene, NICHT das Glow)
+       schwebt sehr dezent vertikal — ±5px, ~5.5s ease-in-out, phasenverschoben
+       zum 9s-Glow-Atmen. Nur transform, kein Layout/CLS. Auf Mobile hat
+       .phone-choreo sonst keinen Transform (Desktop-Parallax ist pointer:fine). */
+    .phone-choreo {
+      animation: heroPhoneFloat 5.5s ease-in-out infinite;
+    }
+  }
+
+  @keyframes heroPhoneFloat {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
     }
   }
 
@@ -551,9 +588,11 @@ function splitLine(line: string) {
     }
   }
 
-  /* Ruhezustand bei prefers-reduced-motion: kein Loop, Glow statisch sichtbar. */
+  /* Ruhezustand bei prefers-reduced-motion: keine Loops (Glow-Atmen UND
+     Phone-Schweben aus), alles statisch im Endzustand sichtbar. */
   @media (max-width: 767.98px) and (prefers-reduced-motion: reduce) {
-    .phone-glow {
+    .phone-glow,
+    .phone-choreo {
       animation: none;
     }
   }
