@@ -1,0 +1,308 @@
+---
+/**
+ * Problem → Lösung — cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
+ *
+ * ZWEI eigenständige <section>-Elemente (#problem, #loesung) für SEO/Struktur,
+ * nur VISUELL verbunden durch eine gemeinsame dunkle Overlay-Ebene, deren
+ * OPACITY gescrubbt wird (0→1 = dunkel rein · halten · 1→0 = „Licht an").
+ *
+ * OBERSTES GEBOT (Guardrails): Ruhezustand = HELL. Ohne JS / bei
+ * prefers-reduced-motion ist die Overlay-Opacity 0 (heller CD-Hintergrund),
+ * aller Text steht in voller, lesbarer Farbe da, die Lösung inkl. CTA ist
+ * sichtbar. Der Dunkel-Tunnel + Flutung sind reine JS-Zugabe (animations.ts:
+ * initProblemStory), nur Opacity/Transform (Farb-Flutung auf Text = etablierte
+ * Signature-Ausnahme). Kein Pin → kein CLS; reines Scrubbing.
+ *
+ * Genau EINE H1 bleibt im Hero; dieser Block nutzt H2 (Problem sr-only, Lösung
+ * sichtbar) + H3-freie Beats. Fakten (Portalzahl) aus site.ts.
+ */
+import StoreBadges from '../StoreBadges.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { portalCountRounded } from '../../data/site';
+import type { Locale } from '../../data/site';
+
+const lang: Locale = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const P = t.sections.problem;
+const S = t.sections.solution;
+
+/* --- Dunkle Beats: in Wort-Einheiten zerlegen; **…** = Emphasis (gelb). --- */
+type Unit = { text: string; em: boolean };
+function tokenize(src: string): Unit[] {
+  let plain = '';
+  const ranges: Array<[number, number]> = [];
+  src.split('**').forEach((part, i) => {
+    const start = plain.length;
+    plain += part;
+    if (i % 2 === 1) ranges.push([start, plain.length]);
+  });
+  const units: Unit[] = [];
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(plain)) !== null) {
+    const s = m.index;
+    const e = s + m[0].length;
+    const em = ranges.some(([rs, reEnd]) => s < reEnd && e > rs);
+    units.push({ text: m[0], em });
+  }
+  return units;
+}
+
+const beatUnits = P.beats.map((b) => tokenize(b));
+const subUnits = tokenize(P.beat2Sub);
+const turnUnits = tokenize(P.turn);
+
+/* --- Heller Lösungs-Teil: **…** → gelber Marker (Phrase, statisch, dunkler
+   Text auf Gelb). Kein Fill-Word → nicht mitgeflutet. --- */
+const solText = S.text.replace('{n}', String(portalCountRounded));
+function splitEmphasis(src: string) {
+  return src.split('**').map((seg, i) => ({ text: seg, mark: i % 2 === 1 }));
+}
+const solSegs = splitEmphasis(solText);
+
+/* Headline mit gelbem Keyword-Marker. */
+function splitMark(line: string, keyword: string) {
+  const idx = line.indexOf(keyword);
+  if (idx < 0) return [{ text: line, mark: false }];
+  return [
+    { text: line.slice(0, idx), mark: false },
+    { text: keyword, mark: true },
+    { text: line.slice(idx + keyword.length), mark: false },
+  ].filter((s) => s.mark || s.text.length > 0);
+}
+const headlineSegs = splitMark(S.headline, S.headlineMark);
+---
+
+<div class="story" data-story>
+  {/* Dunkle Overlay-Ebene: Opacity per ScrollTrigger gescrubbt (0→1→0).
+      Default 0 → ohne JS/reduced-motion bleibt der Block hell. */}
+  <div class="story-overlay" data-story-overlay aria-hidden="true"></div>
+
+  {/* ---- PROBLEM (dunkler Tunnel) ---- */}
+  <section id="problem" class="story-sec story-dark">
+    <div class="story-inner">
+      <h2 class="sr-only">{P.title}</h2>
+
+      <div class="beats" data-problem>
+        {
+          beatUnits.map((units, bi) => (
+            <>
+              <p class="beat">
+                {units.map((u, i) => (
+                  <>
+                    {i > 0 && ' '}
+                    {u.em ? (
+                      <span class="fill-word fill-word--em">
+                        <span class="em-mark" aria-hidden="true" />
+                        <span class="em-text">{u.text}</span>
+                      </span>
+                    ) : (
+                      <span class="fill-word">{u.text}</span>
+                    )}
+                  </>
+                ))}
+              </p>
+              {bi === 1 && (
+                <p class="beat-sub">
+                  {subUnits.map((u, i) => (
+                    <>
+                      {i > 0 && ' '}
+                      <span class="fill-word">{u.text}</span>
+                    </>
+                  ))}
+                </p>
+              )}
+            </>
+          ))
+        }
+
+        {/* Wendepunkt */}
+        <p class="beat beat-turn">
+          {turnUnits.map((u, i) => (
+            <>
+              {i > 0 && ' '}
+              {u.em ? (
+                <span class="fill-word fill-word--em">
+                  <span class="em-mark" aria-hidden="true" />
+                  <span class="em-text">{u.text}</span>
+                </span>
+              ) : (
+                <span class="fill-word">{u.text}</span>
+              )}
+            </>
+          ))}
+        </p>
+      </div>
+
+      <p class="source">
+        <span class="fill-word">{P.source}</span>
+        {/* TODO: Quelle verlinken (Berliner Zeitung) */}
+      </p>
+    </div>
+  </section>
+
+  {/* ---- LÖSUNG (Licht an) ---- */}
+  <section id="loesung" class="story-sec story-light">
+    <div class="story-inner">
+      <h2 class="sol-headline" data-sol-item>
+        {
+          headlineSegs.map((seg) =>
+            seg.mark ? <span class="mark">{seg.text}</span> : <span>{seg.text}</span>,
+          )
+        }
+      </h2>
+
+      <p class="sol-text" data-sol-item>
+        {
+          solSegs.map((seg) =>
+            seg.mark ? <span class="mark">{seg.text}</span> : <span>{seg.text}</span>,
+          )
+        }
+      </p>
+
+      <div class="sol-cta" data-sol-item>
+        <StoreBadges position="loesung" lang={lang} />
+        <span class="sol-cta-note">{t.cta.tryFree}</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  /* ---- Bühne: Wrapper trägt die Overlay-Ebene; Default HELL (CD-Grau). ---- */
+  .story {
+    position: relative;
+    background-color: var(--color-grey); /* #eaebeb — heller Ruhezustand */
+  }
+  .story-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-color: var(--color-black); /* #3b3b3a */
+    opacity: 0; /* Default: aus → ohne JS/reduced-motion bleibt es hell */
+    pointer-events: none;
+    will-change: opacity;
+  }
+  /* Inhalt IMMER über der Overlay-Ebene. */
+  .story-sec {
+    position: relative;
+    z-index: 2;
+    padding-block: var(--spacing-section);
+  }
+  .story-inner {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 72rem;
+    padding-inline: var(--spacing-inset);
+  }
+
+  /* Dunkler Teil: als kurzer, kontrollierter „Tunnel" (kein endloser Pin). */
+  .story-dark {
+    min-height: 88svh;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ---- Beats (Roboto Black, fluten Wort für Wort ein) ---- */
+  .beat {
+    font-size: clamp(1.9rem, 5.2vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  .beat + .beat,
+  .beat-turn {
+    margin-top: clamp(1.25rem, 3.5vw, 2.25rem);
+  }
+  .beat-sub {
+    margin-top: clamp(0.75rem, 2vw, 1.15rem);
+    font-size: clamp(1rem, 2.4vw, 1.4rem);
+    font-weight: 400;
+    line-height: 1.3;
+    max-width: 34rem;
+  }
+  .beat-turn {
+    margin-top: clamp(2rem, 6vw, 3.5rem);
+  }
+  .source {
+    margin-top: clamp(1.5rem, 4vw, 2.5rem);
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* Fill-Word: Default = volle CD-Farbe (dunkel auf hell) → ohne JS /
+     reduced-motion sofort lesbar. Bei aktivem JS + Motion floodet die
+     Scrub-Timeline von „kaum sichtbar" auf hell (#f6f6f6). */
+  .fill-word {
+    color: var(--color-black);
+  }
+  .fill-word--em {
+    position: relative;
+    white-space: nowrap;
+  }
+  .em-mark {
+    position: absolute;
+    inset: 0.06em -0.08em 0.04em -0.08em;
+    background-color: var(--color-yellow);
+    border-radius: 0.1em;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .em-text {
+    position: relative;
+    z-index: 1;
+    /* Zahl sitzt IMMER dunkel auf dem gelben Marker (auch im Dunkel-Modus,
+       wo die übrigen Wörter hell fluten) → maximaler Kontrast, „leuchtet". */
+    color: var(--color-black);
+  }
+  .source .fill-word {
+    opacity: 0.75;
+  }
+
+  /* Pre-Mute NUR bei aktivem JS + erlaubter Bewegung: dunkle Beats starten
+     „kaum sichtbar" (heller-Ton, niedrige Deckkraft) für die Flutung; Marker
+     eingeklappt. Ohne JS / reduced-motion greift das NICHT → voller Kontrast. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .story-dark .fill-word {
+      color: rgb(246 246 246 / 0.16);
+    }
+    html.js .story-dark .em-mark {
+      transform: scaleX(0);
+    }
+  }
+
+  /* ---- Heller Lösungs-Teil ---- */
+  .sol-headline {
+    font-size: clamp(2rem, 5.5vw, 3.75rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    max-width: 18ch;
+    color: var(--color-black);
+  }
+  .sol-text {
+    margin-top: clamp(1.25rem, 3vw, 2rem);
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+    line-height: 1.4;
+    max-width: 40rem;
+    color: var(--color-black);
+  }
+  .sol-cta {
+    margin-top: clamp(2rem, 4vw, 2.75rem);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+  }
+  .sol-cta-note {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgb(59 59 58 / 0.75);
+  }
+
+  /* Marker im hellen Teil: gelbe Phrase-Highlight (Utility-.mark ist global).
+     Der Lösungs-Auftritt (transform/opacity) läuft rein in JS — hier kein
+     Vorverstecken, damit ohne JS alles sofort sichtbar ist. */
+</style>

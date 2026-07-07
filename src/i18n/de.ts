@@ -54,12 +54,27 @@ export const de = {
 
   sections: {
     problem: {
+      // sr-only Überschrift (Eyebrow „Das Problem" ist entfernt — die dunkle
+      // Inszenierung ist die Deklaration; Heading bleibt für SEO/Struktur).
       title: 'Das Problem',
-      // **…** markiert Emphasis-Wörter (Zahlen), die beim Scroll-Fill gelb aufleuchten.
-      text: 'In Berlin kamen auf ein einziges Neubauprojekt **43.000 Bewerber** – in nur **30 Minuten**. Für gerade einmal **288 Wohnungen**. Wer zu spät klickt, hat verloren.',
+      // Dunkle Story-Beats, fluten per Scroll-Fill ein. **…** = Emphasis (gelb).
+      beats: [
+        'In Berlin kamen auf ein einziges Neubauprojekt **43.000 Bewerber**.',
+        'Für **288 Wohnungen**. Nach **30 Minuten** war Schluss.',
+      ],
+      beat2Sub: 'Bis du das Inserat überhaupt siehst, waren längst Hunderte schneller.',
+      // Wendepunkt (Reframe) — direkt vor dem „Licht an".
+      turn: 'Es liegt nicht an dir. Du warst nur **nie der Erste**.',
       source: 'Quelle: Berliner Zeitung',
     },
-    solution: { title: 'Die Lösung' },
+    solution: {
+      title: 'Die Lösung',
+      // Sichtbare H2 (Keyword mit gelbem Marker).
+      headline: 'Zeit, den Spieß umzudrehen.',
+      headlineMark: 'Spieß umzudrehen',
+      // {n} = Portalanzahl aus site.ts. **…** = gelber Marker.
+      text: 'Immobilien Bot überwacht rund um die Uhr über **{n} Portale** und meldet sich in Sekunden, sobald deine Wohnung online geht. **Ab jetzt bist du der Erste**.',
+    },
     features: { title: 'Features' },
     portals: {
       title: 'Alle Portale in einer App',

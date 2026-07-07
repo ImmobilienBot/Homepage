@@ -544,27 +544,65 @@ function initCursor() {
 }
 
 /**
- * Problem-Sektion: Scroll-Text-Fill. Wörter fluten beim Scrollen von ausgegraut
- * auf volle CD-Farbe (scrub), Emphasis-Marker wischen gelb herein.
- * (Farbe = Paint-only, kein Layout — bewusste Ausnahme für diesen Signature-Move.)
+ * Problem → Lösung: cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
+ *
+ * Drei entkoppelte, robuste Bausteine (reines Scrubbing, KEIN Pin → kein CLS):
+ *  1) Overlay-Opacity: 0→1 (dunkel rein), halten, 1→0 („Licht an") — nur Opacity.
+ *  2) Text-Fill: dunkle Beats fluten von „kaum sichtbar" auf hell (#f6f6f6);
+ *     Emphasis-Marker wischen gelb herein (scaleX). Farbe = Paint-only-Ausnahme.
+ *  3) Lösung tritt beim „Licht an" auf (transform/opacity, einmal, nicht gescrubbt)
+ *     → CTA bleibt sofort klick-/lesbar.
+ *
+ * Guardrail: läuft NUR in diesem (prefers-reduced-motion:no-preference)-Block.
+ * Bei reduced-motion / ohne JS bleibt die Overlay-Opacity 0 (hell), alle Texte
+ * stehen in voller Farbe da, die Lösung inkl. CTA ist sichtbar. Kein Blitz:
+ * die Opacity ist monoton (0→1→0), kein Stroboskop.
  */
-function initProblemFill() {
-  const el = document.querySelector<HTMLElement>('#problem [data-problem]');
-  if (!el) return;
-  const words = gsap.utils.toArray<HTMLElement>('#problem .fill-word');
-  const marks = gsap.utils.toArray<HTMLElement>('#problem .em-mark');
-  if (!words.length) return;
+function initProblemStory() {
+  const story = document.querySelector<HTMLElement>('[data-story]');
+  const overlay = document.querySelector<HTMLElement>('[data-story-overlay]');
+  if (!story || !overlay) return;
 
-  const cs = getComputedStyle(document.documentElement);
-  const full = cs.getPropertyValue('--color-black').trim() || '#3b3b3a';
-  const muted = cs.getPropertyValue('--color-grey-yellow').trim() || '#c0c0c1';
-
-  const tl = gsap.timeline({
-    scrollTrigger: { trigger: el, start: 'top 78%', end: 'bottom 55%', scrub: 0.4 },
+  // 1) Dunkle Overlay-Ebene: rein → halten → raus (Licht an). Nur Opacity.
+  const ov = gsap.timeline({
+    scrollTrigger: { trigger: story, start: 'top 72%', end: 'bottom 62%', scrub: true },
   });
-  tl.fromTo(words, { color: muted }, { color: full, ease: 'none', stagger: { each: 0.4 } }, 0);
-  if (marks.length) {
-    tl.fromTo(marks, { scaleX: 0 }, { scaleX: 1, ease: 'none', stagger: { each: 0.4 } }, 0.1);
+  ov.fromTo(overlay, { opacity: 0 }, { opacity: 1, ease: 'power1.out', duration: 1 }, 0)
+    .to(overlay, { opacity: 1, duration: 1.4 }) // halten über die Beats
+    .to(overlay, { opacity: 0, ease: 'power2.out', duration: 1 }); // weicher „Licht an"-Fade
+
+  // 2) Text-Fill der dunklen Beats (dunkel → hell), Zahlen leuchten gelb.
+  const fillRoot = document.querySelector<HTMLElement>('#problem [data-problem]');
+  if (fillRoot) {
+    const words = gsap.utils.toArray<HTMLElement>('#problem .fill-word');
+    const marks = gsap.utils.toArray<HTMLElement>('#problem .em-mark');
+    if (words.length) {
+      const fill = gsap.timeline({
+        scrollTrigger: { trigger: fillRoot, start: 'top 80%', end: 'bottom 68%', scrub: 0.4 },
+      });
+      fill.fromTo(
+        words,
+        { color: 'rgb(246 246 246 / 0.16)' },
+        { color: '#f6f6f6', ease: 'none', stagger: { each: 0.35 } },
+        0,
+      );
+      if (marks.length) {
+        fill.fromTo(marks, { scaleX: 0 }, { scaleX: 1, ease: 'none', stagger: { each: 0.35 } }, 0.1);
+      }
+    }
+  }
+
+  // 3) Lösung tritt beim „Licht an" sauber auf (einmal, transform/opacity).
+  const solItems = gsap.utils.toArray<HTMLElement>('#loesung [data-sol-item]');
+  if (solItems.length) {
+    gsap.from(solItems, {
+      autoAlpha: 0,
+      y: 28,
+      duration: 0.7,
+      ease: 'power3.out',
+      stagger: 0.12,
+      scrollTrigger: { trigger: '#loesung', start: 'top 72%', toggleActions: 'play none none none' },
+    });
   }
 }
 
@@ -595,6 +633,6 @@ if (!prefersReducedMotion) {
   initHeroNotifications();
   initHeroChoreography();
   initHeroCanvas();
-  initProblemFill();
+  initProblemStory();
   initReveals();
 }

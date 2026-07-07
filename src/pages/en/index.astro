@@ -6,8 +6,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { useTranslations } from '../../i18n';
 import Hero from '../../components/sections/Hero.astro';
-import Problem from '../../components/sections/Problem.astro';
-import Loesung from '../../components/sections/Loesung.astro';
+import ProblemLoesung from '../../components/sections/ProblemLoesung.astro';
 import Features from '../../components/sections/Features.astro';
 import Portale from '../../components/sections/Portale.astro';
 import Preise from '../../components/sections/Preise.astro';
@@ -21,8 +20,7 @@ const t = useTranslations('en');
 
 <BaseLayout title={t.meta.title} description={t.meta.description}>
   <Hero />
-  <Problem />
-  <Loesung />
+  <ProblemLoesung />
   <Features />
   <Portale />
   <Preise />
