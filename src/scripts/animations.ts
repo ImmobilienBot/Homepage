@@ -573,21 +573,22 @@ function initHeroScrollCue() {
 /**
  * Problem → Lösung: cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
  *
- * Bausteine (reines Scrubbing, KEIN Pin → kein CLS; KEIN wheel/touch-Hijack —
- * das Einrasten ist reines CSS-Scroll-Snap in ProblemLoesung.astro):
- *  1a) DIM-IN (scrub, erstes Panel): Overlay spät & stark 0→1; hält danach
- *      dunkel (letzter Wert bleibt), bis der Licht-Trigger es löst.
- *  1b) LICHT-AN (scrub, Lösungs-Panel, kurze Range + power4.in): HARTER, schneller
- *      Cut 1→0 (Schalter-Gefühl) + EIN kurzer Weiß-Blitz (kein Stroboskop). Danach
- *      treten die Lösungs-Inhalte auf — VORHER komplett verborgen (gsap.set),
- *      erst MIT dem Licht-an sichtbar (kein Durchscheinen). Beide Trigger liegen
- *      weit auseinander → keine Konflikte, voll reversibel.
- *  2) Text-Fill je Panel: reguläre Beats fluten von „kaum sichtbar" auf WEISS.
- *     Zahlen bleiben gelb (CSS) und zählen separat hoch. Farbe = Paint-Ausnahme.
+ * KEIN Scroll-Snap (kollidierte mit Lenis → Totzone/„plopp") und KEIN wheel/
+ * touch-Hijack: freie Lenis-Scrollbewegung, 100svh-Panels enthüllen ihren Inhalt
+ * beim EINTRITT (getriggert, nicht scroll-gescrubbt) → nichts blockiert sich.
+ *  1a) DIM-IN (onEnter erstes Panel): Overlay 0→1 (zügig), hält dunkel; reverse
+ *      erst beim Zurückscrollen über den Story-Anfang.
+ *  1b) LICHT-AN (paused Timeline): HARTER, schneller Cut 1→0 (~140ms) + EIN kurzer
+ *      Weiß-Blitz (kein Stroboskop); danach treten die Lösungs-Inhalte auf —
+ *      VORHER komplett verborgen (gsap.set). Startet über ZWEI Wege zuverlässig:
+ *      Scroll-Eintritt (ScrollTrigger) ODER Ketten-Klick (Timeline direkt) —
+ *      KEINE gecachten Scroll-Pixel (das behebt den Klick-Bug).
+ *  2) Text-Fill je Panel beim Eintritt: reguläre Beats fluten auf WEISS (reverse
+ *     beim Zurückscrollen). Zahlen bleiben gelb (CSS). Farbe = Paint-Ausnahme.
  *  3) Zahlen-Counter: echte, belegte Statistik (KEIN Live-Zähler) — zählt EINMAL
  *     0 → Endwert und bleibt. tabular-nums + reservierte Breite → kein CLS.
- *  4) Lampenkette: Klick → Blitz + sanft zum Licht-an-Ende scrollen (treibt den
- *     Licht-Scrub) — reines Weiterscrollen schaltet es ebenso. Ein Mechanismus.
+ *  4) Lampenkette: Klick spielt die Licht-Timeline sofort + gleitet per Lenis
+ *     aufs Lösungs-Panel; reines Weiterscrollen schaltet es ebenso. Ein Ziel.
  *
  * Guardrail: läuft NUR im (prefers-reduced-motion:no-preference)-Block. Bei
  * reduced-motion / ohne JS: Overlay 0 (hell), Text volle Farbe, Zahlen Endwert,
@@ -606,45 +607,32 @@ function initProblemStory(lenis: Lenis) {
   // Lösung vor dem Licht-an komplett verbergen (kein Durchscheinen auf Dunkel).
   if (solItems.length) gsap.set(solItems, { autoAlpha: 0, y: 24 });
 
-  // 1a) DIM-IN: Overlay spät & stark 0→1, sobald man sich in den ersten Beat
-  //     committet (kurze Range → zügig). Danach hält es dunkel (letzter Wert 1),
-  //     bis der Licht-an-Trigger es löst. Reversibel, keine Konflikte (Ranges
-  //     liegen weit auseinander).
-  if (firstPanel) {
-    gsap.fromTo(
-      overlay,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        ease: 'power2.in',
-        scrollTrigger: { trigger: firstPanel, start: 'top 45%', end: 'top 5%', scrub: true },
-      },
-    );
-  }
+  // Zustandsgesteuert per diskreter Tweens (overwrite:'auto' → jeder Übergang
+  // killt den vorherigen; keine zwei Timelines konkurrieren um dieselbe Opacity).
+  // Latches verhindern Mehrfach-Feuern. Nur transform/opacity.
+  let darkOn = false;
+  let lightOn = false;
 
-  // 1b) LICHT-AN als HARTER, schneller Cut (kurze Range + power4.in: bleibt
-  //     dunkel, kippt am Ende schlagartig auf hell). Danach treten die Lösungs-
-  //     Inhalte auf. immediateRender:false → am Load nicht angewandt (kein
-  //     Jump); greift erst beim Erreichen (Overlay ist dort bereits 1).
-  let lightScrubEnd = 0;
-  if (solPanel) {
-    const lightTl = gsap.timeline({
-      scrollTrigger: { trigger: solPanel, start: 'top 82%', end: 'top 56%', scrub: true },
+  // 1a) DIM-IN beim Eintritt ins erste Panel: Overlay 0→1 (zügig), hält dunkel.
+  //     Reverse nur beim Zurückscrollen über den Story-Anfang → Hero wieder hell.
+  const turnDark = () => {
+    if (darkOn) return;
+    darkOn = true;
+    gsap.to(overlay, { opacity: 1, duration: 0.5, ease: 'power2.in', overwrite: 'auto' });
+  };
+  const undimAtStart = () => {
+    if (!darkOn) return;
+    darkOn = false;
+    gsap.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
+  };
+  if (firstPanel) {
+    ScrollTrigger.create({
+      trigger: firstPanel,
+      start: 'top 68%',
+      onEnter: turnDark,
+      onEnterBack: turnDark, // wieder nach unten reinscrollen → dunkel bleibt
+      onLeaveBack: undimAtStart,
     });
-    lightTl.fromTo(
-      overlay,
-      { opacity: 1 },
-      { opacity: 0, ease: 'power4.in', duration: 1, immediateRender: false },
-      0,
-    );
-    if (solItems.length) {
-      lightTl.to(
-        solItems,
-        { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.6, stagger: 0.06 },
-        0.7,
-      );
-    }
-    if (lightTl.scrollTrigger) lightScrubEnd = lightTl.scrollTrigger.end;
   }
 
   // Weiß-Blitz: GENAU EIN kurzer Hell-Impuls beim Licht-an (kein Stroboskop).
@@ -657,24 +645,60 @@ function initProblemStory(lenis: Lenis) {
       .to(flash, { opacity: 0.6, duration: 0.06, ease: 'power1.out' })
       .to(flash, { opacity: 0, duration: 0.18, ease: 'power1.in' });
   };
-  if (solPanel && flash) {
-    ScrollTrigger.create({ trigger: solPanel, start: 'top 62%', once: true, onEnter: doFlash });
+
+  // 1b) LICHT-AN: HARTER, schneller Cut 1→0 (~140ms, Schalter) + Blitz; danach
+  //     treten die Lösungs-Inhalte auf (vorher via gsap.set verborgen). Startet
+  //     über ZWEI Wege zuverlässig — Scroll-Eintritt ODER Ketten-Klick (direkt);
+  //     KEINE gecachten Scroll-Pixel (das behebt den Klick-Bug).
+  const turnOnLight = () => {
+    if (lightOn) return;
+    lightOn = true;
+    doFlash();
+    gsap.to(overlay, { opacity: 0, duration: 0.14, ease: 'power2.in', overwrite: 'auto' });
+    if (solItems.length) {
+      gsap.to(solItems, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.5,
+        ease: 'power2.out',
+        stagger: 0.06,
+        overwrite: 'auto',
+      });
+    }
+  };
+  const turnOffLight = () => {
+    if (!lightOn) return;
+    lightOn = false;
+    gsap.to(overlay, { opacity: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
+    if (solItems.length) {
+      gsap.to(solItems, { autoAlpha: 0, y: 24, duration: 0.2, overwrite: 'auto' });
+    }
+  };
+  if (solPanel) {
+    ScrollTrigger.create({
+      trigger: solPanel,
+      start: 'top 55%',
+      onEnter: turnOnLight,
+      onLeaveBack: turnOffLight, // zurückscrollen → wieder dunkel/verborgen
+    });
   }
 
-  // 2) Text-Fill je Panel (reguläre Wörter dunkel → weiß); Zahlen bleiben gelb.
+  // 2) Text-Fill je Panel beim EINTRITT (nicht gescrubbt): reguläre Wörter fluten
+  //    dunkel → weiß; reverse beim Zurückscrollen. Zahlen bleiben gelb (Counter).
   gsap.utils.toArray<HTMLElement>('#problem .panel').forEach((panel) => {
     const words = gsap.utils.toArray<HTMLElement>('.fill-word', panel);
     if (!words.length) return;
-    gsap
-      .timeline({
-        scrollTrigger: { trigger: panel, start: 'top 75%', end: 'top 25%', scrub: 0.4 },
-      })
-      .fromTo(
-        words,
-        { color: 'rgb(246 246 246 / 0.16)' },
-        { color: '#f6f6f6', ease: 'none', stagger: { each: 0.05 } },
-        0,
-      );
+    gsap.fromTo(
+      words,
+      { color: 'rgb(246 246 246 / 0.16)' },
+      {
+        color: '#f6f6f6',
+        duration: 0.8,
+        ease: 'power1.out',
+        stagger: 0.06,
+        scrollTrigger: { trigger: panel, start: 'top 62%', toggleActions: 'play none none reverse' },
+      },
+    );
   });
 
   // 3) Zahlen-Counter: 0 → Endwert (einmal, echte Statistik). Format nach Sprache.
@@ -696,17 +720,18 @@ function initProblemStory(lenis: Lenis) {
       onComplete: () => {
         el.textContent = nf.format(target);
       },
-      scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+      scrollTrigger: { trigger: el, start: 'top 62%', once: true },
     });
   });
 
-  // 4) Lampenkette: Klick → Blitz + sanft zum Licht-an-Ende scrollen (treibt den
-  //    Licht-Scrub). Reines Weiterscrollen löst dasselbe aus. Kein Konflikt.
+  // 4) Lampenkette: Klick schaltet das Licht SOFORT an (Timeline direkt spielen —
+  //    kein Warten auf Scroll, keine gecachten Pixel) UND gleitet per Lenis aufs
+  //    Lösungs-Panel. Reines Weiterscrollen löst dasselbe via ScrollTrigger aus.
   const lamp = document.querySelector<HTMLElement>('[data-lamp]');
-  if (lamp) {
+  if (lamp && solPanel) {
     lamp.addEventListener('click', () => {
-      doFlash();
-      if (lightScrubEnd) lenis.scrollTo(lightScrubEnd, { duration: 0.7 });
+      turnOnLight();
+      lenis.scrollTo(solPanel, { offset: -40, duration: 0.7 });
     });
   }
 }

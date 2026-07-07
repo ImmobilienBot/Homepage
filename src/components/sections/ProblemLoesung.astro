@@ -239,16 +239,9 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     margin-inline: auto;
     text-align: center; /* Content horizontal + (via flex) vertikal zentriert */
   }
-  /* Snap NUR bei erlaubter Bewegung; proximity lässt freies Durchscrollen zu.
-     Nur diese Panels tragen snap-align → der Hero snappt NICHT. */
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html) {
-      scroll-snap-type: y proximity;
-    }
-    .panel {
-      scroll-snap-align: center;
-    }
-  }
+  /* KEIN CSS-Scroll-Snap: kollidiert mit Lenis (Totzone/„plopp"). Freie
+     Lenis-Scrollbewegung; jedes 100svh-Panel enthüllt seinen Inhalt beim
+     Eintritt (on-enter reveal in animations.ts), nicht scroll-gescrubbt. */
 
   /* ---- Beats (Roboto Black, zentriert, fluten Wort für Wort ein) ---- */
   .beat {
@@ -379,27 +372,28 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     border-radius: 9999px;
     background-color: var(--color-yellow);
   }
-  /* Weiches, pulsierendes Gelb-Glow um den Knauf (Blickfang). */
+  /* Dezenter, weicher Gelb-Schimmer um den Knauf (KEIN greller Leucht-Ball). */
   .lamp-glow {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 64px;
-    height: 64px;
+    width: 34px;
+    height: 34px;
     transform: translate(-50%, -50%);
     border-radius: 9999px;
-    background: radial-gradient(closest-side, rgb(255 240 60 / 0.75), rgb(255 240 60 / 0));
+    background: radial-gradient(closest-side, rgb(255 240 60 / 0.4), rgb(255 240 60 / 0));
     z-index: -1;
-    opacity: 0.55;
+    opacity: 0.4;
   }
-  /* Mikro-Label „Klick" + Pfeil (gedämpftes Weiß) — schwingt NICHT mit. */
+  /* Mikro-Label „Klick" + Pfeil — gut lesbar (heller, leichter Schatten). */
   .lamp-hint {
-    margin-top: 0.6rem;
-    font-size: 0.66rem;
+    margin-top: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgb(246 246 246 / 0.65);
+    color: rgb(246 246 246 / 0.92);
+    text-shadow: 0 1px 6px rgb(0 0 0 / 0.45);
     display: inline-flex;
     align-items: center;
     gap: 0.25em;
@@ -411,11 +405,13 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     html.js .lamp {
       display: flex;
     }
+    /* Periodischer vertikaler „Zupfer" (ziehen/klicken) statt Deko-Schaukeln. */
     html.js .lamp-swing {
-      animation: lampSwing 3.4s ease-in-out infinite;
+      animation: lampTug 3s ease-in-out infinite;
     }
+    /* Sehr dezenter Schimmer-Puls (klein). */
     html.js .lamp-glow {
-      animation: lampGlow 2.6s ease-in-out infinite;
+      animation: lampGlowPulse 2.8s ease-in-out infinite;
     }
   }
   .lamp:focus-visible {
@@ -423,13 +419,17 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     outline-offset: 4px;
     border-radius: 6px;
   }
-  @keyframes lampSwing {
-    0%, 100% { transform: rotate(-4deg); }
-    50% { transform: rotate(4deg); }
+  /* „Zupfer": kurz nach unten ziehen, mit leichtem Überschwingen zurück. */
+  @keyframes lampTug {
+    0%, 62% { transform: translateY(0); }
+    72% { transform: translateY(8px); }
+    84% { transform: translateY(-2px); }
+    92% { transform: translateY(1px); }
+    100% { transform: translateY(0); }
   }
-  @keyframes lampGlow {
-    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); }
+  @keyframes lampGlowPulse {
+    0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.55; transform: translate(-50%, -50%) scale(1.12); }
   }
 
   /* ---- Heller Lösungs-Teil (zentriert) ---- */
