@@ -454,14 +454,15 @@ function splitLine(line: string) {
       padding-block: 1.5rem 0;
     }
 
-    /* Grid → Flex-Spalte in Quell-Reihenfolge (Text-Block → Phone). */
+    /* Grid → Flex-Spalte in Quell-Reihenfolge (Text-Block → Phone).
+       gap = Rhythmus Trust-Zeile → Phone (~28px, Teil des 8px-Systems). */
     .hero-grid {
       display: flex;
       flex-direction: column;
       align-items: stretch;
       width: 100%;
       flex: 1;
-      gap: clamp(1rem, 4vw, 1.5rem);
+      gap: 1.75rem;
     }
 
     /* ---- Text-Block: kompakterer 8px-Rhythmus, damit Badges + Trust
@@ -478,16 +479,18 @@ function splitLine(line: string) {
          schmalen Handys nicht zu hoch werden. Roboto Black, enge LH bleibt. */
       font-size: clamp(2rem, 8.5vw, 2.75rem);
     }
+    /* Vertikaler Rhythmus (8px-System): H1→Sub 16px · Sub→Badges 24px ·
+       Badges→Trust 12px (Header→H1 bleibt kompakt, Trust→Phone via .hero-grid gap). */
     .hero-sub {
-      margin-top: 1rem;
+      margin-top: 1rem; /* 16px */
       font-size: 1.0625rem;
       line-height: 1.4;
     }
     .hero-cta {
-      margin-top: 1.25rem;
+      margin-top: 1.5rem; /* 24px */
     }
     .trust-row {
-      margin-top: 1rem;
+      margin-top: 0.75rem; /* 12px */
     }
 
     /* ---- Phone-Visual: füllt den Rest, Phone absolut → expandiert die
@@ -498,13 +501,15 @@ function splitLine(line: string) {
       flex: 1 1 0;
       min-height: 30svh;
     }
+    /* Phone als mittige „Bühne": VOLLE Content-Breite (Viewport − 2× Einschub),
+       zentriert → Seitenkanten fluchten exakt mit der linken/rechten Copy-Kante.
+       Groß & dominant, „Produkt vorn". top:0 → Abstand zur Trust-Zeile kommt
+       ausschließlich aus dem .hero-grid gap (sauberer, einzelner Knopf). */
     .phone-stage {
       position: absolute;
       left: 50%;
-      top: clamp(8px, 2vh, 20px);
-      width: clamp(240px, 76vw, 330px);
-      /* Kein statischer translateY-Versatz mehr (Desktop-Wert überschreiben);
-         Zentrierung übernimmt translateX. */
+      top: 0;
+      width: 100%;
       transform: translateX(-50%);
     }
 
@@ -526,10 +531,10 @@ function splitLine(line: string) {
        Nur transform/opacity (composited), kein Layout. Basis-Transform
        (Zentrierung) bleibt in den Keyframes erhalten. */
     .phone-glow {
-      width: 175%;
-      height: 120%;
-      opacity: 0.6;
-      filter: blur(60px);
+      width: 200%;
+      height: 130%;
+      opacity: 0.55;
+      filter: blur(80px);
       animation: heroGlowBreath 9s ease-in-out infinite;
     }
   }
