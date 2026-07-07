@@ -17,7 +17,9 @@ export const en: Dict = {
     pricing: 'Pricing',
     faq: 'FAQ',
     cta: 'Get the app',
-    ctaFree: 'Try for free',
+    // Header CTA: full variant (desktop) + short variant (mobile <640px).
+    ctaFree: 'Try 7 days free',
+    ctaShort: '7 days free',
     skipToContent: 'Skip to content',
   },
 

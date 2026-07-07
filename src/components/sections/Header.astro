@@ -42,7 +42,10 @@ const navItems = [
       class="nav-cta"
       data-lenis-target="#preise"
     >
-      <span>{t.nav.ctaFree}</span>
+      {/* Desktop: volle Variante ab sm (640px). Mobile (<640px): kurze Variante.
+          Pille hat white-space:nowrap → bleibt immer einzeilig. */}
+      <span class="hidden sm:inline">{t.nav.ctaFree}</span>
+      <span class="sm:hidden">{t.nav.ctaShort}</span>
       <span class="nav-cta-arrow" aria-hidden="true">→</span>
     </a>
   </div>

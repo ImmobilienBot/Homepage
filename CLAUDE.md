@@ -318,6 +318,10 @@ Entdeckungs- und Empfehlungsschicht.
 - **Secrets:** GTM-ID darf ins Repo (öffentlich). Echte Keys/Tokens **nie** ins Repo — in
   Cloudflare-Environment-Variablen.
 - **Static bleiben** (SSG); kein Server-Runtime nötig (client-seitiges JS für `/go/app` ist ok).
+- **Auto-Commit & -Push:** Nach jeder abgeschlossenen Aufgabe und **erfolgreichem `npm run build`**
+  alle Änderungen mit kurzer, beschreibender Commit-Message committen und auf `main` pushen
+  (Cloudflare deployt automatisch). **Nur bei grünem Build pushen** — schlägt der Build fehl, erst
+  fixen, dann committen.
 
 ---
 
