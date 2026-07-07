@@ -169,7 +169,61 @@ function splitLine(line: string) {
       </div>
     </div>
   </div>
+
+  {/* Scroll-Indikator („Maus"): dunkel auf Hellgrau, zentriert am unteren Rand.
+      Fadet beim ersten Wegscrollen aus (initHeroScrollCue). Rein dekorativ. */}
+  <span class="hero-scroll-cue" data-hero-cue aria-hidden="true">
+    <span class="hero-scroll-dot"></span>
+  </span>
 </section>
+
+<style>
+  /* ---- Scroll-Cue unter dem Hero („Maus"-Kontur mit gleitendem Punkt) ---- */
+  .hero-scroll-cue {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(0.75rem, 2vh, 1.5rem);
+    transform: translateX(-50%);
+    z-index: 40;
+    display: block;
+    width: 24px;
+    height: 38px;
+    border: 2px solid var(--color-black);
+    border-radius: 12px;
+    pointer-events: none;
+  }
+  .hero-scroll-dot {
+    position: absolute;
+    left: 50%;
+    top: 7px;
+    width: 4px;
+    height: 8px;
+    border-radius: 2px;
+    background-color: var(--color-black);
+    transform: translateX(-50%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-scroll-dot {
+      animation: heroCueDot 1.8s ease-in-out infinite;
+    }
+  }
+  @keyframes heroCueDot {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 0);
+    }
+    25% {
+      opacity: 1;
+    }
+    75% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, 11px);
+    }
+  }
+</style>
 
 <style>
   /* ---- Kinetische Typografie (der Blickfang, links) ----

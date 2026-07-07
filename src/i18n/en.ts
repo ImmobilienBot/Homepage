@@ -55,23 +55,24 @@ export const en: Dict = {
       // sr-only heading (the „The Problem" eyebrow is removed — the dark staging
       // is the declaration; heading kept for SEO/structure).
       title: 'The Problem',
-      // Dark story beats, flooded in via scroll-fill. **…** = emphasis (yellow).
+      // Dark story beats. **…** marks ONLY the bare number → yellow + counter.
       beats: [
-        'In Berlin, a single new development drew **43,000 applicants**.',
-        'For **288 flats**. After **30 minutes**, it was over.',
+        'In Berlin, a single new development drew **43,000** applicants.',
+        'For **288** flats. After **30** minutes, it was over.',
       ],
       beat2Sub: 'By the time you even see the listing, hundreds were already faster.',
-      // Turning point (reframe) — right before the „lights on".
-      turn: "It's not on you. You were just never **the first**.",
-      source: 'Source: Berliner Zeitung',
+      // Turning point (reframe) — no yellow emphasis now, carried by size/fill.
+      turn: "It's not on you. You were just never the first.",
     },
     solution: {
       title: 'The Solution',
-      // Visible H2 (keyword with yellow marker).
+      // Visible H2 (keyword with yellow marker — brand signature on light).
       headline: 'Time to turn the tables.',
       headlineMark: 'turn the tables',
       // {n} = portal count from site.ts. **…** = yellow marker.
       text: "Immobilien Bot watches **{n} portals** around the clock and pings you within seconds the moment your flat goes live. **From now on, you're the first**.",
+      // aria-label for the pull-chain button („light on").
+      lightOn: 'Turn on the light',
     },
     features: { title: 'Features' },
     portals: {
@@ -98,6 +99,9 @@ export const en: Dict = {
     contact: 'Contact',
     langSwitch: 'Deutsch',
     signature: 'The original. Faster than the rest.',
+    // Footnote for the Berlin statistic (asterisk in the problem story).
+    // TODO: add the real source link (Berliner Zeitung) once available.
+    sourceNote: '* Statistics: Berliner Zeitung',
   },
 
   legal: {

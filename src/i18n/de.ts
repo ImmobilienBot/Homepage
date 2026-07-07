@@ -57,23 +57,24 @@ export const de = {
       // sr-only Überschrift (Eyebrow „Das Problem" ist entfernt — die dunkle
       // Inszenierung ist die Deklaration; Heading bleibt für SEO/Struktur).
       title: 'Das Problem',
-      // Dunkle Story-Beats, fluten per Scroll-Fill ein. **…** = Emphasis (gelb).
+      // Dunkle Story-Beats. **…** markiert NUR die reine Zahl → gelb + Counter.
       beats: [
-        'In Berlin kamen auf ein einziges Neubauprojekt **43.000 Bewerber**.',
-        'Für **288 Wohnungen**. Nach **30 Minuten** war Schluss.',
+        'In Berlin kamen auf ein einziges Neubauprojekt **43.000** Bewerber.',
+        'Für **288** Wohnungen. Nach **30** Minuten war Schluss.',
       ],
       beat2Sub: 'Bis du das Inserat überhaupt siehst, waren längst Hunderte schneller.',
-      // Wendepunkt (Reframe) — direkt vor dem „Licht an".
-      turn: 'Es liegt nicht an dir. Du warst nur **nie der Erste**.',
-      source: 'Quelle: Berliner Zeitung',
+      // Wendepunkt (Reframe) — keine gelbe Emphasis mehr, wirkt über Größe/Fill.
+      turn: 'Es liegt nicht an dir. Du warst nur nie der Erste.',
     },
     solution: {
       title: 'Die Lösung',
-      // Sichtbare H2 (Keyword mit gelbem Marker).
+      // Sichtbare H2 (Keyword mit gelbem Marker — Brand-Signature auf Hell).
       headline: 'Zeit, den Spieß umzudrehen.',
       headlineMark: 'Spieß umzudrehen',
       // {n} = Portalanzahl aus site.ts. **…** = gelber Marker.
       text: 'Immobilien Bot überwacht rund um die Uhr über **{n} Portale** und meldet sich in Sekunden, sobald deine Wohnung online geht. **Ab jetzt bist du der Erste**.',
+      // aria-Label für den Lampenketten-Button („Licht an").
+      lightOn: 'Licht anschalten',
     },
     features: { title: 'Features' },
     portals: {
@@ -101,6 +102,9 @@ export const de = {
     contact: 'Kontakt',
     langSwitch: 'English',
     signature: 'Das Original. Schneller als die anderen.',
+    // Fußnote zur Berlin-Statistik (Sternchen in der Problem-Story).
+    // TODO: echten Quell-Link (Berliner Zeitung) ergänzen, sobald vorhanden.
+    sourceNote: '* Statistik: Berliner Zeitung',
   },
 
   legal: {

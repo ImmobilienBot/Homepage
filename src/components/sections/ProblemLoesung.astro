@@ -3,18 +3,20 @@
  * Problem → Lösung — cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
  *
  * ZWEI eigenständige <section>-Elemente (#problem, #loesung) für SEO/Struktur,
- * nur VISUELL verbunden durch eine gemeinsame dunkle Overlay-Ebene, deren
- * OPACITY gescrubbt wird (0→1 = dunkel rein · halten · 1→0 = „Licht an").
+ * visuell verbunden durch EINE dunkle Overlay-Ebene (position:fixed), deren
+ * OPACITY gescrubbt wird: 0 → 1 (spät & stark, „Licht geht aus") · halten ·
+ * 1 → 0 („Licht an"). Das Overlay überspannt Hero-Ausgang + Story-Eintritt →
+ * kein harter Cut. Nav (z-40) + Story-Text (z-20) liegen ÜBER dem Overlay (z-5);
+ * nur Hero-BG/Phones + Story-Hintergrund dimmen.
  *
  * OBERSTES GEBOT (Guardrails): Ruhezustand = HELL. Ohne JS / bei
  * prefers-reduced-motion ist die Overlay-Opacity 0 (heller CD-Hintergrund),
- * aller Text steht in voller, lesbarer Farbe da, die Lösung inkl. CTA ist
- * sichtbar. Der Dunkel-Tunnel + Flutung sind reine JS-Zugabe (animations.ts:
- * initProblemStory), nur Opacity/Transform (Farb-Flutung auf Text = etablierte
- * Signature-Ausnahme). Kein Pin → kein CLS; reines Scrubbing.
+ * aller Text steht in voller, lesbarer Farbe da, Zahlen als ENDWERT, die Lösung
+ * inkl. CTA ist sichtbar, KEINE Kette/kein Counter/kein Blitz. Dunkel-Tunnel +
+ * Counter + Kette = reine JS-Zugabe (animations.ts: initProblemStory).
  *
  * Genau EINE H1 bleibt im Hero; dieser Block nutzt H2 (Problem sr-only, Lösung
- * sichtbar) + H3-freie Beats. Fakten (Portalzahl) aus site.ts.
+ * sichtbar). Fakten (Portalzahl) aus site.ts.
  */
 import StoreBadges from '../StoreBadges.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n';
@@ -26,7 +28,7 @@ const t = useTranslations(lang);
 const P = t.sections.problem;
 const S = t.sections.solution;
 
-/* --- Dunkle Beats: in Wort-Einheiten zerlegen; **…** = Emphasis (gelb). --- */
+/* --- Dunkle Beats: in Wort-Einheiten zerlegen; **…** = reine Zahl (gelb + Counter). --- */
 type Unit = { text: string; em: boolean };
 function tokenize(src: string): Unit[] {
   let plain = '';
@@ -52,8 +54,7 @@ const beatUnits = P.beats.map((b) => tokenize(b));
 const subUnits = tokenize(P.beat2Sub);
 const turnUnits = tokenize(P.turn);
 
-/* --- Heller Lösungs-Teil: **…** → gelber Marker (Phrase, statisch, dunkler
-   Text auf Gelb). Kein Fill-Word → nicht mitgeflutet. --- */
+/* --- Heller Lösungs-Teil: **…** → gelber Marker (Phrase, statisch). --- */
 const solText = S.text.replace('{n}', String(portalCountRounded));
 function splitEmphasis(src: string) {
   return src.split('**').map((seg, i) => ({ text: seg, mark: i % 2 === 1 }));
@@ -74,11 +75,12 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
 ---
 
 <div class="story" data-story>
-  {/* Dunkle Overlay-Ebene: Opacity per ScrollTrigger gescrubbt (0→1→0).
-      Default 0 → ohne JS/reduced-motion bleibt der Block hell. */}
+  {/* Dunkle Overlay-Ebene (fixed, viewport-weit): Opacity per ScrollTrigger
+      gescrubbt (0→1→0). Default 0 → ohne JS/reduced-motion bleibt alles hell.
+      z-5: über Hero/Story-BG (z-auto), unter Story-Text (z-20) + Nav (z-40). */}
   <div class="story-overlay" data-story-overlay aria-hidden="true"></div>
 
-  {/* ---- PROBLEM (dunkler Tunnel) ---- */}
+  {/* ---- PROBLEM (dunkler Tunnel, zentriert) ---- */}
   <section id="problem" class="story-sec story-dark">
     <div class="story-inner">
       <h2 class="sr-only">{P.title}</h2>
@@ -92,16 +94,30 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
                   <>
                     {i > 0 && ' '}
                     {u.em ? (
-                      <span class="fill-word fill-word--em">
-                        <span class="em-mark" aria-hidden="true" />
-                        <span class="em-text">{u.text}</span>
+                      <span
+                        class="fill-num"
+                        data-count-to={u.text.replace(/\D/g, '')}
+                        style={`min-width:${u.text.length}ch`}
+                      >
+                        {u.text}
                       </span>
                     ) : (
                       <span class="fill-word">{u.text}</span>
                     )}
                   </>
                 ))}
+                {/* Sternchen an der Statistik (Ende Beat 2) → Fußnote im Footer. */}
+                {bi === 1 && (
+                  <a
+                    href="#quelle-statistik"
+                    class="stat-ast"
+                    aria-label="Quelle der Statistik (Fußnote)"
+                  >
+                    *
+                  </a>
+                )}
               </p>
+
               {bi === 1 && (
                 <p class="beat-sub">
                   {subUnits.map((u, i) => (
@@ -112,38 +128,40 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
                   ))}
                 </p>
               )}
+
+              {/* Dezenter Scroll-Cue ZWISCHEN den Beats (nicht nach dem Wendepunkt). */}
+              <span class="scroll-cue scroll-cue--beat" aria-hidden="true">
+                <span class="scroll-cue-dot"></span>
+              </span>
             </>
           ))
         }
 
-        {/* Wendepunkt */}
+        {/* Wendepunkt — alle Wörter weiß (Emphasis über Größe/Fill, kein Gelb). */}
         <p class="beat beat-turn">
           {turnUnits.map((u, i) => (
             <>
               {i > 0 && ' '}
-              {u.em ? (
-                <span class="fill-word fill-word--em">
-                  <span class="em-mark" aria-hidden="true" />
-                  <span class="em-text">{u.text}</span>
-                </span>
-              ) : (
-                <span class="fill-word">{u.text}</span>
-              )}
+              <span class="fill-word">{u.text}</span>
             </>
           ))}
         </p>
       </div>
 
-      <p class="source">
-        <span class="fill-word">{P.source}</span>
-        {/* TODO: Quelle verlinken (Berliner Zeitung) */}
-      </p>
+      {/* ---- Lampenkette (Licht-an) — nur mit JS+Motion sichtbar (CSS-gated).
+          Klick ODER Weiterscrollen schalten das Licht an (animations.ts). ---- */}
+      <button class="lamp" data-lamp type="button" aria-label={S.lightOn}>
+        <span class="lamp-swing" aria-hidden="true">
+          <span class="lamp-cord"></span>
+          <span class="lamp-knob"></span>
+        </span>
+      </button>
     </div>
   </section>
 
-  {/* ---- LÖSUNG (Licht an) ---- */}
+  {/* ---- LÖSUNG (Licht an, zentriert) ---- */}
   <section id="loesung" class="story-sec story-light">
-    <div class="story-inner">
+    <div class="story-inner story-inner--center">
       <h2 class="sol-headline" data-sol-item>
         {
           headlineSegs.map((seg) =>
@@ -169,24 +187,26 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
 </div>
 
 <style>
-  /* ---- Bühne: Wrapper trägt die Overlay-Ebene; Default HELL (CD-Grau). ---- */
+  /* ---- Bühne: Wrapper; Default HELL (CD-Grau). ---- */
   .story {
     position: relative;
     background-color: var(--color-grey); /* #eaebeb — heller Ruhezustand */
   }
+  /* Overlay viewport-weit (fixed) → dimmt Hero-Ausgang + Story gleichmäßig,
+     kein harter Rechteck-Cut. Default opacity 0. */
   .story-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    z-index: 1;
+    z-index: 5;
     background-color: var(--color-black); /* #3b3b3a */
-    opacity: 0; /* Default: aus → ohne JS/reduced-motion bleibt es hell */
+    opacity: 0;
     pointer-events: none;
     will-change: opacity;
   }
-  /* Inhalt IMMER über der Overlay-Ebene. */
+  /* Inhalt IMMER über der Overlay-Ebene (z-20 < Nav z-40). */
   .story-sec {
     position: relative;
-    z-index: 2;
+    z-index: 20;
     padding-block: var(--spacing-section);
   }
   .story-inner {
@@ -196,97 +216,215 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     padding-inline: var(--spacing-inset);
   }
 
-  /* Dunkler Teil: als kurzer, kontrollierter „Tunnel" (kein endloser Pin). */
+  /* Dunkler Teil: zentriert, viel Luft, als kurzer „Tunnel" (kein Pin). */
   .story-dark {
-    min-height: 88svh;
+    min-height: 96svh;
     display: flex;
     align-items: center;
   }
+  .story-dark .story-inner {
+    text-align: center;
+  }
+  .beats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-  /* ---- Beats (Roboto Black, fluten Wort für Wort ein) ---- */
+  /* ---- Beats (Roboto Black, zentriert, fluten Wort für Wort ein) ---- */
   .beat {
-    font-size: clamp(1.9rem, 5.2vw, 3.6rem);
+    font-size: clamp(1.9rem, 5.4vw, 3.6rem);
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.12;
     letter-spacing: -0.01em;
     text-wrap: balance;
-    max-width: 20ch;
+    max-width: 22ch;
   }
+  /* Deutlich mehr vertikaler Abstand — jeder Beat ein eigener „Moment". */
   .beat + .beat,
   .beat-turn {
-    margin-top: clamp(1.25rem, 3.5vw, 2.25rem);
+    margin-top: clamp(2.5rem, 8vw, 5rem);
   }
   .beat-sub {
-    margin-top: clamp(0.75rem, 2vw, 1.15rem);
+    margin-top: clamp(1rem, 2.5vw, 1.5rem);
     font-size: clamp(1rem, 2.4vw, 1.4rem);
     font-weight: 400;
-    line-height: 1.3;
-    max-width: 34rem;
+    line-height: 1.35;
+    max-width: 36rem;
   }
   .beat-turn {
-    margin-top: clamp(2rem, 6vw, 3.5rem);
-  }
-  .source {
-    margin-top: clamp(1.5rem, 4vw, 2.5rem);
-    font-size: 0.9rem;
-    letter-spacing: 0.02em;
+    font-size: clamp(2.1rem, 6vw, 4rem);
+    max-width: 20ch;
   }
 
-  /* Fill-Word: Default = volle CD-Farbe (dunkel auf hell) → ohne JS /
-     reduced-motion sofort lesbar. Bei aktivem JS + Motion floodet die
-     Scrub-Timeline von „kaum sichtbar" auf hell (#f6f6f6). */
+  /* Reguläre Wörter: Default = volle CD-Farbe (dunkel auf hell) → ohne JS /
+     reduced-motion sofort lesbar. Bei JS+Motion floodet die Scrub-Timeline von
+     „kaum sichtbar" auf WEISS (#f6f6f6). */
   .fill-word {
     color: var(--color-black);
   }
-  .fill-word--em {
-    position: relative;
-    white-space: nowrap;
-  }
-  .em-mark {
-    position: absolute;
-    inset: 0.06em -0.08em 0.04em -0.08em;
-    background-color: var(--color-yellow);
-    border-radius: 0.1em;
-    transform-origin: left center;
-    z-index: 0;
-  }
-  .em-text {
-    position: relative;
-    z-index: 1;
-    /* Zahl sitzt IMMER dunkel auf dem gelben Marker (auch im Dunkel-Modus,
-       wo die übrigen Wörter hell fluten) → maximaler Kontrast, „leuchtet". */
+
+  /* Reine ZAHL: Default = dunkel (lesbar auf hell im Ruhezustand). Bei JS+Motion
+     GELB (#fff03c) auf dunkel, zählt einmal hoch (Counter, animations.ts).
+     tabular-nums + reservierte Breite (inline min-width) → KEIN CLS beim Zählen. */
+  .fill-num {
     color: var(--color-black);
-  }
-  .source .fill-word {
-    opacity: 0.75;
+    font-weight: 900;
+    display: inline-block;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Pre-Mute NUR bei aktivem JS + erlaubter Bewegung: dunkle Beats starten
-     „kaum sichtbar" (heller-Ton, niedrige Deckkraft) für die Flutung; Marker
-     eingeklappt. Ohne JS / reduced-motion greift das NICHT → voller Kontrast. */
+  /* Sternchen-Referenz zur Statistik (klein, hochgestellt). */
+  .stat-ast {
+    font-size: 0.5em;
+    vertical-align: super;
+    margin-left: 0.1em;
+    text-decoration: none;
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  /* Pre-Mute / Farbstart NUR bei aktivem JS + erlaubter Bewegung. Ohne JS /
+     reduced-motion greift das NICHT → voller Kontrast im hellen Ruhezustand. */
   @media (prefers-reduced-motion: no-preference) {
     html.js .story-dark .fill-word {
       color: rgb(246 246 246 / 0.16);
     }
-    html.js .story-dark .em-mark {
-      transform: scaleX(0);
+    html.js .story-dark .fill-num {
+      color: var(--color-yellow);
     }
   }
 
-  /* ---- Heller Lösungs-Teil ---- */
+  /* ---- Scroll-Cue („Maus"-Kontur mit gleitendem Punkt) ---- */
+  .scroll-cue {
+    display: block;
+    width: 24px;
+    height: 38px;
+    border: 2px solid var(--color-black);
+    border-radius: 12px;
+    position: relative;
+  }
+  .scroll-cue-dot {
+    position: absolute;
+    left: 50%;
+    top: 7px;
+    width: 4px;
+    height: 8px;
+    border-radius: 2px;
+    background-color: currentColor;
+    transform: translateX(-50%);
+  }
+  /* Zwischen den dunklen Beats: dezenter + invertiert (hell auf dunkel). */
+  .scroll-cue--beat {
+    margin-top: clamp(2.5rem, 8vw, 5rem);
+    width: 20px;
+    height: 32px;
+    border-color: var(--color-offwhite);
+    color: var(--color-offwhite);
+    opacity: 0.35;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-cue-dot {
+      animation: cueDot 1.8s ease-in-out infinite;
+    }
+  }
+  @keyframes cueDot {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 0);
+    }
+    25% {
+      opacity: 1;
+    }
+    75% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, 11px);
+    }
+  }
+
+  /* ---- Lampenkette (Licht-an-Trigger) ----
+     Nur mit JS + Motion sichtbar; ohne JS / reduced-motion ausgeblendet
+     (Lösung ist dort ohnehin statisch sichtbar → niemand hängt fest). */
+  .lamp {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: clamp(1.5rem, 4vw, 3rem);
+    transform: translateX(-50%);
+    background: none;
+    border: 0;
+    padding: 0.5rem;
+    cursor: pointer;
+    z-index: 21;
+  }
+  .lamp-swing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: top center;
+  }
+  .lamp-cord {
+    width: 2px;
+    height: clamp(40px, 9vw, 68px);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-grey-yellow) 0 4px,
+      transparent 4px 7px
+    );
+  }
+  .lamp-knob {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background-color: var(--color-yellow);
+    box-shadow: 0 0 18px 2px rgb(255 240 60 / 0.5);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .lamp {
+      display: block;
+    }
+    html.js .lamp .lamp-swing {
+      animation: lampSwing 3.4s ease-in-out infinite;
+    }
+  }
+  .lamp:focus-visible {
+    outline: 2px solid var(--color-yellow);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+  @keyframes lampSwing {
+    0%,
+    100% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(4deg);
+    }
+  }
+
+  /* ---- Heller Lösungs-Teil (zentriert) ---- */
+  .story-inner--center {
+    text-align: center;
+  }
   .sol-headline {
     font-size: clamp(2rem, 5.5vw, 3.75rem);
     font-weight: 900;
-    line-height: 1.0;
+    line-height: 1;
     letter-spacing: -0.02em;
-    max-width: 18ch;
+    max-width: 20ch;
+    margin-inline: auto;
     color: var(--color-black);
   }
   .sol-text {
     margin-top: clamp(1.25rem, 3vw, 2rem);
+    margin-inline: auto;
     font-size: clamp(1.15rem, 2.2vw, 1.5rem);
     line-height: 1.4;
-    max-width: 40rem;
+    max-width: 42rem;
     color: var(--color-black);
   }
   .sol-cta {
@@ -294,6 +432,7 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem 1.25rem;
   }
   .sol-cta-note {
@@ -301,8 +440,4 @@ const headlineSegs = splitMark(S.headline, S.headlineMark);
     font-weight: 700;
     color: rgb(59 59 58 / 0.75);
   }
-
-  /* Marker im hellen Teil: gelbe Phrase-Highlight (Utility-.mark ist global).
-     Der Lösungs-Auftritt (transform/opacity) läuft rein in JS — hier kein
-     Vorverstecken, damit ohne JS alles sofort sichtbar ist. */
 </style>

@@ -544,64 +544,112 @@ function initCursor() {
 }
 
 /**
+ * Scroll-Cue unter dem Hero („Maus"): fadet beim ersten Wegscrollen weich aus,
+ * damit er nicht stört. Nur Opacity (scrub). CSS-Loop (Punkt) läuft separat.
+ */
+function initHeroScrollCue() {
+  const cue = document.querySelector<HTMLElement>('#hero [data-hero-cue]');
+  if (!cue) return;
+  gsap.to(cue, {
+    autoAlpha: 0,
+    ease: 'none',
+    scrollTrigger: { trigger: '#hero', start: 'top top', end: '30% top', scrub: true },
+  });
+}
+
+/**
  * Problem → Lösung: cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
  *
- * Drei entkoppelte, robuste Bausteine (reines Scrubbing, KEIN Pin → kein CLS):
- *  1) Overlay-Opacity: 0→1 (dunkel rein), halten, 1→0 („Licht an") — nur Opacity.
- *  2) Text-Fill: dunkle Beats fluten von „kaum sichtbar" auf hell (#f6f6f6);
- *     Emphasis-Marker wischen gelb herein (scaleX). Farbe = Paint-only-Ausnahme.
- *  3) Lösung tritt beim „Licht an" auf (transform/opacity, einmal, nicht gescrubbt)
- *     → CTA bleibt sofort klick-/lesbar.
+ * Bausteine (reines Scrubbing, KEIN Pin → kein CLS):
+ *  1) MASTER (ein gescrubbtes Timeline, keine Konflikte, reversibel): dunkle
+ *     Overlay-Ebene (fixed) SPÄT & STARK 0→1 (Hero committet sich in die Story),
+ *     halten über die Beats, dann weicher „Licht an" 1→0. Am Ende treten die
+ *     Lösungs-Inhalte auf — VORHER komplett verborgen (kein Durchscheinen auf
+ *     Dunkel), erst MIT dem Licht-an sichtbar. Nur Opacity/Transform.
+ *  2) Text-Fill: reguläre Beats fluten von „kaum sichtbar" auf WEISS (#f6f6f6).
+ *     Zahlen bleiben gelb (CSS) und zählen separat hoch. Farbe = Paint-Ausnahme.
+ *  3) Zahlen-Counter: echte, belegte Statistik (KEIN Live-Zähler) — zählt EINMAL
+ *     0 → Endwert und bleibt. tabular-nums + reservierte Breite → kein CLS.
+ *  4) Lampenkette: Klick scrollt sanft zum Licht-an (treibt denselben Master-
+ *     Scrub) — reines Weiterscrollen schaltet es ebenso. Ein Mechanismus.
  *
- * Guardrail: läuft NUR in diesem (prefers-reduced-motion:no-preference)-Block.
- * Bei reduced-motion / ohne JS bleibt die Overlay-Opacity 0 (hell), alle Texte
- * stehen in voller Farbe da, die Lösung inkl. CTA ist sichtbar. Kein Blitz:
- * die Opacity ist monoton (0→1→0), kein Stroboskop.
+ * Guardrail: läuft NUR im (prefers-reduced-motion:no-preference)-Block. Bei
+ * reduced-motion / ohne JS: Overlay 0 (hell), Text volle Farbe, Zahlen Endwert,
+ * Lösung sichtbar, keine Kette/kein Counter. Kein Blitz (Opacity monoton).
  */
-function initProblemStory() {
+function initProblemStory(lenis: Lenis) {
   const story = document.querySelector<HTMLElement>('[data-story]');
   const overlay = document.querySelector<HTMLElement>('[data-story-overlay]');
   if (!story || !overlay) return;
 
-  // 1) Dunkle Overlay-Ebene: rein → halten → raus (Licht an). Nur Opacity.
-  const ov = gsap.timeline({
-    scrollTrigger: { trigger: story, start: 'top 72%', end: 'bottom 62%', scrub: true },
-  });
-  ov.fromTo(overlay, { opacity: 0 }, { opacity: 1, ease: 'power1.out', duration: 1 }, 0)
-    .to(overlay, { opacity: 1, duration: 1.4 }) // halten über die Beats
-    .to(overlay, { opacity: 0, ease: 'power2.out', duration: 1 }); // weicher „Licht an"-Fade
+  const solItems = gsap.utils.toArray<HTMLElement>('#loesung [data-sol-item]');
 
-  // 2) Text-Fill der dunklen Beats (dunkel → hell), Zahlen leuchten gelb.
+  // 1) MASTER: Overlay spät & stark dimmen → halten → weicher Licht-an; danach
+  //    Lösung auf (fromTo → vorher via immediateRender verborgen, kein Durchscheinen).
+  const master = gsap.timeline({
+    scrollTrigger: { trigger: story, start: 'top 55%', end: 'bottom bottom', scrub: true },
+  });
+  master
+    .to(overlay, { opacity: 1, ease: 'power2.in', duration: 1 }, 0) // spät & stark aus
+    .to(overlay, { opacity: 1, duration: 4 }) // dunkel halten über ALLE Beats (live justierbar)
+    .to(overlay, { opacity: 0, ease: 'power2.out', duration: 1.2 }); // weicher Licht-an
+  if (solItems.length) {
+    master.fromTo(
+      solItems,
+      { autoAlpha: 0, y: 28 },
+      { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.9, stagger: 0.08 },
+    );
+  }
+  const lightOnST = master.scrollTrigger;
+
+  // 2) Text-Fill (reguläre Wörter dunkel → weiß); Zahlen bleiben gelb (CSS).
   const fillRoot = document.querySelector<HTMLElement>('#problem [data-problem]');
   if (fillRoot) {
     const words = gsap.utils.toArray<HTMLElement>('#problem .fill-word');
-    const marks = gsap.utils.toArray<HTMLElement>('#problem .em-mark');
     if (words.length) {
-      const fill = gsap.timeline({
-        scrollTrigger: { trigger: fillRoot, start: 'top 80%', end: 'bottom 68%', scrub: 0.4 },
-      });
-      fill.fromTo(
-        words,
-        { color: 'rgb(246 246 246 / 0.16)' },
-        { color: '#f6f6f6', ease: 'none', stagger: { each: 0.35 } },
-        0,
-      );
-      if (marks.length) {
-        fill.fromTo(marks, { scaleX: 0 }, { scaleX: 1, ease: 'none', stagger: { each: 0.35 } }, 0.1);
-      }
+      gsap
+        .timeline({
+          scrollTrigger: { trigger: fillRoot, start: 'top 82%', end: 'bottom 62%', scrub: 0.4 },
+        })
+        .fromTo(
+          words,
+          { color: 'rgb(246 246 246 / 0.16)' },
+          { color: '#f6f6f6', ease: 'none', stagger: { each: 0.3 } },
+          0,
+        );
     }
   }
 
-  // 3) Lösung tritt beim „Licht an" sauber auf (einmal, transform/opacity).
-  const solItems = gsap.utils.toArray<HTMLElement>('#loesung [data-sol-item]');
-  if (solItems.length) {
-    gsap.from(solItems, {
-      autoAlpha: 0,
-      y: 28,
-      duration: 0.7,
-      ease: 'power3.out',
-      stagger: 0.12,
-      scrollTrigger: { trigger: '#loesung', start: 'top 72%', toggleActions: 'play none none none' },
+  // 3) Zahlen-Counter: 0 → Endwert (einmal). Format nach Seiten-Sprache.
+  const nf = new Intl.NumberFormat(
+    document.documentElement.lang === 'en' ? 'en-US' : 'de-DE',
+  );
+  gsap.utils.toArray<HTMLElement>('#problem .fill-num').forEach((el) => {
+    const target = parseInt(el.dataset.countTo || '0', 10);
+    if (!target) return;
+    el.textContent = nf.format(0); // Startwert (Beat ist beim Laden unter dem Falz)
+    const proxy = { v: 0 };
+    gsap.to(proxy, {
+      v: target,
+      duration: 1.1,
+      ease: 'power2.out',
+      onUpdate: () => {
+        el.textContent = nf.format(Math.round(proxy.v));
+      },
+      onComplete: () => {
+        el.textContent = nf.format(target); // exakter, fixer Endwert
+      },
+      scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+    });
+  });
+
+  // 4) Lampenkette: Klick → sanft zum Licht-an scrollen (treibt den Master-Scrub).
+  //    Reines Weiterscrollen löst dasselbe aus. Keine Latch/kein Konflikt.
+  const lamp = document.querySelector<HTMLElement>('[data-lamp]');
+  if (lamp && lightOnST) {
+    lamp.addEventListener('click', () => {
+      const y = lightOnST.start + (lightOnST.end - lightOnST.start) * 0.98;
+      lenis.scrollTo(y, { duration: 0.9 });
     });
   }
 }
@@ -633,6 +681,7 @@ if (!prefersReducedMotion) {
   initHeroNotifications();
   initHeroChoreography();
   initHeroCanvas();
-  initProblemStory();
+  initHeroScrollCue();
+  initProblemStory(lenis);
   initReveals();
 }

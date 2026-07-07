@@ -51,6 +51,10 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
     </div>
 
     <p class="text-body opacity-60">© {site.name} · {t.footer.signature}</p>
+
+    {/* Fußnote zur Berlin-Statistik (Sternchen in der Problem-Story).
+        TODO: „Berliner Zeitung" später mit dem echten Quell-Link versehen. */}
+    <p class="footer-source" id="quelle-statistik">{t.footer.sourceNote}</p>
   </div>
 </footer>
 
@@ -66,5 +70,11 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
     /* Logo ist CD-Schwarz → für den dunklen Footer auf Offwhite umfärben. */
     filter: brightness(0) invert(1);
     opacity: 0.92;
+  }
+  /* Kleine Quellen-Fußnote (Statistik-Sternchen). */
+  .footer-source {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    letter-spacing: 0.01em;
   }
 </style>
