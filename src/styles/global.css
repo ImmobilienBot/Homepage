@@ -155,6 +155,16 @@ html.has-custom-cursor * {
   height: 5px;
   background-color: #3b3b3a; /* CD-Schwarz — genauso dunkel wie der Ring */
 }
+/* In der dunklen Story-Sektion invertiert: Ring + Punkt auf Off-White, damit der
+   Custom-Cursor auf dem dunklen BG nicht untergeht. Toggle via `cursor-invert`
+   am <html> (animations.ts, pointerenter/leave der dunklen Sektion). `!important`
+   schlägt die inline-Farben, die GSAP im Ruhezustand setzt. */
+html.cursor-invert .cursor-ring {
+  border-color: #f6f6f6 !important;
+}
+html.cursor-invert .cursor-dot {
+  background-color: #f6f6f6 !important;
+}
 /* Mitlaufendes Pill-Label (Osmo-Referenz): über Store-Badges läuft es NEBEN dem
    kleinen dunklen Cursor-Punkt mit (Ring/Lupe aus, Punkt bleibt sichtbar).
    Gelbe Pille, dunkler Text; folgt dem Cursor (quickTo, animations.ts).

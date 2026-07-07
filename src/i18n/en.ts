@@ -71,8 +71,10 @@ export const en: Dict = {
       headlineMark: 'turn the tables',
       // {n} = portal count from site.ts. **…** = yellow marker.
       text: "Immobilien Bot watches **{n} portals** around the clock and pings you within seconds the moment your flat goes live. **From now on, you're the first**.",
-      // aria-label for the pull-chain button („light on").
-      lightOn: 'Turn on the light',
+      // aria-label for the pull-chain button (linked to the visible hint).
+      lightOn: 'Turn on the light and reveal the solution',
+      // Visible micro-label at the knob (clickability hint, desktop + mobile).
+      clickHint: 'Click',
     },
     features: { title: 'Features' },
     portals: {

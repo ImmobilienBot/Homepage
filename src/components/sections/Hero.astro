@@ -182,7 +182,8 @@ function splitLine(line: string) {
   .hero-scroll-cue {
     position: absolute;
     left: 50%;
-    bottom: clamp(0.75rem, 2vh, 1.5rem);
+    /* Klar am unteren Viewport-Rand mit Abstand (~24–40px) → weg von den Grafiken. */
+    bottom: clamp(1.5rem, 4vh, 2.5rem);
     transform: translateX(-50%);
     z-index: 40;
     display: block;

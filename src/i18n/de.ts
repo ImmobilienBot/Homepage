@@ -73,8 +73,10 @@ export const de = {
       headlineMark: 'Spieß umzudrehen',
       // {n} = Portalanzahl aus site.ts. **…** = gelber Marker.
       text: 'Immobilien Bot überwacht rund um die Uhr über **{n} Portale** und meldet sich in Sekunden, sobald deine Wohnung online geht. **Ab jetzt bist du der Erste**.',
-      // aria-Label für den Lampenketten-Button („Licht an").
-      lightOn: 'Licht anschalten',
+      // aria-Label für den Lampenketten-Button (verknüpft mit sichtbarem Hinweis).
+      lightOn: 'Licht anschalten und Lösung anzeigen',
+      // Sichtbares Mikro-Label am Knauf (Klickbarkeits-Hinweis, Desktop + Mobile).
+      clickHint: 'Klick',
     },
     features: { title: 'Features' },
     portals: {
