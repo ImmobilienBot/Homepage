@@ -15,6 +15,10 @@ const prefersReducedMotion = window.matchMedia(
   '(prefers-reduced-motion: reduce)',
 ).matches;
 
+// Desktop/Mobile-Grenze = Hero-Breakpoint (md = 768px, siehe Hero.astro).
+// Auf Mobile: nur EIN Phone (kein hinterer Fächer) und nur EINE Notification.
+const isDesktopHero = window.matchMedia('(min-width: 768px)').matches;
+
 function initSmoothScroll() {
   const lenis = new Lenis({
     lerp: 0.1,
@@ -145,6 +149,8 @@ function initPhoneCluster() {
   //    transform-origin OBEN (50% 0%) → beim Skalieren bleibt die Oberkante
   //    verankert; mit positivem yPercent liegen die Oberkanten unter der Notch.
   //    Muss zur Hero.astro-CSS passen. x:0/y:0 neutralisieren geerbten px-Versatz.
+  //    NUR Desktop: mobil sind die hinteren Phones ausgeblendet (hidden md:block).
+  if (!isDesktopHero) return;
   backs.forEach((el, i) => {
     const rest = FAN_REST[el.dataset.fan as keyof typeof FAN_REST];
     if (!rest) return;
@@ -175,6 +181,20 @@ function initPhoneCluster() {
 function initHeroNotifications() {
   const cards = gsap.utils.toArray<HTMLElement>('#hero [data-notif]');
   if (!cards.length) return;
+
+  // Mobile: nur EINE Karte, einmal dezent von oben herein (federnd) — bleibt
+  // danach sichtbar (Endzustand). Kein Dauer-Loop (Performance/Ruhe). Additiv:
+  // ohne JS/reduced-motion steht die Karte per CSS bereits im Endzustand.
+  if (!isDesktopHero) {
+    gsap.from(cards[0], {
+      autoAlpha: 0,
+      yPercent: -45,
+      duration: 0.7,
+      ease: 'back.out(1.4)',
+      delay: HERO_START_DELAY + 0.6,
+    });
+    return;
+  }
 
   // Start nach Haupt-Phone (a) + hinteren Phones (b), damit es nicht unruhig wird.
   // Um HERO_START_DELAY mitverschoben (gleiche Ruhe am Anfang wie der Cluster).
