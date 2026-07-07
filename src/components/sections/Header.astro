@@ -181,6 +181,8 @@ const navItems = [
     position: relative;
     color: var(--color-black);
     padding-bottom: 3px;
+    /* Immer einzeilig — sonst bricht „Der Bot" in der geschrumpften Pille um. */
+    white-space: nowrap;
   }
   .nav-link::after {
     content: '';
@@ -216,8 +218,9 @@ const navItems = [
     background-color: var(--color-yellow);
     color: var(--color-black);
     font-weight: 700;
-    padding: 0.55rem 1.15rem;
-    font-size: var(--text-body);
+    padding: 0.55rem 1.1rem;
+    /* Einen Tick kleiner als Body → kompakter in der Pille, bleibt gut lesbar. */
+    font-size: 0.9rem;
     box-shadow: 0 6px 16px -8px rgb(59 59 58 / 0.35);
     transition:
       transform 0.25s ease,

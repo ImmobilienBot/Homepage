@@ -706,19 +706,16 @@ function initProblemStory(lenis: Lenis) {
       gsap.to(solItems, { autoAlpha: 0, y: 24, duration: 0.2, overwrite: 'auto' });
     }
   };
-  if (solPanel) {
-    ScrollTrigger.create({
-      trigger: solPanel,
-      start: 'top 55%',
-      onEnter: turnOnLight,
-      onLeaveBack: turnOffLight,
-    });
-  }
-
   // PIN + SCRUB: gepinnte Beat-Story. Die Beats liegen absolut gestapelt in der
   // Mitte; beim Scrubben blendet der alte Beat unscharf (Desktop) + transparent
   // nach oben aus, der neue scharf von unten herein (Crossfade „mitte mitte").
   // Sauber über Lenis (ScrollTrigger.update hängt an Lenis' scroll). Kein Hijack.
+  //
+  // WICHTIG (Overlay-Timing): Das Overlay bleibt über die GESAMTE gepinnte Story
+  // konstant dunkel — es ist NICHT an den Scrub gekoppelt. Der Wechsel auf Hell
+  // passiert ausschließlich am ENDE des Pins (onLeave = Story-Ende erreicht) als
+  // harter Cut; onEnterBack (zurück in die Story) macht wieder dunkel. Dadurch
+  // sind ALLE Problem-Beats dunkel; nur die Lösung dahinter ist hell.
   if (pinStage && beats.length > 1) {
     gsap.set(beats[0], { autoAlpha: 1, yPercent: 0 });
     if (canBlur) gsap.set(beats, { filter: 'blur(0px)' });
@@ -734,6 +731,8 @@ function initProblemStory(lenis: Lenis) {
         onUpdate: (self) => {
           if (progressFill) gsap.set(progressFill, { scaleY: self.progress });
         },
+        onLeave: turnOnLight, // Story-Ende erreicht → harter Licht-Cut
+        onEnterBack: turnOffLight, // zurück in die Story → wieder dunkel
       },
     });
 

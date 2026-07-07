@@ -412,23 +412,19 @@ const LAMP_LINKS = 6; // gestapelte Kettenglieder → biegbare Welle
     html.js .lamp {
       display: flex;
     }
-    /* Idle „Zupfer" als WELLE: jedes Glied gleiche Bewegung, nach unten gestaffelt
-       (animation-delay über --i) → die Kette biegt sich (nur transform). */
-    html.js .lamp-link,
-    html.js .lamp-knob {
-      animation: lampTug 3.2s ease-in-out infinite;
-      animation-delay: calc(var(--i) * 0.045s);
+    /* Sanftes, organisches Links-rechts-Pendeln (Idle) — Drehpunkt oben, nur
+       transform, ruhig/dezent. Die ganze Kette schwingt als Einheit. */
+    html.js .lamp-chain {
+      transform-origin: top center;
+      animation: lampSwing 4.2s ease-in-out infinite;
     }
     html.js .lamp-glow {
       animation: lampGlowPulse 2.8s ease-in-out infinite;
     }
   }
-  @keyframes lampTug {
-    0%, 58% { transform: translateY(0); }
-    70% { transform: translateY(6px); }
-    84% { transform: translateY(-1.5px); } /* Überschwingen zurück */
-    92% { transform: translateY(0.5px); }
-    100% { transform: translateY(0); }
+  @keyframes lampSwing {
+    0%, 100% { transform: rotate(-3.5deg); }
+    50% { transform: rotate(3.5deg); }
   }
   @keyframes lampGlowPulse {
     0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
