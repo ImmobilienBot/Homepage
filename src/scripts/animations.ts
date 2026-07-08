@@ -571,37 +571,45 @@ function initHeroScrollCue() {
 }
 
 /**
- * Problem „3c": Der Hero→Problem-Übergang. Die Sektion startet als LÜCKENLOSE graue
- * Fläche in der Hero-BG-Farbe (#eaebeb) und ZERFÄLLT beim Eintritt EINMALIG + elastisch
- * in die Partikel-„43.000" — dabei wird der dunkle Sektions-BG (#3b3b3a) frei.
+ * Problem „3c": Der Hero→Problem-Übergang + die Partikel-„43.000".
  *
- * EIN fester, gedeckelter Partikelsatz mit zwei Positions-Zuständen:
- *  - RASTER: großes, überlappendes Kachel-Grid über die GANZE Sektion → solide graue
- *    Fläche, verdeckt den dunklen BG komplett → nahtlose Fortsetzung des (hellen) Heros,
- *    KEINE Kante an der Sektionsgrenze.
- *  - ZAHL: aus den Alpha-Pixeln von „43.000" gesampelte Zielpositionen (Font-Gate!).
- * Beim Eintritt (ScrollTrigger onEnter, once, KEIN Pin/Scrub) tweenen die Partikel
- * Raster→Zahl: per-Partikel-Stagger, elastischer ease-out-back, Größe groß→klein,
- * Farbe Hero-Grau→Zahl-Hellgrau. EIN Partikel wird isoliert über der Zahl zu einem
- * runden GELBEN Punkt (Glow, kein Text). Danach Reveal der Headline-Gruppe.
+ * ÜBERGANG (triggered, EINMAL, kein Scrub/Reverse):
+ *  - Ruhezustand: eine solide hellgraue Fläche (.section-wipe, Hero-BG #eaebeb) deckt
+ *    die dunkle Sektion LÜCKENLOS ab → nahtlose Fortsetzung des Heros, KEINE Kante.
+ *  - Beim Eintritt (ScrollTrigger onEnter, once): die Fläche wischt per CLIP-PATH
+ *    horizontal weg (bleibt in place, kein translate), gibt den dunklen BG frei.
+ *  - Direkt anschließend faden die Partikel ein und kommen ELASTISCH zur „43.000"
+ *    zusammen (per-Partikel-Stagger, ease-out-back). Kein Punktegewusel im Ruhezustand
+ *    (die Fläche verdeckt vorher alles; Canvas ist bis dahin opacity 0).
  *
- * reduced-motion / ohne JS: KEINE Fläche, KEIN Effekt — statische „43.000" (DOM-Text)
- * auf dunklem BG + alles sofort sichtbar (Canvas per CSS aus; Funktion nicht gerufen).
- * DPR ≤ 2. Maus-Repel auf der fertigen Zahl (Desktop). Vom Hero-Canvas entkoppelt.
+ * du-Partikel: das der optischen Zahl-MITTE nächste Sample wird ein runder GELBER Punkt
+ * (Glow, etwas größer, kein Text) INNERHALB der Ziffern. Maus-Repel (Desktop) groß & satt.
+ *
+ * FONT-GATE beibehalten. reduced-motion / ohne JS: KEINE Fläche, KEIN Effekt — statische
+ * „43.000" (DOM) auf dunklem BG + alles sofort sichtbar (Canvas + Fläche per CSS aus).
+ * DPR ≤ 2. Vom Hero-Canvas entkoppelt.
  */
 async function initProblem3c() {
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
   const stage = document.querySelector<HTMLElement>('[data-p3-stage]');
   const canvas = document.querySelector<HTMLCanvasElement>('[data-p3-canvas]');
   const numEl = document.querySelector<HTMLElement>('[data-p3-num]');
+  const wipe = document.querySelector<HTMLElement>('[data-p3-wipe]');
   if (!section || !stage || !canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
-  const GREY = [234, 235, 235]; // Hero-BG #eaebeb → Raster-Fläche (nahtlos zum Hero)
   const NUM_RGB = [220, 221, 220]; // Zahl-Partikelfarbe (hell, lesbar auf Dunkel)
+
+  // ---- Justierbare Konstanten ----
+  const WIPE_DUR = 0.7; // Wisch-Dauer (s)
+  const DUR = 1000; // Formung: Tween-Dauer je Partikel (ms)
+  const MAXDELAY = 700; // Formung: max. Per-Partikel-Stagger (ms)
+  const REPEL_R = 150; // Maus-Wölbung: Radius (px) — deutlich größer als zuvor (62)
+  const REPEL_R2 = REPEL_R * REPEL_R;
+  const REPEL_F = 9; // Maus-Wölbung: Kraft — ~2× stärker als zuvor (4.5)
 
   // Headline-Gruppe (inkl. Statistik-Satz) initial verbergen — NUR JS-Zugabe.
   const reveals = gsap.utils.toArray<HTMLElement>('#problem [data-p3-reveal]');
@@ -616,12 +624,10 @@ async function initProblem3c() {
   };
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const DUR = 1000; // Tween-Dauer je Partikel (ms)
-  const MAXDELAY = 700; // max. Per-Partikel-Stagger
 
   type P = {
-    rx: number; ry: number; // Raster-Position (Start)
-    nx: number; ny: number; // Zahl-Position (Ziel)
+    rx: number; ry: number; // Startlage (Streuung um die Zahl)
+    nx: number; ny: number; // Ziel (Zahl-Pixel)
     x: number; y: number; // aktuell
     delay: number;
     du: boolean;
@@ -629,9 +635,8 @@ async function initProblem3c() {
   let parts: P[] = [];
   let W = 0;
   let H = 0;
-  let rasterSize = 20;
   let pSize = 3;
-  let duMax = 9;
+  let duMax = 10;
   let started = false;
   let startT = 0;
   let duLandT = 0;
@@ -725,22 +730,14 @@ async function initProblem3c() {
     }
 
     pSize = Math.max(2, fontPx / 110);
-    duMax = pSize * 3.2;
+    duMax = pSize * 3.6;
 
-    // RASTER über die GANZE Sektion (M Kacheln) → deckt den dunklen BG lückenlos.
-    // Kachel groß + überlappend (×1.5) → wirkt wie eine solide graue Fläche.
-    const cols = Math.max(1, Math.round(Math.sqrt((M * W) / H)));
-    const rows = Math.ceil(M / cols);
-    const cellW = W / cols;
-    const cellH = H / rows;
-    rasterSize = Math.max(cellW, cellH) * 1.5;
-
-    // „du"-Partikel: das der Zahl-Oberkante-Mitte nächste Sample → wird isoliert
-    // ÜBER die Zahl gesetzt (freigestellt, fällt sofort auf).
+    // du-Partikel: das der OPTISCHEN MITTE der Zahl nächste Sample (an die tatsächliche
+    // Render-Position der Zahl gekoppelt) → bleibt INNERHALB der Ziffern.
     let duIdx = 0;
     let duBd = Infinity;
     const tcx = W / 2;
-    const tcy = offY;
+    const tcy = offY + oh * 0.5;
     for (let i = 0; i < M; i++) {
       const d = (nums[i].x - tcx) * (nums[i].x - tcx) + (nums[i].y - tcy) * (nums[i].y - tcy);
       if (d < duBd) {
@@ -749,25 +746,30 @@ async function initProblem3c() {
       }
     }
 
+    // Startlage: Streuung in einem Band UM die Zahl (nicht über die ganze Sektion) →
+    // dichte, schnelle „Zusammenkommen"-Formung.
+    const bandTop = offY - oh * 0.6;
+    const bandH = oh * 2.2;
     const next: P[] = [];
     for (let i = 0; i < M; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const rx = (col + 0.5) * cellW;
-      const ry = (row + 0.5) * cellH;
-      let nx = nums[i].x;
-      let ny = nums[i].y;
-      let du = false;
-      if (i === duIdx) {
-        du = true;
-        nx = W / 2;
-        ny = offY - fontPx * 0.32; // isoliert ÜBER der Zahl
-      }
-      next.push({ rx, ry, nx, ny, x: rx, y: ry, delay: Math.random() * MAXDELAY, du });
+      next.push({
+        rx: Math.random() * W,
+        ry: bandTop + Math.random() * bandH,
+        nx: nums[i].x,
+        ny: nums[i].y,
+        x: 0,
+        y: 0,
+        delay: Math.random() * MAXDELAY,
+        du: i === duIdx,
+      });
+    }
+    for (const p of next) {
+      p.x = p.rx;
+      p.y = p.ry;
     }
     parts = next;
     duLandT = 0;
-    // DOM-Zahl verstecken (bleibt für a11y/SEO/No-JS im Markup); Canvas übernimmt.
+    canvas.style.opacity = '0'; // bis zur Formung unsichtbar (Fläche deckt eh ab)
     if (numEl) numEl.style.opacity = '0';
   };
 
@@ -793,79 +795,92 @@ async function initProblem3c() {
   const loop = (now: number) => {
     if (!running) return;
     ctx.clearRect(0, 0, W, H);
-    const elapsed = started ? now - startT : 0;
+    if (!started) {
+      rafId = requestAnimationFrame(loop);
+      return;
+    }
+    const elapsed = now - startT;
 
     for (const p of parts) {
-      const t = started ? Math.min(1, Math.max(0, (elapsed - p.delay) / DUR)) : 0;
-      const e = started ? easeOutBack(t) : 0;
+      const t = Math.min(1, Math.max(0, (elapsed - p.delay) / DUR));
+      const e = easeOutBack(t);
       p.x = p.rx + (p.nx - p.rx) * e;
       p.y = p.ry + (p.ny - p.ry) * e;
 
-      // Maus-Repel auf der fertigen Zahl (nur Desktop, nur gelandete Partikel).
+      // Maus-Wölbung auf der fertigen Zahl (nur Desktop, nur gelandete Partikel).
       if (fine && t >= 1) {
         const dx = p.x - mx;
         const dy = p.y - my;
         const d2 = dx * dx + dy * dy;
-        if (d2 < 3844 && d2 > 0.01) {
+        if (d2 < REPEL_R2 && d2 > 0.01) {
           const d = Math.sqrt(d2);
-          const f = ((62 - d) / 62) * 4.5;
+          const f = ((REPEL_R - d) / REPEL_R) * REPEL_F;
           p.x += (dx / d) * f;
           p.y += (dy / d) * f;
         }
       }
 
-      const size = rasterSize + (pSize - rasterSize) * t;
-
-      if (p.du && t >= 1) {
-        // Gelandet → runder gelber Punkt mit Glow, wächst pSize→duMax (kein Text).
-        if (!duLandT) duLandT = now;
-        const g = Math.min(1, (now - duLandT) / 500);
-        const r = pSize + g * (duMax - pSize);
-        ctx.fillStyle = YELLOW;
-        ctx.shadowColor = YELLOW;
-        ctx.shadowBlur = duMax * 2;
+      if (p.du) {
+        // Runder GELBER Punkt INNERHALB der Zahl, wächst pSize→duMax mit Glow (kein Text).
+        let r = pSize;
+        if (t >= 1) {
+          if (!duLandT) duLandT = now;
+          const g = Math.min(1, (now - duLandT) / 500);
+          r = pSize + g * (duMax - pSize);
+          ctx.fillStyle = YELLOW;
+          ctx.shadowColor = YELLOW;
+          ctx.shadowBlur = duMax * 2;
+        } else {
+          ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},0.66)`;
+          ctx.shadowBlur = 0;
+        }
         ctx.beginPath();
         ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
       } else {
-        // Raster→Zahl: Farbe Hero-Grau→Zahl-Grau, Alpha 1→0.66.
-        const cr = (GREY[0] + (NUM_RGB[0] - GREY[0]) * t) | 0;
-        const cg = (GREY[1] + (NUM_RGB[1] - GREY[1]) * t) | 0;
-        const cb = (GREY[2] + (NUM_RGB[2] - GREY[2]) * t) | 0;
-        const a = 1 + (0.66 - 1) * t;
-        ctx.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
-        if (p.du) {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, size / 2, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
-        }
+        ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},0.66)`;
+        ctx.fillRect(p.x - pSize / 2, p.y - pSize / 2, pSize, pSize);
       }
     }
 
     rafId = requestAnimationFrame(loop);
   };
 
-  // TRIGGER: EINMAL beim Eintritt (Oberkante ~60% der Viewporthöhe). Kein Pin/Scrub.
+  // TRIGGER: EINMAL beim Eintritt (Oberkante ~65% der Viewporthöhe). Kein Pin/Scrub/Reverse.
+  let triggered = false;
   ScrollTrigger.create({
     trigger: section,
-    start: 'top 60%',
+    start: 'top 65%',
     once: true,
     onEnter: () => {
-      if (!started) {
+      if (triggered) return;
+      triggered = true;
+      // 1) Fläche wischt per Clip-Path horizontal weg (bleibt in place → kein Overflow).
+      if (wipe) {
+        gsap.to(wipe, {
+          clipPath: 'inset(0% 0% 0% 100%)',
+          duration: WIPE_DUR,
+          ease: 'power2.inOut',
+          onComplete: () => {
+            wipe.style.display = 'none';
+          },
+        });
+      }
+      // 2) Direkt anschließend: Partikel einfaden + elastisch zur Zahl formen.
+      const startForm = WIPE_DUR * 0.6;
+      gsap.delayedCall(startForm, () => {
         started = true;
         startT = performance.now();
-        // Reveal, nachdem Zahl + gelber Punkt stehen (~Ende der Formung). Safety-Net.
-        gsap.delayedCall(2.0, doReveal);
-        gsap.delayedCall(2.8, doReveal);
-      }
+        gsap.to(canvas, { opacity: 1, duration: 0.4, ease: 'power1.out' });
+      });
+      // 3) Headline-Gruppe nach der Formung einblenden (+ Safety-Net).
+      gsap.delayedCall(startForm + 2.0, doReveal);
+      gsap.delayedCall(startForm + 2.8, doReveal);
     },
   });
 
-  // Loop laufen lassen, sobald die Sektion NAHE ist (rootMargin) → graue Fläche steht
-  // schon, bevor die Kante in den Blick kommt (kein Dunkel-Flash am Seam).
+  // Loop laufen lassen, sobald die Sektion NAHE ist (rootMargin).
   const io = new IntersectionObserver(
     (entries) => {
       const vis = entries[0]?.isIntersecting ?? false;
@@ -883,8 +898,7 @@ async function initProblem3c() {
   );
   io.observe(section);
 
-  // Resize: neu aufsetzen. War die Formung schon durch, direkt im Endzustand bleiben
-  // (kein erneutes Zerfallen), Reveal-Latch bleibt.
+  // Resize: neu aufsetzen. War die Formung schon durch, direkt im Endzustand bleiben.
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     window.clearTimeout(resizeTimer);
@@ -894,6 +908,7 @@ async function initProblem3c() {
       if (wasStarted) {
         started = true;
         startT = performance.now() - (MAXDELAY + DUR + 1000);
+        canvas.style.opacity = '1';
       }
     }, 150);
   });

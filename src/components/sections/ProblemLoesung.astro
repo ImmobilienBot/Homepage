@@ -61,10 +61,14 @@ const ICONS = [
 ---
 
 <section id="problem" class="problem3c">
-  {/* Vollflächiges Partikel-Canvas: startet als lückenlose graue Fläche (Hero-Farbe)
-      und zerfällt beim Eintritt in die „43.000" (gibt den dunklen BG frei). Deko-Ebene
-      ÜBER dem dunklen Sektions-BG, UNTER dem Inhalt (z-0). Ohne JS/reduced-motion aus. */}
+  {/* Vollflächiges Partikel-Canvas: die „43.000" formt sich hier (Deko-Ebene über dem
+      dunklen Sektions-BG, unter dem Inhalt, z-0). Ohne JS/reduced-motion aus. */}
   <canvas class="p3-canvas" data-p3-canvas aria-hidden="true"></canvas>
+
+  {/* Übergangs-Fläche: solide Hero-Grau (#eaebeb) deckt die Sektion im Ruhezustand
+      LÜCKENLOS ab (nahtlos zum Hero, keine Kante). Beim Eintritt wischt sie per
+      Clip-Path weg und gibt den dunklen BG frei. Nur mit JS+Motion sichtbar. */}
+  <div class="section-wipe" data-p3-wipe aria-hidden="true"></div>
 
   <div class="p3-inner">
     {/* 1 · Partikel-Zahl (Display, KEIN Heading) + eng gekoppelter Statistik-Satz.
@@ -184,7 +188,7 @@ const ICONS = [
     width: 100%;
     height: clamp(140px, 34vw, 300px);
   }
-  /* Vollflächiges Partikel-Canvas: deckt die GANZE Sektion (graue Fläche → Zahl).
+  /* Vollflächiges Partikel-Canvas: hier formt sich die Zahl.
      Über dem dunklen Sektions-BG, unter dem Inhalt (.p3-inner z-1). Größe setzt JS. */
   .p3-canvas {
     position: absolute;
@@ -194,6 +198,18 @@ const ICONS = [
     z-index: 0;
     pointer-events: none;
     /* nur mit JS+Motion sichtbar; ohne JS bleibt die statische Zahl auf Dunkel */
+    display: none;
+  }
+  /* Übergangs-Fläche (Hero-Grau) — deckt im Ruhezustand die ganze Sektion ab, über
+     Canvas UND Inhalt (z-5), aber unter der Nav-Pille (Header z-40). JS wischt sie
+     per Clip-Path weg. Nur mit JS+Motion sichtbar (sonst nie ein grauer Vorhang). */
+  .section-wipe {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background-color: var(--color-grey); /* #eaebeb = exakte Hero-BG-Farbe */
+    pointer-events: none;
+    clip-path: inset(0% 0% 0% 0%);
     display: none;
   }
   /* Echte DOM-Zahl: Fallback (No-JS/reduced-motion), mittig in der Stage. Bei
@@ -218,8 +234,15 @@ const ICONS = [
     font-size: clamp(1rem, 2.4vw, 1.4rem);
     font-weight: 400;
     line-height: 1.3;
-    max-width: 30ch;
+    max-width: 30ch; /* Mobile: darf umbrechen */
     color: rgb(246 246 246 / 0.72);
+  }
+  /* Desktop: Statistik-Satz EINZEILIG (unter der breiten Zahl ist reichlich Platz). */
+  @media (min-width: 768px) {
+    .p3-stat {
+      max-width: none;
+      white-space: nowrap;
+    }
   }
   .p3-ast {
     font-size: 0.6em;
@@ -357,7 +380,8 @@ const ICONS = [
 
   /* Sanftes Idle am Pfeil (nur JS+Motion). */
   @media (prefers-reduced-motion: no-preference) {
-    :global(html.js) .p3-canvas {
+    :global(html.js) .p3-canvas,
+    :global(html.js) .section-wipe {
       display: block;
     }
     .p3-more-arrow {
