@@ -57,14 +57,11 @@ export const de = {
     problem: {
       // sr-only-Titel (Struktur/SEO). Die sichtbare Aussage tragen Zahl + H2.
       title: 'Das Problem',
-      // Große Partikel-Zahl (Display, KEIN Heading). Locale-formatiert; Count-up-
-      // Ziel = nur die Ziffern (43000). Sternchen → Quelle in der Footer-Fußnote.
+      // Große Partikel-Zahl (Display, KEIN Heading) — formt sich im Canvas aus
+      // Partikeln. Sternchen → Quelle in der Footer-Fußnote.
       bigNumber: '43.000',
       // Statistik-Satz, ENG an die Zahl gekoppelt (kleiner, gedämpftes Weiß).
       stat: 'Bewerber auf 288 Wohnungen. Nach 30 Minuten war Schluss.',
-      // Desktop-Hinweise an der Partikel-Zahl (Mobile/reduced-motion: ausgeblendet).
-      hintMove: 'Fahr mit der Maus durch die Zahl',
-      replay: 'Replay',
       // Umkehr-Headline (H2). Gelber Marker NUR auf „du".
       headline: 'Einer davon ist zuerst da: du.',
       headlineMark: 'du',

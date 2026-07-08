@@ -236,6 +236,20 @@ function splitLine(line: string) {
 </style>
 
 <style>
+  /* ---- Hero = echtes Vollbild (Desktop) ----
+     min. 100svh, Inhalt vertikal zentriert → die dunkle 3c-Sektion darunter
+     blutet NICHT in den ersten Viewport (keine sichtbare Unterkante). Mobile hat
+     sein eigenes 100svh (Flex-Spalte weiter unten). NUR die Sektionshöhe ändert
+     sich — Inhalt/Slogan/Phones/Konstellation bleiben 1:1. */
+  @media (min-width: 768px) {
+    .hero-section {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+
   /* ---- Kinetische Typografie (der Blickfang, links) ----
      Sichtbar per Default. Die Maske klippt nur die von unten einfahrende Zeile
      WÄHREND der Animation; im Ruhezustand (yPercent 0) ist die Zeile voll da.

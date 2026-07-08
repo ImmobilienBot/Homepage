@@ -571,184 +571,264 @@ function initHeroScrollCue() {
 }
 
 /**
- * Problem „3c": Partikel-Zahl (43.000) mit Count-up + Cursor-Repel — EINE dunkle,
- * fokussierte Sektion (kein Pin/Scrub/Tunnel). Reuse der Count-up- UND der
- * Partikel-/Repel-Technik (aus der Hero-Konstellation adaptiert) als EIGENE, vom
- * Hero vollständig entkoppelte Canvas-Instanz, begrenzt auf die Zahl.
+ * Problem „3c": die Zahl „43.000" FORMT sich aus Partikeln (erprobter Sampling-
+ * Algorithmus) — EIGENE, vom Hero vollständig entkoppelte Canvas-Instanz.
  *
- *  - Count-up 0→43.000 beim Eintritt (einmal), tabular-nums + reservierte Breite
- *    → kein CLS.
- *  - DESKTOP (pointer:fine): Partikel-Aura um die Ziffern, die dem Cursor ausweicht
- *    (Repel) — „Fahr mit der Maus durch die Zahl" + „↺ Replay".
- *  - MOBILE: nur sanfte Drift, kein Cursor/Repel, kein Hinweis (Tap-Replay bleibt).
+ *  - FONT-GATE: erst sampeln/zeichnen, wenn Roboto Black geladen ist
+ *    (`document.fonts.load('900 250px Roboto')`) — sonst würde die Zahl leer/kaputt
+ *    gesampelt (das war der alte Bug).
+ *  - SAMPLING: „43.000" auf ein Offscreen-Canvas zeichnen, Alpha-Pixel abtasten →
+ *    Ziel-Positionen; pro Ziel ein Partikel, das aus zufälliger Startlage zum Ziel
+ *    east → die Zahl entsteht.
+ *  - MAUS-REPEL nur Desktop (pointer:fine); Touch: kein Repel.
+ *  - „DU"-MOMENT (~2300ms): das Partikel nahe der Zahl-Mitte wächst, wird gelb mit
+ *    Glow + winziges „du"/„you"-Label; ~400ms später Reveal der Headline-Gruppe.
+ *  - TRIGGER: Formung startet, sobald die Sektion in den Viewport scrollt.
  *  - Läuft NUR im no-preference-Block. reduced-motion / ohne JS: statische „43.000"
- *    (DOM-Text-Endwert), kein Canvas/kein Count-up (Guardrail: alles sichtbar).
- *
- * FALLBACK-Wahl (bewusst, CLAUDE.md „lieber sauber als ruckelig"): die Zahl bleibt
- * ECHTER DOM-Text (Roboto Black, Count-up); die Partikel bilden eine dezente Aura +
- * Repel um die Ziffern (KEIN Pixel-Sampling der Glyphen) → robust, kollidiert nicht
- * mit der Hero-Konstellation, Text nie nur im Canvas.
+ *    (DOM-Text) + Headline sofort sichtbar (Reveal ist reine JS-Zugabe). DPR ≤ 2.
  */
-function initProblem3c() {
+async function initProblem3c() {
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
-  const numEl = document.querySelector<HTMLElement>('[data-p3-num]');
-  const numWrap = document.querySelector<HTMLElement>('[data-p3-numwrap]');
+  const stage = document.querySelector<HTMLElement>('[data-p3-stage]');
   const canvas = document.querySelector<HTMLCanvasElement>('[data-p3-canvas]');
-  const hint = document.querySelector<HTMLElement>('[data-p3-hint]');
-  const replay = document.querySelector<HTMLElement>('[data-p3-replay]');
-  if (!section || !numEl) return;
+  const numEl = document.querySelector<HTMLElement>('[data-p3-num]');
+  if (!section || !stage || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
   const fine = window.matchMedia('(pointer: fine)').matches;
+  const YELLOW = '#fff03c';
+  const duLabel = section.querySelector('.mark')?.textContent?.trim() || 'du';
 
-  // ---- Count-up (reuse-Technik) ----
-  const nf = new Intl.NumberFormat(
-    document.documentElement.lang === 'en' ? 'en-US' : 'de-DE',
-  );
-  const target = parseInt(numEl.dataset.countTo || '0', 10);
-  let countTween: ReturnType<typeof gsap.to> | null = null;
-  const runCountUp = () => {
-    if (!target) return;
-    countTween?.kill();
-    const proxy = { v: 0 };
-    numEl.textContent = nf.format(0);
-    countTween = gsap.to(proxy, {
-      v: target,
-      duration: 1.2,
-      ease: 'power2.out',
-      onUpdate: () => {
-        numEl.textContent = nf.format(Math.round(proxy.v));
-      },
-      onComplete: () => {
-        numEl.textContent = nf.format(target);
-      },
-    });
-  };
-  // Startwert 0 (Sektion beim Laden unter dem Falz → kein Flash), Count-up bei Eintritt.
-  if (target) numEl.textContent = nf.format(0);
-  ScrollTrigger.create({ trigger: section, start: 'top 75%', once: true, onEnter: runCountUp });
-
-  // Desktop-Hinweis nur bei Maus.
-  if (hint && fine) hint.style.display = 'flex';
-
-  // ---- Partikel-Aura (eigene Canvas-Instanz, begrenzt auf die Zahl) ----
-  const ctx = canvas?.getContext('2d') ?? null;
-  if (canvas && ctx && numWrap) {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const LIGHT = '246,246,246'; // Off-White als rgb-Tripel (für rgba)
-    const YELLOW = '#fff03c';
-    let W = 0;
-    let H = 0;
-    type Pt = { x: number; y: number; vx: number; vy: number; r: number; a: number; yellow: boolean };
-    let pts: Pt[] = [];
-
-    const build = () => {
-      W = numWrap.clientWidth;
-      H = numWrap.clientHeight;
-      canvas.width = Math.round(W * dpr);
-      canvas.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // in CSS-px zeichnen
-      // Dichte an die Fläche gekoppelt, HART gedeckelt (Performance). Mobile weniger.
-      const cap = fine ? 90 : 40;
-      const count = Math.max(24, Math.min(cap, Math.round((W * H) / 2600)));
-      pts = [];
-      for (let i = 0; i < count; i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const sp = 0.08 + Math.random() * 0.22; // langsame Grunddrift
-        const yellow = Math.random() < 0.28; // Gelb-Akzente
-        pts.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          vx: Math.cos(ang) * sp,
-          vy: Math.sin(ang) * sp,
-          r: 1 + Math.random() * 1.8,
-          a: yellow ? 0.9 : 0.35 + Math.random() * 0.3,
-          yellow,
-        });
-      }
-    };
-
-    let mx = -1;
-    let my = -1;
-    if (fine) {
-      window.addEventListener(
-        'mousemove',
-        (e) => {
-          const rect = canvas.getBoundingClientRect();
-          mx = e.clientX - rect.left;
-          my = e.clientY - rect.top;
-        },
-        { passive: true },
-      );
+  // Headline-Gruppe initial verbergen — NUR JS-Zugabe (ohne JS/reduced-motion sichtbar).
+  const reveals = gsap.utils.toArray<HTMLElement>('#problem [data-p3-reveal]');
+  if (reveals.length) gsap.set(reveals, { autoAlpha: 0, y: 22 });
+  let revealed = false;
+  const doReveal = () => {
+    if (revealed) return;
+    revealed = true;
+    if (reveals.length) {
+      gsap.to(reveals, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.7,
+        ease: 'power2.out',
+        stagger: 0.08,
+      });
     }
+  };
 
-    // Scatter-Impuls (Replay-Feedback): alle Partikel bekommen einen kurzen Stoß.
-    const scatter = () => {
-      for (const p of pts) {
-        const ang = Math.random() * Math.PI * 2;
-        const sp = 1.5 + Math.random() * 2;
-        p.vx += Math.cos(ang) * sp;
-        p.vy += Math.sin(ang) * sp;
-      }
-    };
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const REPEL = 60;
-    const REPEL_SQ = REPEL * REPEL;
-    let running = false;
-    const tick = () => {
-      if (!running) return;
-      ctx.clearRect(0, 0, W, H);
-      for (const p of pts) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.97; // Reibung: Scatter-/Repel-Impuls klingt sanft aus
-        p.vy *= 0.97;
-        // Im Zahl-Rechteck halten (Abprall).
-        if (p.x <= 0) { p.x = 0; p.vx = Math.abs(p.vx) + 0.05; }
-        else if (p.x >= W) { p.x = W; p.vx = -Math.abs(p.vx) - 0.05; }
-        if (p.y <= 0) { p.y = 0; p.vy = Math.abs(p.vy) + 0.05; }
-        else if (p.y >= H) { p.y = H; p.vy = -Math.abs(p.vy) - 0.05; }
-        // Cursor-Repel (nur Desktop): Partikel weichen dem Zeiger aus.
-        if (fine && mx >= 0) {
-          const dx = p.x - mx;
-          const dy = p.y - my;
-          const dsq = dx * dx + dy * dy;
-          if (dsq < REPEL_SQ && dsq > 0.01) {
-            const d = Math.sqrt(dsq);
-            const push = (1 - d / REPEL) * 1.4;
-            p.x += (dx / d) * push;
-            p.y += (dy / d) * push;
-          }
+  type P = { x: number; y: number; hx: number; hy: number; delay: number; size: number; du: boolean };
+  let parts: P[] = [];
+  let W = 0;
+  let H = 0;
+  let started = false;
+  let startT = 0;
+  let duPicked = false;
+  let duP: P | null = null;
+  let duStart = 0;
+  let duGrow = 0;
+
+  // FONT-GATE (Grund des alten Bugs): erst nach dem Laden der Schrift sampeln.
+  try {
+    await (document.fonts?.load('900 250px Roboto') ?? Promise.resolve());
+  } catch {
+    /* Font-API nicht verfügbar → best effort */
+  }
+
+  const setup = () => {
+    const stageW = stage.clientWidth;
+    if (!stageW) return;
+    const sc = Math.min(1, (stageW - 60) / 1100);
+    const ow = Math.max(1, Math.round(1100 * sc));
+    const oh = Math.max(1, Math.round(340 * sc));
+    // Stage-Höhe an die gesampelte Zahl koppeln (≈14% Luft oben/unten) → der
+    // Statistik-Satz bleibt ENG unter der Zahl.
+    W = stageW;
+    H = Math.round(oh / 0.74);
+    stage.style.height = H + 'px';
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // in CSS-px zeichnen
+
+    // Offscreen: „43.000" zeichnen und Alpha-Pixel abtasten.
+    const off = document.createElement('canvas');
+    off.width = ow;
+    off.height = oh;
+    const octx = off.getContext('2d');
+    if (!octx) return;
+    octx.fillStyle = '#fff';
+    octx.font = `900 ${Math.round(250 * sc)}px Roboto`;
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillText('43.000', ow / 2, oh / 2);
+    const data = octx.getImageData(0, 0, ow, oh).data;
+    const step = Math.max(4, Math.round(5 * sc));
+    const offX = (W - ow) / 2;
+    const offY = H * 0.14;
+
+    const next: P[] = [];
+    for (let y = 0; y < oh; y += step) {
+      for (let x = 0; x < ow; x += step) {
+        if (data[(y * ow + x) * 4 + 3] > 128) {
+          next.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            hx: x + offX,
+            hy: y + offY,
+            delay: Math.random() * 900,
+            size: 2.5,
+            du: false,
+          });
         }
       }
-      for (const p of pts) {
-        ctx.globalAlpha = p.a;
-        ctx.fillStyle = p.yellow ? YELLOW : `rgb(${LIGHT})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(tick);
-    };
+    }
+    parts = next;
+    duPicked = false;
+    duP = null;
+    duGrow = 0;
+    // Nur wenn wirklich Partikel gesampelt wurden, die DOM-Zahl verstecken (sonst
+    // bliebe die Fläche leer). DOM-Zahl bleibt für a11y/SEO/No-JS im Markup.
+    if (numEl) numEl.style.opacity = parts.length ? '0' : '';
+  };
 
-    build();
-    window.addEventListener('resize', build);
-    // Font-Metriken können die Zahlbreite ändern → nach Font-Load neu vermessen.
-    if (document.fonts?.ready) document.fonts.ready.then(build);
-    // Nur laufen lassen, wenn die Sektion sichtbar ist (Performance).
-    const io = new IntersectionObserver((entries) => {
-      const vis = entries[0]?.isIntersecting ?? false;
-      if (vis && !running) { running = true; requestAnimationFrame(tick); }
-      if (!vis) { running = false; mx = -1; my = -1; }
-    });
-    io.observe(section);
+  setup();
 
-    // Replay: Count-up neu + Partikel-Scatter.
-    replay?.addEventListener('click', () => { runCountUp(); scatter(); });
-  } else {
-    // Ohne Canvas: Replay startet nur den Count-up neu.
-    replay?.addEventListener('click', runCountUp);
+  // Maus relativ zur Stage (nur Desktop).
+  let mx = -9999;
+  let my = -9999;
+  if (fine) {
+    window.addEventListener(
+      'mousemove',
+      (e) => {
+        const r = canvas.getBoundingClientRect();
+        mx = e.clientX - r.left;
+        my = e.clientY - r.top;
+      },
+      { passive: true },
+    );
   }
+
+  let running = false;
+  let rafId = 0;
+  const loop = (now: number) => {
+    if (!running) return;
+    ctx.clearRect(0, 0, W, H);
+    const elapsed = started ? now - startT : 0;
+
+    // „DU"-Moment: nach ~2300ms das der Zahl-Mitte nächste Partikel wählen.
+    if (started && !duPicked && elapsed >= 2300 && parts.length) {
+      const tx = W / 2;
+      const ty = H * 0.14 + 150;
+      let best = parts[0];
+      let bd = Infinity;
+      for (const p of parts) {
+        const d = (p.hx - tx) * (p.hx - tx) + (p.hy - ty) * (p.hy - ty);
+        if (d < bd) {
+          bd = d;
+          best = p;
+        }
+      }
+      best.du = true;
+      duP = best;
+      duPicked = true;
+      duStart = now;
+      gsap.delayedCall(0.4, doReveal); // Reveal ~400ms nach dem „du"-Partikel
+    }
+
+    for (const p of parts) {
+      // Formung: nach Ablauf des delays zum Ziel easen.
+      if (started && elapsed > p.delay) {
+        p.x += (p.hx - p.x) * 0.075;
+        p.y += (p.hy - p.y) * 0.075;
+      }
+      // Maus-Repel (nur Desktop): d² < 62² = 3844.
+      if (fine) {
+        const dx = p.x - mx;
+        const dy = p.y - my;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 3844 && d2 > 0.01) {
+          const d = Math.sqrt(d2);
+          const f = ((62 - d) / 62) * 4.5;
+          p.x += (dx / d) * f;
+          p.y += (dy / d) * f;
+        }
+      }
+      // „du"-Partikel wächst 2.5→7.5 über 500ms.
+      if (p.du) {
+        duGrow = Math.min(1, (now - duStart) / 500);
+        p.size = 2.5 + duGrow * 5;
+      }
+      if (p.du) {
+        ctx.fillStyle = YELLOW;
+        ctx.shadowColor = YELLOW;
+        ctx.shadowBlur = 12;
+      } else {
+        ctx.fillStyle = 'rgba(220,221,220,0.66)';
+        ctx.shadowBlur = 0;
+      }
+      const s = p.size;
+      ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
+    }
+    ctx.shadowBlur = 0;
+
+    // Winziges „du"/„you"-Label ab halbem Wachstum, knapp über dem Partikel.
+    if (duP && duGrow >= 0.5) {
+      ctx.fillStyle = YELLOW;
+      ctx.font = '700 15px Roboto';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(duLabel, duP.x, duP.y - 14);
+    }
+
+    rafId = requestAnimationFrame(loop);
+  };
+
+  // TRIGGER: Formung startet beim Scrollen in die Sektion.
+  ScrollTrigger.create({
+    trigger: section,
+    start: 'top 75%',
+    once: true,
+    onEnter: () => {
+      if (!started) {
+        started = true;
+        startT = performance.now();
+        // Sicherheitsnetz: Headline SPÄTESTENS ~2,7s nach Eintritt einblenden —
+        // auch falls der Loop (schnelles Wegscrollen) den „du"-Moment nie erreicht.
+        gsap.delayedCall(2.7, doReveal);
+      }
+    },
+  });
+
+  // Loop nur laufen lassen, wenn die Sektion sichtbar ist (Performance).
+  const io = new IntersectionObserver((entries) => {
+    const vis = entries[0]?.isIntersecting ?? false;
+    if (vis && !running) {
+      running = true;
+      rafId = requestAnimationFrame(loop);
+    } else if (!vis && running) {
+      running = false;
+      cancelAnimationFrame(rafId);
+      mx = -9999;
+      my = -9999;
+    }
+  });
+  io.observe(section);
+
+  // Resize: sauber neu aufsetzen (Partikel + Stage-Höhe). Läuft die Formung schon,
+  // re-formt sie aus neuen Startlagen; „du"/Reveal-Zustand bleibt (revealed-Latch).
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      setup();
+      if (started) startT = performance.now();
+    }, 150);
+  });
 }
 
 function initReveals() {

@@ -55,14 +55,11 @@ export const en: Dict = {
     problem: {
       // sr-only title (structure/SEO). The visible claim is carried by number + H2.
       title: 'The Problem',
-      // Big particle number (display, NOT a heading). Locale-formatted; count-up
-      // target = digits only (43000). Asterisk → source in the footer footnote.
+      // Big particle number (display, NOT a heading) — forms from particles in the
+      // canvas. Asterisk → source in the footer footnote.
       bigNumber: '43,000',
       // Stat sentence, TIGHTLY coupled to the number (smaller, muted white).
       stat: 'applicants for 288 flats. After 30 minutes, it was over.',
-      // Desktop hints on the particle number (mobile/reduced-motion: hidden).
-      hintMove: 'Move your mouse through the number',
-      replay: 'Replay',
       // Reversal headline (H2). Yellow marker ONLY on „you".
       headline: 'One of them gets there first: you.',
       headlineMark: 'you',

@@ -28,9 +28,6 @@ const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const P = t.sections.problem;
 
-// Count-up-Ziel = nur die Ziffern der (locale-formatierten) Zahl.
-const countTo = P.bigNumber.replace(/\D/g, '');
-
 // H2-Payoff: Prefix + Nowrap-Klammer(Marker + Suffix) → „du." bricht nie um.
 const headMark = P.headlineMark;
 const headIdx = P.headline.indexOf(headMark);
@@ -57,16 +54,14 @@ const ICONS = [
 
 <section id="problem" class="problem3c">
   <div class="p3-inner">
-    {/* 1 · Partikel-Zahl (Display, KEIN Heading) + eng gekoppelter Statistik-Satz */}
+    {/* 1 · Partikel-Zahl (Display, KEIN Heading) + eng gekoppelter Statistik-Satz.
+        Die „Stage" ist der Container, in dem sich die Zahl aus Partikeln FORMT
+        (dekoratives Canvas ÜBER dem echten DOM-Text). Ohne JS/reduced-motion:
+        statische „43.000" sichtbar (Canvas aus). */}
     <div class="p3-stat-block">
-      <div class="p3-numwrap" data-p3-numwrap>
+      <div class="p3-stage" data-p3-stage>
         <canvas class="p3-canvas" data-p3-canvas aria-hidden="true"></canvas>
-        <span
-          class="p3-num"
-          data-p3-num
-          data-count-to={countTo}
-          style={`min-width:${P.bigNumber.length}ch`}>{P.bigNumber}</span
-        >
+        <span class="p3-num" data-p3-num>{P.bigNumber}</span>
       </div>
 
       {/* 2 · Statistik-Satz — deutlich kleiner, gedämpft, ENG unter der Zahl */}
@@ -77,25 +72,19 @@ const ICONS = [
           aria-label="Quelle der Statistik (Fußnote)">*</a
         >
       </p>
-
-      {/* Desktop-Hinweis + Replay (nur JS+Motion+Maus sichtbar) */}
-      <div class="p3-hint" data-p3-hint aria-hidden="true">
-        <span class="p3-hint-move">{P.hintMove}</span>
-        <button class="p3-replay" data-p3-replay type="button">
-          <span class="p3-replay-ic" aria-hidden="true">↺</span>{P.replay}
-        </button>
-      </div>
     </div>
 
-    {/* 3 · Umkehr-Headline (H2) — groß, voller Kontrast, Marker nur auf „du" */}
-    <h2 class="p3-head">
+    {/* 3 · Umkehr-Headline (H2) — groß, voller Kontrast, Marker nur auf „du".
+        [data-p3-reveal]: wird per JS nach dem „du"-Moment eingeblendet; ohne JS /
+        reduced-motion sofort sichtbar. */}
+    <h2 class="p3-head" data-p3-reveal>
       <span>{headPrefix}</span><span class="p3-head-nowrap"
         ><span class="mark">{headMark}</span>{headSuffix}</span
       >
     </h2>
 
     {/* 4 · Vorteils-Reihe (kein Fließsatz), je Icon + Label */}
-    <ul class="p3-benefits">
+    <ul class="p3-benefits" data-p3-reveal>
       {
         benefits.map((b, i) => (
           <li class="p3-benefit">
@@ -107,7 +96,7 @@ const ICONS = [
     </ul>
 
     {/* 5 · Store-Badges (Hauptaktion) + 6 · Trust-Zeile */}
-    <div class="p3-cta">
+    <div class="p3-cta" data-p3-reveal>
       <StoreBadges position="problem" lang={lang} />
       <p class="p3-trust">
         <span class="p3-trust-star" aria-hidden="true">★</span>
@@ -120,7 +109,7 @@ const ICONS = [
     </div>
 
     {/* 7 · Features-Verweis (Anker leicht repointbar) */}
-    <a href="#features" class="p3-more" data-p3-more>
+    <a href="#features" class="p3-more" data-p3-more data-p3-reveal>
       <span>{P.moreLink}</span>
       <span class="p3-more-arrow" aria-hidden="true">↓</span>
     </a>
@@ -157,34 +146,39 @@ const ICONS = [
     flex-direction: column;
     align-items: center;
   }
-  .p3-numwrap {
+  /* Partikel-„Stage": Container, in dem sich die Zahl formt. Höhe wird per JS an
+     die gesampelte Zahl gekoppelt (enge Kopplung zum Satz); die CSS-Höhe ist der
+     Fallback (ohne JS zeigt sie die statische DOM-Zahl mittig). */
+  .p3-stage {
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    /* etwas Luft für die Partikel-Aura um die Ziffern (Canvas-Overflow) */
-    padding: 0.25em 0.35em;
+    width: 100%;
+    height: clamp(140px, 34vw, 300px);
   }
   .p3-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 0;
+    z-index: 1;
     pointer-events: none;
-    /* nur mit JS+Motion sichtbar; ohne JS bleibt die Zahl solo */
+    /* nur mit JS+Motion sichtbar; ohne JS bleibt die statische Zahl */
     display: none;
   }
+  /* Echte DOM-Zahl: Fallback (No-JS/reduced-motion), mittig in der Stage. Bei
+     aktiver Animation blendet JS sie aus (opacity 0) und das Canvas übernimmt. */
   .p3-num {
-    position: relative;
-    z-index: 1;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
     font-weight: 900;
     line-height: 0.9;
     letter-spacing: -0.02em;
-    font-size: clamp(4.5rem, 22vw, 12rem);
-    font-variant-numeric: tabular-nums; /* Count-up ohne CLS */
-    text-align: center; /* Ziffern zentriert in der reservierten Breite */
+    font-size: clamp(3.5rem, 18vw, 9rem);
+    font-variant-numeric: tabular-nums;
     color: var(--color-offwhite);
+    white-space: nowrap;
   }
   /* ENGE Kopplung: kleiner Abstand Zahl → Satz (ein Statistik-Block). */
   .p3-stat {
@@ -204,49 +198,8 @@ const ICONS = [
     opacity: 0.7;
   }
 
-  /* Desktop-Hinweis + Replay — nur JS+Motion+Maus (per JS eingeblendet). */
-  .p3-hint {
-    display: none;
-    margin-top: clamp(0.75rem, 1.6vw, 1.1rem);
-    align-items: center;
-    justify-content: center;
-    gap: 0.9rem;
-    flex-wrap: wrap;
-    font-size: 0.8rem;
-    letter-spacing: 0.04em;
-    color: rgb(246 246 246 / 0.5);
-  }
-  .p3-hint-move {
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  .p3-replay {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    background: none;
-    border: 1px solid rgb(246 246 246 / 0.25);
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
-    color: rgb(246 246 246 / 0.75);
-    font: inherit;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: border-color 0.2s ease, color 0.2s ease;
-  }
-  .p3-replay:hover {
-    border-color: var(--color-yellow);
-    color: var(--color-yellow);
-  }
-  .p3-replay-ic {
-    font-size: 1.05em;
-  }
-  .p3-replay:focus-visible {
-    outline: 2px solid var(--color-yellow);
-    outline-offset: 3px;
-  }
-
-  /* ---- 3 · H2-Payoff: groß (kleiner als die Zahl), voller Kontrast, klar abgesetzt ---- */
+  /* ---- 3 · H2-Payoff: groß (kleiner als die Zahl), voller Kontrast, klar abgesetzt.
+     Desktop EINZEILIG (nowrap); mobil natürlicher Umbruch. ---- */
   .p3-head {
     margin-top: clamp(2.5rem, 6vh, 4.5rem);
     font-size: clamp(1.9rem, 5.2vw, 3.5rem);
@@ -256,6 +209,14 @@ const ICONS = [
     max-width: 18ch;
     color: var(--color-offwhite);
     text-wrap: balance;
+  }
+  @media (min-width: 768px) {
+    .p3-head {
+      /* einzeilig groß halten; Größe skaliert mit der Breite → kein Overflow */
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      max-width: none;
+      white-space: nowrap;
+    }
   }
   /* „du." zusammenhalten (kein Umbruch zwischen Marker und Punkt). */
   .p3-head-nowrap {
