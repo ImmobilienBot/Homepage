@@ -142,16 +142,18 @@ const ICONS = [
     align-items: center;
     justify-content: center;
     padding-block: clamp(3rem, 8vh, 6rem);
-    padding-inline: var(--spacing-inset);
+    /* Schmaler Inline-Rand (statt des großen Content-Insets) → die Partikel-„43.000"
+       kann ~78% der SEKTIONSBREITE einnehmen. Text-Blöcke begrenzen sich selbst. */
+    padding-inline: clamp(1rem, 3vw, 2.5rem);
     background-color: var(--color-black);
     color: var(--color-offwhite);
     overflow: hidden;
   }
   .p3-inner {
     width: 100%;
-    /* Weit → die Partikel-„43.000" rendert dominant (~70–80% der Sektionsbreite).
-       Text-Blöcke (Satz/Trust/H2) begrenzen sich selbst darunter. */
-    max-width: min(94vw, 80rem);
+    /* Volle Sektionsbreite → die Partikel-„43.000" rendert dominant (~78%).
+       Text-Blöcke (Satz/Trust/H2) begrenzen sich selbst über eigene max-widths. */
+    max-width: none;
     margin-inline: auto;
     text-align: center;
     display: flex;
@@ -164,6 +166,9 @@ const ICONS = [
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* WICHTIG: volle Breite — sonst schrumpft der Block (align-items:center des
+       Inner) auf die Satzbreite und die Partikel-Stage/Zahl bleibt klein. */
+    width: 100%;
   }
   /* Partikel-„Stage": Container, in dem sich die Zahl formt. Höhe wird per JS an
      die gesampelte Zahl gekoppelt (enge Kopplung zum Satz); die CSS-Höhe ist der

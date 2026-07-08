@@ -650,16 +650,27 @@ async function initProblem3c() {
     if (!stageW) return;
     W = stageW;
 
-    // Font so groß, dass „43.000" ~82% der Stage-Breite füllt → DOMINANTER Blickfang.
-    // Über measureText statt fixer Design-Breite → füllt jede Breite mit Rand.
+    // Font DYNAMISCH aus der Stage-/Sektionsbreite: „43.000" füllt ~80% der Breite
+    // → DOMINANTER Blickfang. KEINE künstliche Deckelung (kein 1/250px) mehr; nur ein
+    // dezenter Höhen-Guard (Zahl soll den Viewport vertikal nicht sprengen).
     const measurer = document.createElement('canvas').getContext('2d');
     if (!measurer) return;
     measurer.font = '900 100px Roboto';
     const w100 = measurer.measureText('43.000').width || 300;
-    const targetW = stageW * 0.82; // Zahl füllt ~82% der (breiten) Stage
+    const targetW = stageW * 0.8; // Zielbreite der Zahl (~80% der Stage)
     let fontPx = Math.round((100 * targetW) / w100);
-    // Höhe deckeln, damit die Zahl auf breiten Viewports nicht überproportional hoch wird.
-    fontPx = Math.max(56, Math.min(fontPx, Math.round(stageW * 0.26)));
+    // Höhen-Guard: Ziffernhöhe max ~40% der Viewporthöhe (sonst überläuft die Zahl).
+    fontPx = Math.max(56, Math.min(fontPx, Math.round(window.innerHeight * 0.4)));
+
+    // Verifikation (einmalig): finale Font-px + Verhältnis Zahlbreite/Stage-Breite.
+    if (!(window as unknown as { __p3logged?: boolean }).__p3logged) {
+      (window as unknown as { __p3logged?: boolean }).__p3logged = true;
+      const numW = (measurer.measureText('43.000').width / 100) * fontPx;
+      // eslint-disable-next-line no-console
+      console.info(
+        `[3c] Stage ${Math.round(stageW)}px · Font ${fontPx}px · Zahlbreite ${Math.round(numW)}px (${Math.round((numW / stageW) * 100)}% der Stage)`,
+      );
+    }
 
     const ow = stageW; // Offscreen = volle Stage-Breite (Zahl zentriert)
     const oh = Math.round(fontPx * 1.1); // knappe Höhe (Ziffern haben keine Unterlängen)
@@ -690,7 +701,7 @@ async function initProblem3c() {
 
     // DICHTE: kleine Schrittweite (scharfe, definierte Ziffern), aber Gesamtzahl
     // deckeln (Performance-Budget, flüssig auf Mobile) — bei Überschreitung gröber.
-    const CAP = fine ? 2800 : 1500;
+    const CAP = fine ? 4000 : 1800;
     let step = fine ? 4 : 5;
     let next: P[] = [];
     for (let iter = 0; iter < 8; iter++) {
@@ -887,12 +898,18 @@ function initReveals() {
 
 /**
  * Dunkel-Übergang Hero → 3c: scroll-gescrubbte Opacity-Ebene (0 → 1) über dem
- * Hero-Inhalt. Späte Rampe (Abdunkeln erst im letzten Drittel des Hero-Scrolls,
- * am Übergang voll dunkel) → der Hero geht NAHTLOS in die dunkle 3c-Sektion über
- * (kein harter Cut). An Lenis gehängt (ScrollTrigger.update ist an Lenis' scroll
- * gekoppelt) — KEIN Pin, KEIN preventDefault, KEIN Auto-Jump. Nur opacity.
+ * GESAMTEN Hero-Inhalt (Text, Phones, Konstellation-Canvas; z-20 > deren z ≤ 10,
+ * aber < Nav-Pille z-40 → Nav bleibt lesbar). Overlay-Farbe = #3b3b3a = exakt die
+ * 3c-Sektionsfarbe → nahtlos, kein Farbsprung an der Grenze.
+ *
+ * Rampe (leicht justierbar): Abdunkeln beginnt bei ~40% durch den Hero und erreicht
+ * VOLLE Deckung (opacity 1.0) bereits bei ~85% → die letzten 15% des Hero-Scrolls
+ * sind komplett dunkel, sodass am 3c-Eintritt keine Kante/kein Sprung sichtbar ist.
+ * An Lenis gehängt (ScrollTrigger.update hängt an Lenis' scroll) — KEIN Pin, KEIN
+ * preventDefault, KEIN Auto-Jump. Nur opacity.
  */
-const HERO_DARK_START = '66% top'; // Start der Abdunkelung (leicht justierbar)
+const HERO_DARK_START = '40% top'; // Beginn der Abdunkelung (~40% durch den Hero)
+const HERO_DARK_END = '85% top'; // volle Deckung (opacity 1.0) bei ~85% des Hero-Scrolls
 function initHeroDarkOverlay() {
   const overlay = document.querySelector<HTMLElement>('[data-hero-dark]');
   if (!overlay) return;
@@ -900,12 +917,12 @@ function initHeroDarkOverlay() {
     overlay,
     { opacity: 0 },
     {
-      opacity: 1,
+      opacity: 1, // Endwert VOLL dunkel (#3b3b3a deckt den Hero komplett)
       ease: 'none',
       scrollTrigger: {
         trigger: '#hero',
         start: HERO_DARK_START,
-        end: 'bottom top',
+        end: HERO_DARK_END,
         scrub: true,
       },
     },
@@ -949,7 +966,13 @@ function initBenefitLottie() {
   const load = async () => {
     if (loaded) return;
     loaded = true;
-    let lottie: { loadAnimation: (cfg: Record<string, unknown>) => { play: () => void; pause: () => void } };
+    type LottieAnim = {
+      play: () => void;
+      pause: () => void;
+      setSpeed: (n: number) => void;
+      addEventListener: (ev: string, cb: () => void) => void;
+    };
+    let lottie: { loadAnimation: (cfg: Record<string, unknown>) => LottieAnim };
     try {
       const mod = (await import('lottie-web/build/player/lottie_light')) as unknown as {
         default: typeof lottie;
@@ -973,9 +996,23 @@ function initBenefitLottie() {
           autoplay: false,
           animationData: data,
         });
+        anim.setSpeed(0.5); // ruhiger, halbe Geschwindigkeit (0.4–0.6)
+        // Kleine Pause zwischen den Loops → nicht hektisch. Nur wenn im Viewport.
+        let visible = false;
+        let paused = false;
+        anim.addEventListener('loopComplete', () => {
+          if (paused || !visible) return;
+          paused = true;
+          anim.pause();
+          window.setTimeout(() => {
+            paused = false;
+            if (visible) anim.play();
+          }, 800);
+        });
         // Play/Pause nach Sichtbarkeit (Performance).
         const io = new IntersectionObserver((entries) => {
-          if (entries[0]?.isIntersecting) anim.play();
+          visible = entries[0]?.isIntersecting ?? false;
+          if (visible && !paused) anim.play();
           else anim.pause();
         });
         io.observe(holder);
