@@ -573,21 +573,22 @@ function initHeroScrollCue() {
 /**
  * Problem „3c": Der Hero→Problem-Übergang + die Partikel-„43.000".
  *
- * ÜBERGANG (triggered, EINMAL, kein Scrub/Reverse):
- *  - Ruhezustand: eine solide hellgraue Fläche (.section-wipe, Hero-BG #eaebeb) deckt
- *    die dunkle Sektion LÜCKENLOS ab → nahtlose Fortsetzung des Heros, KEINE Kante.
- *  - Beim Eintritt (ScrollTrigger onEnter, once): die Fläche wischt per CLIP-PATH
- *    horizontal weg (bleibt in place, kein translate), gibt den dunklen BG frei.
- *  - Direkt anschließend faden die Partikel ein und kommen ELASTISCH zur „43.000"
- *    zusammen (per-Partikel-Stagger, ease-out-back). Kein Punktegewusel im Ruhezustand
- *    (die Fläche verdeckt vorher alles; Canvas ist bis dahin opacity 0).
+ * ÜBERGANG (triggered, EINMAL, kein Scrub/Reverse) — UNVERÄNDERT:
+ *  - Ruhezustand: solide hellgraue Fläche (.section-wipe, #eaebeb) deckt die dunkle
+ *    Sektion lückenlos ab (nahtlos zum Hero). Bei Eintritt wischt sie per Clip-Path weg.
+ *  - Danach faden die Partikel EIN und formen sich WEICH (ruhiges power3.out, dezenter
+ *    Stagger, Startlage NAH am Ziel) zur „43.000" — kein Gewusel, kein Poppen.
  *
- * du-Partikel: das der optischen Zahl-MITTE nächste Sample wird ein runder GELBER Punkt
- * (Glow, etwas größer, kein Text) INNERHALB der Ziffern. Maus-Repel (Desktop) groß & satt.
+ * Maus-Lupe (Desktop): Render = Basis (gehomt) + Repel-OFFSET. Der Offset verschiebt NUR
+ * die gezeichnete Position, nicht die Basis → große, satte Wölbung, springt beim Verlassen
+ * sofort zurück. Das gelbe „du"-Partikel wird NICHT verschoben (stabiler Anker).
+ *
+ * du-Punkt: das der optischen Zahl-MITTE nächste Sample → runder GELBER Kreis (Glow) OBEN-
+ * AUF (grau-freie Zone drumherum) + „du"-Label knapp darüber. Zeichenreihenfolge: grau →
+ * gelber Punkt → Label.
  *
  * FONT-GATE beibehalten. reduced-motion / ohne JS: KEINE Fläche, KEIN Effekt — statische
- * „43.000" (DOM) auf dunklem BG + alles sofort sichtbar (Canvas + Fläche per CSS aus).
- * DPR ≤ 2. Vom Hero-Canvas entkoppelt.
+ * „43.000" (DOM) auf dunklem BG + alles sofort sichtbar. DPR ≤ 2. Vom Hero-Canvas entkoppelt.
  */
 async function initProblem3c() {
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
@@ -602,14 +603,17 @@ async function initProblem3c() {
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
   const NUM_RGB = [220, 221, 220]; // Zahl-Partikelfarbe (hell, lesbar auf Dunkel)
+  const duLabel = section.querySelector('.mark')?.textContent?.trim() || 'du';
 
   // ---- Justierbare Konstanten ----
-  const WIPE_DUR = 0.7; // Wisch-Dauer (s)
-  const DUR = 1000; // Formung: Tween-Dauer je Partikel (ms)
-  const MAXDELAY = 700; // Formung: max. Per-Partikel-Stagger (ms)
-  const REPEL_R = 150; // Maus-Wölbung: Radius (px) — deutlich größer als zuvor (62)
-  const REPEL_R2 = REPEL_R * REPEL_R;
-  const REPEL_F = 9; // Maus-Wölbung: Kraft — ~2× stärker als zuvor (4.5)
+  const WIPE_DUR = 0.7; // Wisch-Dauer (s) — NICHT anfassen
+  const DUR = 950; // Formung: Tween-Dauer je Partikel (ms) — ruhig
+  const MAXDELAY = 350; // Formung: dezenter Per-Partikel-Stagger (ms)
+  const FADE = 0.55; // Anteil des Tweens, über den ein Partikel einfadet
+  const REPEL_R = 150; // Maus-Lupe: Radius (px)
+  const REPEL_STRENGTH = 55; // Maus-Lupe: max. px-Verschiebung nach außen (satt)
+  const CLEAR_R = 20; // grau-freie Zone um den gelben Punkt (px)
+  const CLEAR_R2 = CLEAR_R * CLEAR_R;
 
   // Headline-Gruppe (inkl. Statistik-Satz) initial verbergen — NUR JS-Zugabe.
   const reveals = gsap.utils.toArray<HTMLElement>('#problem [data-p3-reveal]');
@@ -626,28 +630,26 @@ async function initProblem3c() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   type P = {
-    rx: number; ry: number; // Startlage (Streuung um die Zahl)
-    nx: number; ny: number; // Ziel (Zahl-Pixel)
-    x: number; y: number; // aktuell
+    sx: number; sy: number; // Startlage (nah am Ziel)
+    tx: number; ty: number; // Ziel (Zahl-Pixel)
+    bx: number; by: number; // aktuelle Basis (gehomt) — Repel wirkt NICHT hierauf
     delay: number;
+    t: number; // Tween-Fortschritt 0..1
     du: boolean;
   };
   let parts: P[] = [];
+  let duPart: P | null = null;
   let W = 0;
   let H = 0;
   let pSize = 3;
-  let duMax = 10;
+  let duMax = 8;
+  let labelPx = 15;
   let started = false;
   let startT = 0;
   let duLandT = 0;
 
-  // Elastischer ease-out-back (leichtes Überschwingen → Pixel „schnappen" an die Zahl).
-  const easeOutBack = (t: number) => {
-    const c1 = 1.5;
-    const c3 = c1 + 1;
-    const u = t - 1;
-    return 1 + c3 * u * u * u + c1 * u * u;
-  };
+  // Ruhiges, weiches Ease (power3.out) — KEIN elastisches Überschwingen (wirkt hektisch).
+  const easeSoft = (t: number) => 1 - Math.pow(1 - t, 3);
 
   // FONT-GATE (beibehalten): erst nach dem Laden der Schrift sampeln.
   try {
@@ -673,7 +675,6 @@ async function initProblem3c() {
     const w100 = measurer.measureText('43.000').width || 314;
     const targetW = W * 0.66;
     let fontPx = Math.round((100 * targetW) / w100);
-    // Höhen-Guard: Ziffernhöhe max ~34% der Viewporthöhe.
     fontPx = Math.max(48, Math.min(fontPx, Math.round(window.innerHeight * 0.34)));
     const numW = (measurer.measureText('43.000').width / 100) * fontPx;
 
@@ -688,8 +689,7 @@ async function initProblem3c() {
     const ow = W;
     const oh = Math.round(fontPx * 1.05);
 
-    // Stage-Höhe = Zahlhöhe → der Statistik-Satz sitzt ENG darunter. Danach messen,
-    // wo die Zahl in der (mitte-mitte zentrierten) Sektion liegt = Canvas-Zielband.
+    // Stage-Höhe = Zahlhöhe → der Statistik-Satz sitzt ENG darunter. Danach messen.
     stage.style.height = oh + 'px';
     const secR = section.getBoundingClientRect();
     const stR = stage.getBoundingClientRect();
@@ -709,7 +709,6 @@ async function initProblem3c() {
     octx.fillText('43.000', ow / 2, oh / 2);
     const data = octx.getImageData(0, 0, ow, oh).data;
 
-    // Dichte deckeln (Performance): bei Überschreitung gröber sampeln.
     const CAP = fine ? 2800 : 1300;
     let step = fine ? 4 : 5;
     let nums: Array<{ x: number; y: number }> = [];
@@ -730,10 +729,11 @@ async function initProblem3c() {
     }
 
     pSize = Math.max(2, fontPx / 110);
-    duMax = pSize * 3.6;
+    duMax = pSize * 2.4; // etwas größer als ein graues Partikel (nicht riesig)
+    labelPx = Math.max(13, Math.round(fontPx * 0.055));
 
-    // du-Partikel: das der OPTISCHEN MITTE der Zahl nächste Sample (an die tatsächliche
-    // Render-Position der Zahl gekoppelt) → bleibt INNERHALB der Ziffern.
+    // du-Partikel: das der OPTISCHEN MITTE der Zahl (an die tatsächliche Render-Position
+    // gekoppelt: W/2, offY + oh/2) nächste Sample → sitzt gut sichtbar in den Ziffern.
     let duIdx = 0;
     let duBd = Infinity;
     const tcx = W / 2;
@@ -746,28 +746,18 @@ async function initProblem3c() {
       }
     }
 
-    // Startlage: Streuung in einem Band UM die Zahl (nicht über die ganze Sektion) →
-    // dichte, schnelle „Zusammenkommen"-Formung.
-    const bandTop = offY - oh * 0.6;
-    const bandH = oh * 2.2;
+    // Startlage NAH am Ziel (kleiner Offset) → sanftes Settle statt Screen-Gewusel.
+    const spread = fontPx * 0.4;
     const next: P[] = [];
     for (let i = 0; i < M; i++) {
-      next.push({
-        rx: Math.random() * W,
-        ry: bandTop + Math.random() * bandH,
-        nx: nums[i].x,
-        ny: nums[i].y,
-        x: 0,
-        y: 0,
-        delay: Math.random() * MAXDELAY,
-        du: i === duIdx,
-      });
-    }
-    for (const p of next) {
-      p.x = p.rx;
-      p.y = p.ry;
+      const tx = nums[i].x;
+      const ty = nums[i].y;
+      const sx = tx + (Math.random() - 0.5) * spread;
+      const sy = ty + (Math.random() - 0.5) * spread;
+      next.push({ sx, sy, tx, ty, bx: sx, by: sy, delay: Math.random() * MAXDELAY, t: 0, du: i === duIdx });
     }
     parts = next;
+    duPart = next[duIdx] || null;
     duLandT = 0;
     canvas.style.opacity = '0'; // bis zur Formung unsichtbar (Fläche deckt eh ab)
     if (numEl) numEl.style.opacity = '0';
@@ -800,47 +790,75 @@ async function initProblem3c() {
       return;
     }
     const elapsed = now - startT;
+    const mouseOn = fine && mx > -9998;
 
+    // Pass 0: Basis (gehomt) + Fortschritt für alle Partikel berechnen.
     for (const p of parts) {
       const t = Math.min(1, Math.max(0, (elapsed - p.delay) / DUR));
-      const e = easeOutBack(t);
-      p.x = p.rx + (p.nx - p.rx) * e;
-      p.y = p.ry + (p.ny - p.ry) * e;
+      const e = easeSoft(t);
+      p.bx = p.sx + (p.tx - p.sx) * e;
+      p.by = p.sy + (p.ty - p.sy) * e;
+      p.t = t;
+    }
 
-      // Maus-Wölbung auf der fertigen Zahl (nur Desktop, nur gelandete Partikel).
-      if (fine && t >= 1) {
-        const dx = p.x - mx;
-        const dy = p.y - my;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < REPEL_R2 && d2 > 0.01) {
-          const d = Math.sqrt(d2);
-          const f = ((REPEL_R - d) / REPEL_R) * REPEL_F;
-          p.x += (dx / d) * f;
-          p.y += (dy / d) * f;
+    const du = duPart;
+
+    // Pass A: GRAUE Partikel — du überspringen + graue-freie Zone (CLEAR_R) um den Punkt.
+    ctx.shadowBlur = 0;
+    for (const p of parts) {
+      if (p.du) continue;
+      if (du) {
+        const ddx = p.bx - du.bx;
+        const ddy = p.by - du.by;
+        if (ddx * ddx + ddy * ddy < CLEAR_R2) continue;
+      }
+      // Repel-OFFSET nur für die Darstellung (Basis bleibt unverschoben → snappt zurück).
+      let ox = 0;
+      let oy = 0;
+      if (mouseOn) {
+        const dx = p.bx - mx;
+        const dy = p.by - my;
+        const d = Math.hypot(dx, dy);
+        if (d < REPEL_R && d > 0.001) {
+          const falloff = 1 - d / REPEL_R;
+          const push = falloff * REPEL_STRENGTH;
+          ox = (dx / d) * push;
+          oy = (dy / d) * push;
         }
       }
+      const a = 0.66 * Math.min(1, p.t / FADE);
+      ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},${a})`;
+      ctx.fillRect(p.bx + ox - pSize / 2, p.by + oy - pSize / 2, pSize, pSize);
+    }
 
-      if (p.du) {
-        // Runder GELBER Punkt INNERHALB der Zahl, wächst pSize→duMax mit Glow (kein Text).
-        let r = pSize;
-        if (t >= 1) {
-          if (!duLandT) duLandT = now;
-          const g = Math.min(1, (now - duLandT) / 500);
-          r = pSize + g * (duMax - pSize);
-          ctx.fillStyle = YELLOW;
-          ctx.shadowColor = YELLOW;
-          ctx.shadowBlur = duMax * 2;
-        } else {
-          ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},0.66)`;
-          ctx.shadowBlur = 0;
-        }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+    // Pass B: gelber „du"-Punkt OBENAUF (Basisposition, KEIN Repel-Offset).
+    if (du) {
+      const landed = du.t >= 1;
+      let r = pSize;
+      if (landed) {
+        if (!duLandT) duLandT = now;
+        const g = Math.min(1, (now - duLandT) / 400);
+        r = pSize + g * (duMax - pSize);
+        ctx.fillStyle = YELLOW;
+        ctx.shadowColor = YELLOW;
+        ctx.shadowBlur = 16;
       } else {
-        ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},0.66)`;
-        ctx.fillRect(p.x - pSize / 2, p.y - pSize / 2, pSize, pSize);
+        const a = 0.66 * Math.min(1, du.t / FADE);
+        ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},${a})`;
+        ctx.shadowBlur = 0;
+      }
+      ctx.beginPath();
+      ctx.arc(du.bx, du.by, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Pass C: „du"-Label OBENAUF, knapp über dem Punkt (gelb, Roboto 700).
+      if (landed) {
+        ctx.fillStyle = YELLOW;
+        ctx.font = `700 ${labelPx}px Roboto`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(duLabel, du.bx, du.by - r - 8);
       }
     }
 
@@ -856,7 +874,7 @@ async function initProblem3c() {
     onEnter: () => {
       if (triggered) return;
       triggered = true;
-      // 1) Fläche wischt per Clip-Path horizontal weg (bleibt in place → kein Overflow).
+      // 1) Fläche wischt per Clip-Path horizontal weg (UNVERÄNDERT).
       if (wipe) {
         gsap.to(wipe, {
           clipPath: 'inset(0% 0% 0% 100%)',
@@ -867,12 +885,12 @@ async function initProblem3c() {
           },
         });
       }
-      // 2) Direkt anschließend: Partikel einfaden + elastisch zur Zahl formen.
+      // 2) Direkt anschließend: Formung starten (Canvas an; Partikel faden per-Partikel ein).
       const startForm = WIPE_DUR * 0.6;
       gsap.delayedCall(startForm, () => {
         started = true;
         startT = performance.now();
-        gsap.to(canvas, { opacity: 1, duration: 0.4, ease: 'power1.out' });
+        canvas.style.opacity = '1'; // Fade kommt aus der Per-Partikel-Alpha
       });
       // 3) Headline-Gruppe nach der Formung einblenden (+ Safety-Net).
       gsap.delayedCall(startForm + 2.0, doReveal);
