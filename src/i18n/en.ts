@@ -51,39 +51,31 @@ export const en: Dict = {
   },
 
   sections: {
+    // „3c" — ONE focused, dark problem section (particle number + payoff).
     problem: {
-      // sr-only heading (the „The Problem" eyebrow is removed — the dark staging
-      // is the declaration; heading kept for SEO/structure).
+      // sr-only title (structure/SEO). The visible claim is carried by number + H2.
       title: 'The Problem',
-      // Dark story beats. **…** marks ONLY the bare number → yellow + counter.
-      beats: [
-        'In Berlin, a single new development drew **43,000** applicants.',
-        'For **288** flats. After **30** minutes, it was over.',
-      ],
-      beat2Sub: 'By the time you even see the listing, hundreds were already faster.',
-      // Turning point (reframe) — no yellow emphasis now, carried by size/fill.
-      turn: "It's not on you. You were just never the first.",
-    },
-    solution: {
-      title: 'The Solution',
-      // Small, muted kicker above the H2 (NOT a big marker).
-      kicker: 'Time to turn the tables.',
-      // Visible H2 (payoff; yellow marker ONLY on the phrase → brand signature,
-      // closes the loop to the dark story „never the first").
-      headline: "From now on, you're the first.",
-      headlineMark: 'the first',
-      // Scannable benefit row (no prose). {n} = portal count from site.ts.
+      // Big particle number (display, NOT a heading). Locale-formatted; count-up
+      // target = digits only (43000). Asterisk → source in the footer footnote.
+      bigNumber: '43,000',
+      // Stat sentence, TIGHTLY coupled to the number (smaller, muted white).
+      stat: 'applicants for 288 flats. After 30 minutes, it was over.',
+      // Desktop hints on the particle number (mobile/reduced-motion: hidden).
+      hintMove: 'Move your mouse through the number',
+      replay: 'Replay',
+      // Reversal headline (H2). Yellow marker ONLY on „you".
+      headline: 'One of them gets there first: you.',
+      headlineMark: 'you',
+      // Scannable benefits (no prose), each with an icon. {n} = portal count (site.ts).
       benefits: [
-        { label: 'Real-time push', sub: 'Notified within seconds.' },
-        { label: 'Over {n} portals', sub: 'All in one app.' },
-        { label: 'Apply in one tap', sub: 'First in the landlord’s inbox.' },
+        { label: 'Real-time push' },
+        { label: 'Over {n} portals' },
+        { label: 'Apply in one tap' },
       ],
-      // Confident trust line at the CTA (risk reversal, visible — not tiny).
-      trust: 'Try free for 7 days – no risk, cancel anytime.',
-      // aria-label for the pull-chain button (linked to the visible hint).
-      lightOn: 'Turn on the light and reveal the solution',
-      // Visible micro-label at the knob (clickability hint, desktop + mobile).
-      clickHint: 'Click',
+      // Add-on to the trust line (rating/downloads come from hero.trust / site.ts).
+      trustCancel: 'Try free for 7 days, cancel anytime',
+      // Subtle pointer to the next section (anchor easily repointable).
+      moreLink: "We'll show you how",
     },
     features: { title: 'Features' },
     portals: {

@@ -53,39 +53,31 @@ export const de = {
   },
 
   sections: {
+    // „3c" — EINE fokussierte, dunkle Problem-Sektion (Partikel-Zahl + Payoff).
     problem: {
-      // sr-only Überschrift (Eyebrow „Das Problem" ist entfernt — die dunkle
-      // Inszenierung ist die Deklaration; Heading bleibt für SEO/Struktur).
+      // sr-only-Titel (Struktur/SEO). Die sichtbare Aussage tragen Zahl + H2.
       title: 'Das Problem',
-      // Dunkle Story-Beats. **…** markiert NUR die reine Zahl → gelb + Counter.
-      beats: [
-        'In Berlin kamen auf ein einziges Neubauprojekt **43.000** Bewerber.',
-        'Für **288** Wohnungen. Nach **30** Minuten war Schluss.',
-      ],
-      beat2Sub: 'Bis du das Inserat überhaupt siehst, waren längst Hunderte schneller.',
-      // Wendepunkt (Reframe) — keine gelbe Emphasis mehr, wirkt über Größe/Fill.
-      turn: 'Es liegt nicht an dir. Du warst nur nie der Erste.',
-    },
-    solution: {
-      title: 'Die Lösung',
-      // Kleiner, gedämpfter Kicker über der H2 (KEIN großer Marker).
-      kicker: 'Zeit, den Spieß umzudrehen.',
-      // Sichtbare H2 (Payoff; gelber Marker NUR auf der Phrase → Brand-Signature,
-      // schließt die Klammer zur dunklen Story „nie der Erste").
-      headline: 'Ab jetzt bist du der Erste.',
-      headlineMark: 'der Erste',
-      // Scanbare Vorteil-Reihe (kein Fließtext). {n} = Portalanzahl aus site.ts.
+      // Große Partikel-Zahl (Display, KEIN Heading). Locale-formatiert; Count-up-
+      // Ziel = nur die Ziffern (43000). Sternchen → Quelle in der Footer-Fußnote.
+      bigNumber: '43.000',
+      // Statistik-Satz, ENG an die Zahl gekoppelt (kleiner, gedämpftes Weiß).
+      stat: 'Bewerber auf 288 Wohnungen. Nach 30 Minuten war Schluss.',
+      // Desktop-Hinweise an der Partikel-Zahl (Mobile/reduced-motion: ausgeblendet).
+      hintMove: 'Fahr mit der Maus durch die Zahl',
+      replay: 'Replay',
+      // Umkehr-Headline (H2). Gelber Marker NUR auf „du".
+      headline: 'Einer davon ist zuerst da: du.',
+      headlineMark: 'du',
+      // Scanbare Vorteile (kein Fließsatz), je mit Icon. {n} = Portalanzahl (site.ts).
       benefits: [
-        { label: 'Echtzeit-Push', sub: 'In Sekunden benachrichtigt.' },
-        { label: 'Über {n} Portale', sub: 'Alle in einer App.' },
-        { label: 'Bewerbung per Klick', sub: 'Zuerst beim Vermieter.' },
+        { label: 'Echtzeit-Push' },
+        { label: 'Über {n} Portale' },
+        { label: 'Bewerbung per Klick' },
       ],
-      // Selbstbewusste Trust-Zeile am CTA (Risiko-Umkehr, sichtbar — nicht winzig).
-      trust: '7 Tage kostenlos testen – kein Risiko, jederzeit kündbar.',
-      // aria-Label für den Lampenketten-Button (verknüpft mit sichtbarem Hinweis).
-      lightOn: 'Licht anschalten und Lösung anzeigen',
-      // Sichtbares Mikro-Label am Knauf (Klickbarkeits-Hinweis, Desktop + Mobile).
-      clickHint: 'Klick',
+      // Zusatz zur Trust-Zeile (Rating/Downloads kommen aus hero.trust bzw. site.ts).
+      trustCancel: '7 Tage kostenlos, jederzeit kündbar',
+      // Dezenter Verweis zur nächsten Sektion (Anker leicht repointbar).
+      moreLink: 'Wir zeigen dir wie',
     },
     features: { title: 'Features' },
     portals: {

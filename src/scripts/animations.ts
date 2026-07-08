@@ -542,10 +542,10 @@ function initCursor() {
     setState(false, null);
   });
 
-  // Invert-Zustand in der dunklen Story-Sektion: Ring + Punkt auf Off-White,
+  // Invert-Zustand in der dunklen Problem-Sektion (3c): Ring + Punkt auf Off-White,
   // damit der Cursor auf dunklem BG nicht untergeht (CSS: html.cursor-invert).
   // pointerenter/leave bubbeln nicht → sauberer Wechsel an der Sektionsgrenze.
-  const darkSection = document.querySelector<HTMLElement>('.story-dark');
+  const darkSection = document.querySelector<HTMLElement>('.problem3c');
   if (darkSection) {
     darkSection.addEventListener('pointerenter', () =>
       document.documentElement.classList.add('cursor-invert'),
@@ -571,244 +571,183 @@ function initHeroScrollCue() {
 }
 
 /**
- * Problem → Lösung: cinematischer Dark-to-Light-Scroll (ein Storytelling-Bogen).
+ * Problem „3c": Partikel-Zahl (43.000) mit Count-up + Cursor-Repel — EINE dunkle,
+ * fokussierte Sektion (kein Pin/Scrub/Tunnel). Reuse der Count-up- UND der
+ * Partikel-/Repel-Technik (aus der Hero-Konstellation adaptiert) als EIGENE, vom
+ * Hero vollständig entkoppelte Canvas-Instanz, begrenzt auf die Zahl.
  *
- * GEPINNTE Scroll-Story via GSAP ScrollTrigger (pin + scrub), sauber über Lenis
- * (ScrollTrigger.update hängt an Lenis' scroll; KEIN wheel/touch-preventDefault,
- * KEIN Auto-Jump — frei scrollbar):
- *  - DIM-IN (onEnter #problem, vor dem Pin): Overlay 0→1; reverse nur nach oben.
- *  - PIN+SCRUB: der 100svh-Stage wird gepinnt; beim Scrubben Crossfade zwischen
- *    den absolut gestapelten Beats (alter Beat unscharf[Desktop]+transparent nach
- *    oben, neuer scharf von unten). Fortschrittsbalken = Scrub-Progress.
- *  - Zahlen-Counter: echte Statistik (KEIN Live-Zähler) — je Zahl EINMAL beim
- *    Erreichen des Beats (tl.call + Latch), tabular-nums/feste Breite → kein CLS.
- *  - LICHT-AN: HARTER, schneller Cut 1→0 (~140ms) + EIN Weiß-Blitz (kein
- *    Stroboskop); Lösung vorher verborgen (gsap.set), erscheint erst danach.
- *    Zwei Wege: Scroll bis Lösungs-Panel ODER Ketten-Klick (Zustand direkt,
- *    KEINE gecachten Pixel → Klick-Bug bleibt behoben).
+ *  - Count-up 0→43.000 beim Eintritt (einmal), tabular-nums + reservierte Breite
+ *    → kein CLS.
+ *  - DESKTOP (pointer:fine): Partikel-Aura um die Ziffern, die dem Cursor ausweicht
+ *    (Repel) — „Fahr mit der Maus durch die Zahl" + „↺ Replay".
+ *  - MOBILE: nur sanfte Drift, kein Cursor/Repel, kein Hinweis (Tap-Replay bleibt).
+ *  - Läuft NUR im no-preference-Block. reduced-motion / ohne JS: statische „43.000"
+ *    (DOM-Text-Endwert), kein Canvas/kein Count-up (Guardrail: alles sichtbar).
  *
- * Guardrail: läuft NUR im (prefers-reduced-motion:no-preference)-Block. Bei
- * reduced-motion / ohne JS: kein Pin/Scrub/Blur, Beats statisch untereinander,
- * Overlay 0 (hell), Zahlen Endwert, Lösung sichtbar, keine Kette/kein Blitz.
+ * FALLBACK-Wahl (bewusst, CLAUDE.md „lieber sauber als ruckelig"): die Zahl bleibt
+ * ECHTER DOM-Text (Roboto Black, Count-up); die Partikel bilden eine dezente Aura +
+ * Repel um die Ziffern (KEIN Pixel-Sampling der Glyphen) → robust, kollidiert nicht
+ * mit der Hero-Konstellation, Text nie nur im Canvas.
  */
-function initProblemStory(lenis: Lenis) {
-  const story = document.querySelector<HTMLElement>('[data-story]');
-  const overlay = document.querySelector<HTMLElement>('[data-story-overlay]');
-  const flash = document.querySelector<HTMLElement>('[data-story-flash]');
-  if (!story || !overlay) return;
+function initProblem3c() {
+  const section = document.querySelector<HTMLElement>('#problem.problem3c');
+  const numEl = document.querySelector<HTMLElement>('[data-p3-num]');
+  const numWrap = document.querySelector<HTMLElement>('[data-p3-numwrap]');
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-p3-canvas]');
+  const hint = document.querySelector<HTMLElement>('[data-p3-hint]');
+  const replay = document.querySelector<HTMLElement>('[data-p3-replay]');
+  if (!section || !numEl) return;
 
-  const pinStage = document.querySelector<HTMLElement>('[data-pin-stage]');
-  const beatTrack = document.querySelector<HTMLElement>('[data-problem]');
-  const beats = gsap.utils.toArray<HTMLElement>('#problem [data-beat]');
-  const progress = document.querySelector<HTMLElement>('[data-progress]');
-  const progressFill = document.querySelector<HTMLElement>('[data-progress-fill]');
-  const solPanel = document.querySelector<HTMLElement>('#loesung');
-  const solItems = gsap.utils.toArray<HTMLElement>('#loesung [data-sol-item]');
+  const fine = window.matchMedia('(pointer: fine)').matches;
 
-  // Lösung vor dem Licht-an komplett verbergen (kein Durchscheinen auf Dunkel).
-  if (solItems.length) gsap.set(solItems, { autoAlpha: 0, y: 24 });
-
+  // ---- Count-up (reuse-Technik) ----
   const nf = new Intl.NumberFormat(
     document.documentElement.lang === 'en' ? 'en-US' : 'de-DE',
   );
-  // Blur (ausscrollender Beat) NUR Desktop/pointer:fine — sonst nur opacity/transform.
-  const canBlur = window.matchMedia('(pointer: fine)').matches;
-
-  // Zahlen initial auf 0 (Beats sind beim Laden unter dem Falz → kein Flash).
-  gsap.utils.toArray<HTMLElement>('#problem .fill-num').forEach((el) => {
-    el.textContent = nf.format(0);
-  });
-  // Counter läuft je Zahl EINMAL (Latch via dataset), wenn der Beat eintrifft.
-  const fireCounters = (beatEl: HTMLElement) => {
-    beatEl.querySelectorAll<HTMLElement>('.fill-num').forEach((el) => {
-      if (el.dataset.counted) return;
-      el.dataset.counted = '1';
-      const target = parseInt(el.dataset.countTo || '0', 10);
-      if (!target) return;
-      const proxy = { v: 0 };
-      gsap.to(proxy, {
-        v: target,
-        duration: 1.1,
-        ease: 'power2.out',
-        onUpdate: () => {
-          el.textContent = nf.format(Math.round(proxy.v));
-        },
-        onComplete: () => {
-          el.textContent = nf.format(target);
-        },
-      });
-    });
-  };
-
-  // Weiß-Blitz: GENAU EIN kurzer Hell-Impuls beim Licht-an (kein Stroboskop).
-  let flashed = false;
-  const doFlash = () => {
-    if (flashed || !flash) return;
-    flashed = true;
-    gsap
-      .timeline()
-      .to(flash, { opacity: 0.6, duration: 0.06, ease: 'power1.out' })
-      .to(flash, { opacity: 0, duration: 0.18, ease: 'power1.in' });
-  };
-  const showProgress = (on: boolean) => {
-    if (progress) gsap.to(progress, { opacity: on ? 1 : 0, duration: 0.3, overwrite: 'auto' });
-  };
-
-  // Zustandsgesteuerte Overlay-Übergänge (overwrite:'auto', Latches).
-  let darkOn = false;
-  let lightOn = false;
-
-  // DIM: dunkel beim Eintritt in die Story (vor dem Pin); reverse nur nach oben raus.
-  const turnDark = () => {
-    if (darkOn) return;
-    darkOn = true;
-    gsap.to(overlay, { opacity: 1, duration: 0.5, ease: 'power2.in', overwrite: 'auto' });
-    showProgress(true);
-  };
-  const undimAtStart = () => {
-    if (!darkOn) return;
-    darkOn = false;
-    gsap.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
-    showProgress(false);
-  };
-  ScrollTrigger.create({
-    trigger: '#problem',
-    start: 'top 70%',
-    onEnter: turnDark,
-    onEnterBack: turnDark,
-    onLeaveBack: undimAtStart,
-  });
-
-  // LICHT-AN: startet zuverlässig über ZWEI Wege mit UNTERSCHIEDLICHER Anmutung:
-  //  - KLICK (Kette, hard=true): HARTER Schalter-Cut (~140ms) + EIN Weiß-Blitz —
-  //    „klackt" instant an. Der dunkle Track wird NICHT geblurrt (Cut, kein Wisch).
-  //  - SCROLL (Story-Ende, hard=false): schneller Blur-Wisch — der ganze dunkle
-  //    Ketten-Track wischt unscharf (nur Desktop) + transparent nach OBEN raus, das
-  //    Overlay fadet weich weg (Licht an), die Lösung fadet scharf & zentriert herein.
-  //    KEIN Blitz. Wir animieren den .beat-track (NICHT die einzelnen, gescrubbten
-  //    Beats) → kein Konflikt mit der Scrub-Timeline.
-  const turnOnLight = (hard = false) => {
-    if (lightOn) return;
-    lightOn = true;
-    showProgress(false);
-    if (hard) {
-      doFlash();
-      gsap.to(overlay, { opacity: 0, duration: 0.14, ease: 'power2.in', overwrite: 'auto' });
-    } else {
-      if (beatTrack) {
-        gsap.to(beatTrack, {
-          autoAlpha: 0,
-          yPercent: -8,
-          ...(canBlur ? { filter: 'blur(8px)' } : {}),
-          duration: 0.4,
-          ease: 'power2.in',
-          overwrite: 'auto',
-        });
-      }
-      gsap.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.inOut', overwrite: 'auto' });
-    }
-    if (solItems.length) {
-      gsap.to(solItems, {
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.5,
-        ease: 'power2.out',
-        stagger: 0.06,
-        delay: hard ? 0 : 0.1,
-        overwrite: 'auto',
-      });
-    }
-  };
-  const turnOffLight = () => {
-    if (!lightOn) return;
-    lightOn = false;
-    gsap.to(overlay, { opacity: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
-    showProgress(true);
-    // Blur-Wisch zurücknehmen (falls der Scroll-Weg den Track geblurrt hat).
-    if (beatTrack) {
-      gsap.to(beatTrack, {
-        autoAlpha: 1,
-        yPercent: 0,
-        ...(canBlur ? { filter: 'blur(0px)' } : {}),
-        duration: 0.2,
-        overwrite: 'auto',
-      });
-    }
-    if (solItems.length) {
-      gsap.to(solItems, { autoAlpha: 0, y: 24, duration: 0.2, overwrite: 'auto' });
-    }
-  };
-  // PIN + SCRUB: gepinnte Beat-Story. Die Beats liegen absolut gestapelt in der
-  // Mitte; beim Scrubben blendet der alte Beat unscharf (Desktop) + transparent
-  // nach oben aus, der neue scharf von unten herein (Crossfade „mitte mitte").
-  // Sauber über Lenis (ScrollTrigger.update hängt an Lenis' scroll). Kein Hijack.
-  //
-  // WICHTIG (Overlay-Timing): Das Overlay bleibt über die GESAMTE gepinnte Story
-  // konstant dunkel — es ist NICHT an den Scrub gekoppelt. Der Wechsel auf Hell
-  // passiert ausschließlich am ENDE des Pins (onLeave = Story-Ende erreicht) als
-  // harter Cut; onEnterBack (zurück in die Story) macht wieder dunkel. Dadurch
-  // sind ALLE Problem-Beats dunkel; nur die Lösung dahinter ist hell.
-  if (pinStage && beats.length > 1) {
-    gsap.set(beats[0], { autoAlpha: 1, yPercent: 0 });
-    if (canBlur) gsap.set(beats, { filter: 'blur(0px)' });
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: pinStage,
-        start: 'top top',
-        // Kürzerer Pin (war +0.5) → weniger Leerweg; der Licht-Wisch triggert
-        // früher, der Ketten-Slide „klebt" nicht mehr.
-        end: () => '+=' + Math.round(window.innerHeight * (beats.length + 0.1)),
-        pin: true,
-        scrub: 1,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          if (progressFill) gsap.set(progressFill, { scaleY: self.progress });
-        },
-        onLeave: () => turnOnLight(false), // Story-Ende → schneller Blur-Wisch
-        onEnterBack: turnOffLight, // zurück in die Story → wieder dunkel
+  const target = parseInt(numEl.dataset.countTo || '0', 10);
+  let countTween: ReturnType<typeof gsap.to> | null = null;
+  const runCountUp = () => {
+    if (!target) return;
+    countTween?.kill();
+    const proxy = { v: 0 };
+    numEl.textContent = nf.format(0);
+    countTween = gsap.to(proxy, {
+      v: target,
+      duration: 1.2,
+      ease: 'power2.out',
+      onUpdate: () => {
+        numEl.textContent = nf.format(Math.round(proxy.v));
+      },
+      onComplete: () => {
+        numEl.textContent = nf.format(target);
       },
     });
+  };
+  // Startwert 0 (Sektion beim Laden unter dem Falz → kein Flash), Count-up bei Eintritt.
+  if (target) numEl.textContent = nf.format(0);
+  ScrollTrigger.create({ trigger: section, start: 'top 75%', once: true, onEnter: runCountUp });
 
-    tl.call(fireCounters, [beats[0]], 0.05);
-    let pos = 0.8;
-    for (let i = 1; i < beats.length; i++) {
-      const prev = beats[i - 1];
-      const cur = beats[i];
-      tl.to(
-        prev,
-        {
-          autoAlpha: 0,
-          yPercent: -12,
-          ...(canBlur ? { filter: 'blur(6px)' } : {}),
-          duration: 0.5,
-          ease: 'power1.in',
+  // Desktop-Hinweis nur bei Maus.
+  if (hint && fine) hint.style.display = 'flex';
+
+  // ---- Partikel-Aura (eigene Canvas-Instanz, begrenzt auf die Zahl) ----
+  const ctx = canvas?.getContext('2d') ?? null;
+  if (canvas && ctx && numWrap) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const LIGHT = '246,246,246'; // Off-White als rgb-Tripel (für rgba)
+    const YELLOW = '#fff03c';
+    let W = 0;
+    let H = 0;
+    type Pt = { x: number; y: number; vx: number; vy: number; r: number; a: number; yellow: boolean };
+    let pts: Pt[] = [];
+
+    const build = () => {
+      W = numWrap.clientWidth;
+      H = numWrap.clientHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // in CSS-px zeichnen
+      // Dichte an die Fläche gekoppelt, HART gedeckelt (Performance). Mobile weniger.
+      const cap = fine ? 90 : 40;
+      const count = Math.max(24, Math.min(cap, Math.round((W * H) / 2600)));
+      pts = [];
+      for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const sp = 0.08 + Math.random() * 0.22; // langsame Grunddrift
+        const yellow = Math.random() < 0.28; // Gelb-Akzente
+        pts.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          r: 1 + Math.random() * 1.8,
+          a: yellow ? 0.9 : 0.35 + Math.random() * 0.3,
+          yellow,
+        });
+      }
+    };
+
+    let mx = -1;
+    let my = -1;
+    if (fine) {
+      window.addEventListener(
+        'mousemove',
+        (e) => {
+          const rect = canvas.getBoundingClientRect();
+          mx = e.clientX - rect.left;
+          my = e.clientY - rect.top;
         },
-        pos,
+        { passive: true },
       );
-      tl.fromTo(
-        cur,
-        { autoAlpha: 0, yPercent: 12 },
-        { autoAlpha: 1, yPercent: 0, duration: 0.5, ease: 'power1.out' },
-        pos,
-      );
-      tl.call(fireCounters, [cur], pos + 0.3);
-      // Letzter Beat (Kette): kurzer Nachlauf statt langem Dwell → der Übergang
-      // zur Lösung kommt schnell (kein Kleben).
-      pos += i < beats.length - 1 ? 1.5 : 0.7;
     }
-    tl.to({}, { duration: 0.25 }); // knapper Auslauf für den letzten Beat (Kette)
-  }
 
-  // Kette: Klick schaltet das Licht SOFORT an (Timeline-Zustand direkt) und
-  // gleitet per Lenis aufs Lösungs-Panel (Position frisch gelesen). Reines
-  // Weiterscrollen bis ans Ende der Story löst dasselbe via ScrollTrigger aus.
-  const lamp = document.querySelector<HTMLElement>('[data-lamp]');
-  if (lamp && solPanel) {
-    lamp.addEventListener('click', () => {
-      turnOnLight(true); // Ketten-Klick = HARTER Schalter-Cut (+ Blitz), kein Wisch
-      lenis.scrollTo(solPanel, { offset: -40, duration: 0.8 });
+    // Scatter-Impuls (Replay-Feedback): alle Partikel bekommen einen kurzen Stoß.
+    const scatter = () => {
+      for (const p of pts) {
+        const ang = Math.random() * Math.PI * 2;
+        const sp = 1.5 + Math.random() * 2;
+        p.vx += Math.cos(ang) * sp;
+        p.vy += Math.sin(ang) * sp;
+      }
+    };
+
+    const REPEL = 60;
+    const REPEL_SQ = REPEL * REPEL;
+    let running = false;
+    const tick = () => {
+      if (!running) return;
+      ctx.clearRect(0, 0, W, H);
+      for (const p of pts) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.97; // Reibung: Scatter-/Repel-Impuls klingt sanft aus
+        p.vy *= 0.97;
+        // Im Zahl-Rechteck halten (Abprall).
+        if (p.x <= 0) { p.x = 0; p.vx = Math.abs(p.vx) + 0.05; }
+        else if (p.x >= W) { p.x = W; p.vx = -Math.abs(p.vx) - 0.05; }
+        if (p.y <= 0) { p.y = 0; p.vy = Math.abs(p.vy) + 0.05; }
+        else if (p.y >= H) { p.y = H; p.vy = -Math.abs(p.vy) - 0.05; }
+        // Cursor-Repel (nur Desktop): Partikel weichen dem Zeiger aus.
+        if (fine && mx >= 0) {
+          const dx = p.x - mx;
+          const dy = p.y - my;
+          const dsq = dx * dx + dy * dy;
+          if (dsq < REPEL_SQ && dsq > 0.01) {
+            const d = Math.sqrt(dsq);
+            const push = (1 - d / REPEL) * 1.4;
+            p.x += (dx / d) * push;
+            p.y += (dy / d) * push;
+          }
+        }
+      }
+      for (const p of pts) {
+        ctx.globalAlpha = p.a;
+        ctx.fillStyle = p.yellow ? YELLOW : `rgb(${LIGHT})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(tick);
+    };
+
+    build();
+    window.addEventListener('resize', build);
+    // Font-Metriken können die Zahlbreite ändern → nach Font-Load neu vermessen.
+    if (document.fonts?.ready) document.fonts.ready.then(build);
+    // Nur laufen lassen, wenn die Sektion sichtbar ist (Performance).
+    const io = new IntersectionObserver((entries) => {
+      const vis = entries[0]?.isIntersecting ?? false;
+      if (vis && !running) { running = true; requestAnimationFrame(tick); }
+      if (!vis) { running = false; mx = -1; my = -1; }
     });
+    io.observe(section);
+
+    // Replay: Count-up neu + Partikel-Scatter.
+    replay?.addEventListener('click', () => { runCountUp(); scatter(); });
+  } else {
+    // Ohne Canvas: Replay startet nur den Count-up neu.
+    replay?.addEventListener('click', runCountUp);
   }
 }
 
@@ -840,6 +779,6 @@ if (!prefersReducedMotion) {
   initHeroChoreography();
   initHeroCanvas();
   initHeroScrollCue();
-  initProblemStory(lenis);
+  initProblem3c();
   initReveals();
 }
