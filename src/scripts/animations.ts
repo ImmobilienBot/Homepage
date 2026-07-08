@@ -598,6 +598,7 @@ function initProblemStory(lenis: Lenis) {
   if (!story || !overlay) return;
 
   const pinStage = document.querySelector<HTMLElement>('[data-pin-stage]');
+  const beatTrack = document.querySelector<HTMLElement>('[data-problem]');
   const beats = gsap.utils.toArray<HTMLElement>('#problem [data-beat]');
   const progress = document.querySelector<HTMLElement>('[data-progress]');
   const progressFill = document.querySelector<HTMLElement>('[data-progress-fill]');
@@ -678,14 +679,34 @@ function initProblemStory(lenis: Lenis) {
     onLeaveBack: undimAtStart,
   });
 
-  // LICHT-AN: HARTER, schneller Cut (~140ms) + Blitz; danach Lösung auf. Startet
-  // zuverlässig über ZWEI Wege — Scroll bis Lösungs-Panel ODER Ketten-Klick.
-  const turnOnLight = () => {
+  // LICHT-AN: startet zuverlässig über ZWEI Wege mit UNTERSCHIEDLICHER Anmutung:
+  //  - KLICK (Kette, hard=true): HARTER Schalter-Cut (~140ms) + EIN Weiß-Blitz —
+  //    „klackt" instant an. Der dunkle Track wird NICHT geblurrt (Cut, kein Wisch).
+  //  - SCROLL (Story-Ende, hard=false): schneller Blur-Wisch — der ganze dunkle
+  //    Ketten-Track wischt unscharf (nur Desktop) + transparent nach OBEN raus, das
+  //    Overlay fadet weich weg (Licht an), die Lösung fadet scharf & zentriert herein.
+  //    KEIN Blitz. Wir animieren den .beat-track (NICHT die einzelnen, gescrubbten
+  //    Beats) → kein Konflikt mit der Scrub-Timeline.
+  const turnOnLight = (hard = false) => {
     if (lightOn) return;
     lightOn = true;
-    doFlash();
-    gsap.to(overlay, { opacity: 0, duration: 0.14, ease: 'power2.in', overwrite: 'auto' });
     showProgress(false);
+    if (hard) {
+      doFlash();
+      gsap.to(overlay, { opacity: 0, duration: 0.14, ease: 'power2.in', overwrite: 'auto' });
+    } else {
+      if (beatTrack) {
+        gsap.to(beatTrack, {
+          autoAlpha: 0,
+          yPercent: -8,
+          ...(canBlur ? { filter: 'blur(8px)' } : {}),
+          duration: 0.4,
+          ease: 'power2.in',
+          overwrite: 'auto',
+        });
+      }
+      gsap.to(overlay, { opacity: 0, duration: 0.4, ease: 'power2.inOut', overwrite: 'auto' });
+    }
     if (solItems.length) {
       gsap.to(solItems, {
         autoAlpha: 1,
@@ -693,6 +714,7 @@ function initProblemStory(lenis: Lenis) {
         duration: 0.5,
         ease: 'power2.out',
         stagger: 0.06,
+        delay: hard ? 0 : 0.1,
         overwrite: 'auto',
       });
     }
@@ -702,6 +724,16 @@ function initProblemStory(lenis: Lenis) {
     lightOn = false;
     gsap.to(overlay, { opacity: 1, duration: 0.2, ease: 'power2.out', overwrite: 'auto' });
     showProgress(true);
+    // Blur-Wisch zurücknehmen (falls der Scroll-Weg den Track geblurrt hat).
+    if (beatTrack) {
+      gsap.to(beatTrack, {
+        autoAlpha: 1,
+        yPercent: 0,
+        ...(canBlur ? { filter: 'blur(0px)' } : {}),
+        duration: 0.2,
+        overwrite: 'auto',
+      });
+    }
     if (solItems.length) {
       gsap.to(solItems, { autoAlpha: 0, y: 24, duration: 0.2, overwrite: 'auto' });
     }
@@ -724,14 +756,16 @@ function initProblemStory(lenis: Lenis) {
       scrollTrigger: {
         trigger: pinStage,
         start: 'top top',
-        end: () => '+=' + Math.round(window.innerHeight * (beats.length + 0.5)),
+        // Kürzerer Pin (war +0.5) → weniger Leerweg; der Licht-Wisch triggert
+        // früher, der Ketten-Slide „klebt" nicht mehr.
+        end: () => '+=' + Math.round(window.innerHeight * (beats.length + 0.1)),
         pin: true,
         scrub: 1,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           if (progressFill) gsap.set(progressFill, { scaleY: self.progress });
         },
-        onLeave: turnOnLight, // Story-Ende erreicht → harter Licht-Cut
+        onLeave: () => turnOnLight(false), // Story-Ende → schneller Blur-Wisch
         onEnterBack: turnOffLight, // zurück in die Story → wieder dunkel
       },
     });
@@ -759,9 +793,11 @@ function initProblemStory(lenis: Lenis) {
         pos,
       );
       tl.call(fireCounters, [cur], pos + 0.3);
-      pos += 1.5;
+      // Letzter Beat (Kette): kurzer Nachlauf statt langem Dwell → der Übergang
+      // zur Lösung kommt schnell (kein Kleben).
+      pos += i < beats.length - 1 ? 1.5 : 0.7;
     }
-    tl.to({}, { duration: 0.8 }); // Auslauf-Dwell für den letzten Beat (Kette)
+    tl.to({}, { duration: 0.25 }); // knapper Auslauf für den letzten Beat (Kette)
   }
 
   // Kette: Klick schaltet das Licht SOFORT an (Timeline-Zustand direkt) und
@@ -770,7 +806,7 @@ function initProblemStory(lenis: Lenis) {
   const lamp = document.querySelector<HTMLElement>('[data-lamp]');
   if (lamp && solPanel) {
     lamp.addEventListener('click', () => {
-      turnOnLight();
+      turnOnLight(true); // Ketten-Klick = HARTER Schalter-Cut (+ Blitz), kein Wisch
       lenis.scrollTo(solPanel, { offset: -40, duration: 0.8 });
     });
   }

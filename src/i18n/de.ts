@@ -68,11 +68,20 @@ export const de = {
     },
     solution: {
       title: 'Die Lösung',
-      // Sichtbare H2 (Keyword mit gelbem Marker — Brand-Signature auf Hell).
-      headline: 'Zeit, den Spieß umzudrehen.',
-      headlineMark: 'Spieß umzudrehen',
-      // {n} = Portalanzahl aus site.ts. **…** = gelber Marker.
-      text: 'Immobilien Bot überwacht rund um die Uhr über **{n} Portale** und meldet sich in Sekunden, sobald deine Wohnung online geht. **Ab jetzt bist du der Erste**.',
+      // Kleiner, gedämpfter Kicker über der H2 (KEIN großer Marker).
+      kicker: 'Zeit, den Spieß umzudrehen.',
+      // Sichtbare H2 (Payoff; gelber Marker NUR auf der Phrase → Brand-Signature,
+      // schließt die Klammer zur dunklen Story „nie der Erste").
+      headline: 'Ab jetzt bist du der Erste.',
+      headlineMark: 'der Erste',
+      // Scanbare Vorteil-Reihe (kein Fließtext). {n} = Portalanzahl aus site.ts.
+      benefits: [
+        { label: 'Echtzeit-Push', sub: 'In Sekunden benachrichtigt.' },
+        { label: 'Über {n} Portale', sub: 'Alle in einer App.' },
+        { label: 'Bewerbung per Klick', sub: 'Zuerst beim Vermieter.' },
+      ],
+      // Selbstbewusste Trust-Zeile am CTA (Risiko-Umkehr, sichtbar — nicht winzig).
+      trust: '7 Tage kostenlos testen – kein Risiko, jederzeit kündbar.',
       // aria-Label für den Lampenketten-Button (verknüpft mit sichtbarem Hinweis).
       lightOn: 'Licht anschalten und Lösung anzeigen',
       // Sichtbares Mikro-Label am Knauf (Klickbarkeits-Hinweis, Desktop + Mobile).

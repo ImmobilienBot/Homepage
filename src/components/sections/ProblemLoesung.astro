@@ -52,25 +52,20 @@ const beatUnits = P.beats.map((b) => tokenize(b));
 const subUnits = tokenize(P.beat2Sub);
 const turnUnits = tokenize(P.turn);
 
-/* --- Heller Lösungs-Teil: **…** → gelber Marker (Phrase, statisch). --- */
-const solText = S.text.replace('{n}', String(portalCountRounded));
-function splitEmphasis(src: string) {
-  return src.split('**').map((seg, i) => ({ text: seg, mark: i % 2 === 1 }));
-}
-const solSegs = splitEmphasis(solText);
+/* --- Heller Lösungs-Teil (Payoff): H2 mit gelbem Marker NUR auf der Phrase. ---
+   Prefix + Nowrap-Klammer(Marker + Suffix) → die markierte Phrase samt Punkt
+   bricht nie um (sauber, kein Umbruch-Chaos). */
+const headMark = S.headlineMark;
+const headIdx = S.headline.indexOf(headMark);
+const headPrefix = headIdx >= 0 ? S.headline.slice(0, headIdx) : S.headline;
+const headSuffix = headIdx >= 0 ? S.headline.slice(headIdx + headMark.length) : '';
 
-function splitMark(line: string, keyword: string) {
-  const idx = line.indexOf(keyword);
-  if (idx < 0) return [{ text: line, mark: false }];
-  return [
-    { text: line.slice(0, idx), mark: false },
-    { text: keyword, mark: true },
-    { text: line.slice(idx + keyword.length), mark: false },
-  ].filter((s) => s.mark || s.text.length > 0);
-}
-const headlineSegs = splitMark(S.headline, S.headlineMark);
+/* --- Scanbare Vorteile: {n} → Portalanzahl aus site.ts (wachstumssicher). --- */
+const benefits = S.benefits.map((b) => ({
+  label: b.label.replace('{n}', String(portalCountRounded)),
+  sub: b.sub.replace('{n}', String(portalCountRounded)),
+}));
 
-// Zahl als eigenes, zählbares Element rendern (Rest = Klartext).
 const LAMP_LINKS = 6; // gestapelte Kettenglieder → biegbare Welle
 ---
 
@@ -163,23 +158,54 @@ const LAMP_LINKS = 6; // gestapelte Kettenglieder → biegbare Welle
   <section id="loesung" class="story-sec story-light">
     <div class="panel">
       <div class="panel-inner">
+        <p class="sol-kicker" data-sol-item>{S.kicker}</p>
+
         <h2 class="sol-headline" data-sol-item>
-          {
-            headlineSegs.map((seg) =>
-              seg.mark ? <span class="mark">{seg.text}</span> : <span>{seg.text}</span>,
-            )
-          }
+          <span>{headPrefix}</span><span class="sol-head-nowrap"
+            ><span class="mark">{headMark}</span>{headSuffix}</span
+          >
         </h2>
-        <p class="sol-text" data-sol-item>
+
+        <ul class="sol-benefits">
           {
-            solSegs.map((seg) =>
-              seg.mark ? <span class="mark">{seg.text}</span> : <span>{seg.text}</span>,
-            )
+            benefits.map((b) => (
+              <li class="sol-benefit" data-sol-item>
+                <span class="sol-benefit-ic" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                    <path
+                      d="M5 12.5l4.2 4.2L19 7"
+                      stroke="currentColor"
+                      stroke-width="2.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span class="sol-benefit-txt">
+                  <span class="sol-benefit-label">{b.label}</span>
+                  <span class="sol-benefit-sub">{b.sub}</span>
+                </span>
+              </li>
+            ))
           }
-        </p>
+        </ul>
+
         <div class="sol-cta" data-sol-item>
           <StoreBadges position="loesung" lang={lang} />
-          <span class="sol-cta-note">{t.cta.tryFree}</span>
+          <p class="sol-trust">
+            <span class="sol-trust-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                <path
+                  d="M5 12.5l4.2 4.2L19 7"
+                  stroke="currentColor"
+                  stroke-width="2.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            {S.trust}
+          </p>
         </div>
       </div>
     </div>
@@ -447,33 +473,119 @@ const LAMP_LINKS = 6; // gestapelte Kettenglieder → biegbare Welle
     margin-inline: auto;
     text-align: center;
   }
+  /* Kicker: klein, gedämpft, kein Marker. */
+  .sol-kicker {
+    margin: 0 auto clamp(0.75rem, 1.6vw, 1.1rem);
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(59 59 58 / 0.6);
+  }
   .sol-headline {
     font-size: clamp(2rem, 5.5vw, 3.75rem);
     font-weight: 900;
-    line-height: 1;
+    line-height: 1.02;
     letter-spacing: -0.02em;
     max-width: 20ch;
     margin-inline: auto;
     color: var(--color-black);
+    text-wrap: balance;
   }
-  .sol-text {
-    margin: clamp(1.25rem, 3vw, 2rem) auto 0;
-    font-size: clamp(1.15rem, 2.2vw, 1.5rem);
-    line-height: 1.4;
-    max-width: 42rem;
-    color: var(--color-black);
+  /* Markierte Phrase + Punkt zusammenhalten (kein Umbruch mitten in „der Erste."). */
+  .sol-head-nowrap {
+    white-space: nowrap;
   }
-  .sol-cta {
-    margin-top: clamp(2rem, 4vw, 2.75rem);
+
+  /* Scanbare Vorteil-Reihe: Desktop 3 Spalten, Mobile gestapelt + zentriert. */
+  .sol-benefits {
+    list-style: none;
+    margin: clamp(2rem, 4vw, 3rem) auto 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(1.25rem, 3vw, 1.75rem);
+    max-width: 24rem;
+  }
+  .sol-benefit {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    text-align: left;
+  }
+  .sol-benefit-ic {
+    flex: none;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem 1.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    background-color: var(--color-yellow);
+    color: var(--color-black);
   }
-  .sol-cta-note {
-    font-size: 0.95rem;
+  .sol-benefit-txt {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .sol-benefit-label {
+    font-weight: 900;
+    font-size: clamp(1.05rem, 2vw, 1.2rem);
+    color: var(--color-black);
+  }
+  .sol-benefit-sub {
+    margin-top: 0.15rem;
+    font-size: clamp(0.9rem, 1.6vw, 1rem);
+    color: rgb(59 59 58 / 0.7);
+  }
+
+  .sol-cta {
+    margin-top: clamp(2.25rem, 4.5vw, 3rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1rem, 2vw, 1.25rem);
+  }
+  /* Selbstbewusste Trust-Zeile (Risiko-Umkehr) — klar sichtbar, nicht winzig-grau. */
+  .sol-trust {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: clamp(0.95rem, 1.7vw, 1.1rem);
     font-weight: 700;
-    color: rgb(59 59 58 / 0.75);
+    color: var(--color-black);
+  }
+  .sol-trust-ic {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 9999px;
+    background-color: var(--color-yellow);
+    color: var(--color-black);
+  }
+
+  /* Ab 3 Vorteilen nebeneinander (Desktop): 3 gleiche Spalten, je zentriert. */
+  @media (min-width: 768px) {
+    .sol-benefits {
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(1.5rem, 3vw, 2.5rem);
+      max-width: 52rem;
+    }
+    .sol-benefit {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.6rem;
+    }
+    .sol-benefit-txt {
+      align-items: center;
+      text-align: center;
+    }
   }
 </style>

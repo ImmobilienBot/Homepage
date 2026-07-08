@@ -66,11 +66,20 @@ export const en: Dict = {
     },
     solution: {
       title: 'The Solution',
-      // Visible H2 (keyword with yellow marker — brand signature on light).
-      headline: 'Time to turn the tables.',
-      headlineMark: 'turn the tables',
-      // {n} = portal count from site.ts. **…** = yellow marker.
-      text: "Immobilien Bot watches **{n} portals** around the clock and pings you within seconds the moment your flat goes live. **From now on, you're the first**.",
+      // Small, muted kicker above the H2 (NOT a big marker).
+      kicker: 'Time to turn the tables.',
+      // Visible H2 (payoff; yellow marker ONLY on the phrase → brand signature,
+      // closes the loop to the dark story „never the first").
+      headline: "From now on, you're the first.",
+      headlineMark: 'the first',
+      // Scannable benefit row (no prose). {n} = portal count from site.ts.
+      benefits: [
+        { label: 'Real-time push', sub: 'Notified within seconds.' },
+        { label: 'Over {n} portals', sub: 'All in one app.' },
+        { label: 'Apply in one tap', sub: 'First in the landlord’s inbox.' },
+      ],
+      // Confident trust line at the CTA (risk reversal, visible — not tiny).
+      trust: 'Try free for 7 days – no risk, cancel anytime.',
       // aria-label for the pull-chain button (linked to the visible hint).
       lightOn: 'Turn on the light and reveal the solution',
       // Visible micro-label at the knob (clickability hint, desktop + mobile).
