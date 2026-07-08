@@ -43,12 +43,20 @@ const benefits = P.benefits.map((b) => ({
 // Zusatz („kostenlos, kündbar") aus dem Problem-Block.
 const trust = t.hero.trust;
 
-// Schlichte, einfarbige Inline-Line-Icons (keine CD-Icon-Palette im Repo) —
-// Reihenfolge = benefits: Glocke (Push) · Ebenen (Portale) · Cursor (Klick).
+// Lottie-Animationen je Vorteil (lazy via animations.ts geladen). Reihenfolge =
+// benefits: Glocke (Push) · Globus (Portale) · Stift (Bewerbung). Als ?url →
+// bleibt aus dem Main-Bundle draußen; JS fetcht + färbt auf CD-Gelb (Dunkel-BG).
+import bellUrl from '../../assets/icons/system-regular-46-notification-bell-hover-bell.json?url';
+import globeUrl from '../../assets/icons/system-regular-73-world-globe-wikis-hover-world.json?url';
+import editUrl from '../../assets/icons/system-regular-114-edit-pencil-rename-hover-edit.json?url';
+const LOTTIE = [bellUrl, globeUrl, editUrl];
+
+// Statische Inline-Line-Icons = Fallback (No-JS / reduced-motion / Lottie-Fehler).
+// Reihenfolge = benefits: Glocke (Push) · Globus (Portale) · Stift (Bewerbung).
 const ICONS = [
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>`,
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3 19 12l-6.5 1.2 3.2 6.3-2.4 1.2-3.2-6.3L5 19Z"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
 ];
 ---
 
@@ -88,7 +96,16 @@ const ICONS = [
       {
         benefits.map((b, i) => (
           <li class="p3-benefit">
-            <span class="p3-benefit-ic" set:html={ICONS[i]} />
+            <span
+              class="p3-benefit-ic"
+              data-p3-lottie
+              data-lottie-src={LOTTIE[i]}
+              aria-hidden="true"
+            >
+              {/* Fallback-SVG: No-JS / reduced-motion / Lottie-Fehler. JS ersetzt es
+                  durch die (auf Gelb umgefärbte) Lottie-Animation. */}
+              <span class="p3-ic-fallback" set:html={ICONS[i]} />
+            </span>
             <span class="p3-benefit-label">{b.label}</span>
           </li>
         ))
@@ -132,7 +149,9 @@ const ICONS = [
   }
   .p3-inner {
     width: 100%;
-    max-width: 54rem;
+    /* Weit → die Partikel-„43.000" rendert dominant (~70–80% der Sektionsbreite).
+       Text-Blöcke (Satz/Trust/H2) begrenzen sich selbst darunter. */
+    max-width: min(94vw, 80rem);
     margin-inline: auto;
     text-align: center;
     display: flex;
@@ -253,11 +272,22 @@ const ICONS = [
   }
   .p3-benefit-ic {
     display: inline-flex;
-    color: var(--color-yellow);
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    flex: none;
+    color: var(--color-yellow); /* Fallback-SVG nutzt currentColor */
   }
+  .p3-ic-fallback {
+    display: inline-flex;
+    width: 100%;
+    height: 100%;
+  }
+  /* Fallback-SVG UND injizierte Lottie-SVG füllen die Icon-Box. */
   .p3-benefit-ic :global(svg) {
-    width: 1.35rem;
-    height: 1.35rem;
+    width: 100%;
+    height: 100%;
     display: block;
   }
 

@@ -58,6 +58,9 @@
   --spacing-section: clamp(4rem, 10vw, 8rem);
   /* Content-Inset („Einschub") ~100 px Desktop, mobil proportional kleiner */
   --spacing-inset: clamp(1.5rem, 6vw, 6.25rem);
+  /* Flow-Höhe des (scroll-top) Headers — Logo 1.9rem + Nav-Inner-Padding 2×0.85rem.
+     Für die optische Hero-Zentrierung (Content-Nudge um die Header-Höhe). */
+  --header-h: 3.75rem;
 
   /* ---- Radien ---- */
   --radius-pill: 9999px; /* Buttons: Pill-Form */

@@ -53,6 +53,12 @@ function splitLine(line: string) {
       Hinter Inhalten/Phones, über dem grauen Hintergrund. Mobile/reduced-motion: leer. */}
   <canvas class="hero-canvas" data-hero-canvas aria-hidden="true"></canvas>
 
+  {/* Dunkel-Übergang: scroll-gescrubbte Opacity-Ebene (0 → 1) über dem Hero-Inhalt,
+      unter der Nav-Pille. Dunkelt den Hero beim Rausscrollen ein → nahtloser Übergang
+      in die dunkle 3c-Sektion (kein harter Cut). Default 0 = Ruhezustand exakt wie jetzt;
+      per JS (animations.ts, nur no-preference) am Hero-Scroll gehängt. */}
+  <div class="hero-dark-overlay" data-hero-dark aria-hidden="true"></div>
+
   <div class="hero-grid relative z-10 mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
     {/* ---- Links: kinetische Headline + CTAs (mobil zuerst im DOM/Stapel) ---- */}
     <div class="hero-copy order-1">
@@ -248,6 +254,28 @@ function splitLine(line: string) {
       flex-direction: column;
       justify-content: center;
     }
+    /* Optische Zentrierung: der sticky Header nimmt oben Flow-Höhe ein und drückt
+       den zentrierten Inhalt nach unten. Den Content um die Header-Höhe nach oben
+       ziehen → wirkt echt mittig im Viewport (der schwebende Header überlagert nur).
+       Nur transform-freier margin-Nudge; Section-Box/Overlay-Layering unverändert. */
+    .hero-grid {
+      margin-top: calc(-1 * var(--header-h));
+    }
+  }
+
+  /* ---- Dunkel-Übergang-Overlay ----
+     Absolut über dem Hero-Inhalt (z-20), UNTER der Nav-Pille (Header z-40) und
+     über dem Content (hero-grid z-10) / Canvas (z-0). Default opacity 0 (Hero hell,
+     Ruhezustand identisch). JS scrubbt 0→1 am Hero-Scroll. #3b3b3a = 3c-BG →
+     nahtloser Übergang. Kein background-color-Animieren (nur opacity). */
+  .hero-dark-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background-color: var(--color-black);
+    opacity: 0;
+    pointer-events: none;
+    will-change: opacity;
   }
 
   /* ---- Kinetische Typografie (der Blickfang, links) ----

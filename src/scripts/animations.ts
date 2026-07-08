@@ -630,10 +630,17 @@ async function initProblem3c() {
   let duP: P | null = null;
   let duStart = 0;
   let duGrow = 0;
+  // Größen skalieren mit der (jetzt großen) Zahl — in setup() gesetzt.
+  let pSize = 2.5; // Basis-Partikelgröße
+  let duMax = 7.5; // „du"-Partikel-Endgröße
+  let duLabelPx = 15; // „du"-Label-Schriftgröße
+  let duLabelDy = 14; // „du"-Label-Abstand über dem Partikel
+  let numTop = 0; // Oberkante der Zahl (Canvas-px) — für den „du"-Zielpunkt
+  let numH = 0; // Höhe der Zahl (Canvas-px)
 
   // FONT-GATE (Grund des alten Bugs): erst nach dem Laden der Schrift sampeln.
   try {
-    await (document.fonts?.load('900 250px Roboto') ?? Promise.resolve());
+    await (document.fonts?.load('900 300px Roboto') ?? Promise.resolve());
   } catch {
     /* Font-API nicht verfügbar → best effort */
   }
@@ -641,13 +648,23 @@ async function initProblem3c() {
   const setup = () => {
     const stageW = stage.clientWidth;
     if (!stageW) return;
-    const sc = Math.min(1, (stageW - 60) / 1100);
-    const ow = Math.max(1, Math.round(1100 * sc));
-    const oh = Math.max(1, Math.round(340 * sc));
-    // Stage-Höhe an die gesampelte Zahl koppeln (≈14% Luft oben/unten) → der
-    // Statistik-Satz bleibt ENG unter der Zahl.
     W = stageW;
-    H = Math.round(oh / 0.74);
+
+    // Font so groß, dass „43.000" ~82% der Stage-Breite füllt → DOMINANTER Blickfang.
+    // Über measureText statt fixer Design-Breite → füllt jede Breite mit Rand.
+    const measurer = document.createElement('canvas').getContext('2d');
+    if (!measurer) return;
+    measurer.font = '900 100px Roboto';
+    const w100 = measurer.measureText('43.000').width || 300;
+    const targetW = stageW * 0.82; // Zahl füllt ~82% der (breiten) Stage
+    let fontPx = Math.round((100 * targetW) / w100);
+    // Höhe deckeln, damit die Zahl auf breiten Viewports nicht überproportional hoch wird.
+    fontPx = Math.max(56, Math.min(fontPx, Math.round(stageW * 0.26)));
+
+    const ow = stageW; // Offscreen = volle Stage-Breite (Zahl zentriert)
+    const oh = Math.round(fontPx * 1.1); // knappe Höhe (Ziffern haben keine Unterlängen)
+    // Stage-Höhe an die Zahl koppeln (≈13% Luft oben/unten) → Satz bleibt ENG darunter.
+    H = Math.round(oh / 0.8);
     stage.style.height = H + 'px';
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -655,38 +672,57 @@ async function initProblem3c() {
     canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // in CSS-px zeichnen
 
-    // Offscreen: „43.000" zeichnen und Alpha-Pixel abtasten.
+    // Offscreen: „43.000" groß zeichnen und Alpha-Pixel abtasten.
     const off = document.createElement('canvas');
     off.width = ow;
     off.height = oh;
     const octx = off.getContext('2d');
     if (!octx) return;
     octx.fillStyle = '#fff';
-    octx.font = `900 ${Math.round(250 * sc)}px Roboto`;
+    octx.font = `900 ${fontPx}px Roboto`;
     octx.textAlign = 'center';
     octx.textBaseline = 'middle';
     octx.fillText('43.000', ow / 2, oh / 2);
     const data = octx.getImageData(0, 0, ow, oh).data;
-    const step = Math.max(4, Math.round(5 * sc));
-    const offX = (W - ow) / 2;
+
+    const offX = (W - ow) / 2; // = 0 (Zahl füllt die Stage-Breite)
     const offY = H * 0.14;
 
-    const next: P[] = [];
-    for (let y = 0; y < oh; y += step) {
-      for (let x = 0; x < ow; x += step) {
-        if (data[(y * ow + x) * 4 + 3] > 128) {
-          next.push({
-            x: Math.random() * W,
-            y: Math.random() * H,
-            hx: x + offX,
-            hy: y + offY,
-            delay: Math.random() * 900,
-            size: 2.5,
-            du: false,
-          });
+    // DICHTE: kleine Schrittweite (scharfe, definierte Ziffern), aber Gesamtzahl
+    // deckeln (Performance-Budget, flüssig auf Mobile) — bei Überschreitung gröber.
+    const CAP = fine ? 2800 : 1500;
+    let step = fine ? 4 : 5;
+    let next: P[] = [];
+    for (let iter = 0; iter < 8; iter++) {
+      next = [];
+      for (let y = 0; y < oh; y += step) {
+        for (let x = 0; x < ow; x += step) {
+          if (data[(y * ow + x) * 4 + 3] > 128) {
+            next.push({
+              x: Math.random() * W,
+              y: Math.random() * H,
+              hx: x + offX,
+              hy: y + offY,
+              delay: Math.random() * 900,
+              size: pSize,
+              du: false,
+            });
+          }
         }
       }
+      if (next.length <= CAP) break;
+      step += 1; // zu viele Partikel → eine Stufe gröber sampeln
     }
+
+    // „du"-/Partikel-Größen mit der großen Zahl skalieren (skalieren mit).
+    pSize = Math.max(2.2, fontPx / 95);
+    duMax = pSize * 3;
+    duLabelPx = Math.max(13, Math.round(fontPx * 0.085));
+    duLabelDy = duMax + Math.max(6, Math.round(fontPx * 0.03));
+    for (const p of next) p.size = pSize;
+    numTop = offY;
+    numH = oh;
+
     parts = next;
     duPicked = false;
     duP = null;
@@ -723,7 +759,7 @@ async function initProblem3c() {
     // „DU"-Moment: nach ~2300ms das der Zahl-Mitte nächste Partikel wählen.
     if (started && !duPicked && elapsed >= 2300 && parts.length) {
       const tx = W / 2;
-      const ty = H * 0.14 + 150;
+      const ty = numTop + numH * 0.5; // Mitte der Zahl (skaliert mit der Größe)
       let best = parts[0];
       let bd = Infinity;
       for (const p of parts) {
@@ -758,15 +794,15 @@ async function initProblem3c() {
           p.y += (dy / d) * f;
         }
       }
-      // „du"-Partikel wächst 2.5→7.5 über 500ms.
+      // „du"-Partikel wächst pSize→duMax über 500ms (skaliert mit der Zahlgröße).
       if (p.du) {
         duGrow = Math.min(1, (now - duStart) / 500);
-        p.size = 2.5 + duGrow * 5;
+        p.size = pSize + duGrow * (duMax - pSize);
       }
       if (p.du) {
         ctx.fillStyle = YELLOW;
         ctx.shadowColor = YELLOW;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = duMax * 1.8;
       } else {
         ctx.fillStyle = 'rgba(220,221,220,0.66)';
         ctx.shadowBlur = 0;
@@ -779,10 +815,10 @@ async function initProblem3c() {
     // Winziges „du"/„you"-Label ab halbem Wachstum, knapp über dem Partikel.
     if (duP && duGrow >= 0.5) {
       ctx.fillStyle = YELLOW;
-      ctx.font = '700 15px Roboto';
+      ctx.font = `700 ${duLabelPx}px Roboto`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillText(duLabel, duP.x, duP.y - 14);
+      ctx.fillText(duLabel, duP.x, duP.y - duLabelDy);
     }
 
     rafId = requestAnimationFrame(loop);
@@ -849,6 +885,119 @@ function initReveals() {
   });
 }
 
+/**
+ * Dunkel-Übergang Hero → 3c: scroll-gescrubbte Opacity-Ebene (0 → 1) über dem
+ * Hero-Inhalt. Späte Rampe (Abdunkeln erst im letzten Drittel des Hero-Scrolls,
+ * am Übergang voll dunkel) → der Hero geht NAHTLOS in die dunkle 3c-Sektion über
+ * (kein harter Cut). An Lenis gehängt (ScrollTrigger.update ist an Lenis' scroll
+ * gekoppelt) — KEIN Pin, KEIN preventDefault, KEIN Auto-Jump. Nur opacity.
+ */
+const HERO_DARK_START = '66% top'; // Start der Abdunkelung (leicht justierbar)
+function initHeroDarkOverlay() {
+  const overlay = document.querySelector<HTMLElement>('[data-hero-dark]');
+  if (!overlay) return;
+  gsap.fromTo(
+    overlay,
+    { opacity: 0 },
+    {
+      opacity: 1,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '#hero',
+        start: HERO_DARK_START,
+        end: 'bottom top',
+        scrub: true,
+      },
+    },
+  );
+}
+
+/**
+ * Vorteils-Icons (3c) als Lottie — LAZY. lottie-web (light build) erst per
+ * dynamischem Import laden, wenn die 3c-Sektion nahe/im Viewport ist. Die JSONs
+ * sind dunkel gefärbt (helle Vorlage) → zur Laufzeit auf CD-Gelb umfärben, damit
+ * sie auf dem dunklen BG lesbar sind. Autoplay + Loop, via IntersectionObserver
+ * pausiert außerhalb des Viewports. Fällt eine Datei aus, bleibt ihr Fallback-SVG.
+ * reduced-motion ruft diese Funktion NICHT auf → statische Fallback-SVGs.
+ */
+// Rekursiv jede solide Füll-/Strichfarbe (c.a===0, k=[r,g,b,a]) auf die Zielfarbe setzen.
+function recolorLottie(node: unknown, rgb: number[]): void {
+  if (!node || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (const n of node) recolorLottie(n, rgb);
+    return;
+  }
+  const o = node as Record<string, unknown>;
+  const c = o.c as { a?: number; k?: number[] } | undefined;
+  if (c && c.a === 0 && Array.isArray(c.k) && c.k.length === 4) {
+    c.k = [rgb[0], rgb[1], rgb[2], c.k[3]];
+  }
+  for (const key in o) {
+    if (key === 'c') continue;
+    recolorLottie(o[key], rgb);
+  }
+}
+
+function initBenefitLottie() {
+  const holders = gsap.utils.toArray<HTMLElement>('[data-p3-lottie]');
+  const section = document.querySelector<HTMLElement>('#problem.problem3c');
+  if (!holders.length || !section) return;
+
+  const YELLOW_RGB = [1, 0.941, 0.235]; // #fff03c
+  let loaded = false;
+
+  const load = async () => {
+    if (loaded) return;
+    loaded = true;
+    let lottie: { loadAnimation: (cfg: Record<string, unknown>) => { play: () => void; pause: () => void } };
+    try {
+      const mod = (await import('lottie-web/build/player/lottie_light')) as unknown as {
+        default: typeof lottie;
+      };
+      lottie = mod.default;
+    } catch {
+      return; // Lib nicht ladbar → Fallback-SVGs bleiben stehen
+    }
+    for (const holder of holders) {
+      const src = holder.getAttribute('data-lottie-src');
+      if (!src) continue;
+      try {
+        const res = await fetch(src);
+        const data = await res.json();
+        recolorLottie(data, YELLOW_RGB);
+        holder.innerHTML = ''; // Fallback-SVG entfernen, Lottie übernimmt
+        const anim = lottie.loadAnimation({
+          container: holder,
+          renderer: 'svg',
+          loop: true,
+          autoplay: false,
+          animationData: data,
+        });
+        // Play/Pause nach Sichtbarkeit (Performance).
+        const io = new IntersectionObserver((entries) => {
+          if (entries[0]?.isIntersecting) anim.play();
+          else anim.pause();
+        });
+        io.observe(holder);
+      } catch {
+        /* dieses Icon behält sein Fallback-SVG */
+      }
+    }
+  };
+
+  // Lazy: laden, sobald die Sektion nahe ist (rootMargin ~300px).
+  const near = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        load();
+        near.disconnect();
+      }
+    },
+    { rootMargin: '300px' },
+  );
+  near.observe(section);
+}
+
 if (!prefersReducedMotion) {
   const lenis = initSmoothScroll();
   initAnchorScroll(lenis);
@@ -859,6 +1008,8 @@ if (!prefersReducedMotion) {
   initHeroChoreography();
   initHeroCanvas();
   initHeroScrollCue();
+  initHeroDarkOverlay();
   initProblem3c();
+  initBenefitLottie();
   initReveals();
 }
