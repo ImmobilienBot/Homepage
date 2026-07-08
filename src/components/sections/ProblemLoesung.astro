@@ -61,19 +61,23 @@ const ICONS = [
 ---
 
 <section id="problem" class="problem3c">
+  {/* Vollflächiges Partikel-Canvas: startet als lückenlose graue Fläche (Hero-Farbe)
+      und zerfällt beim Eintritt in die „43.000" (gibt den dunklen BG frei). Deko-Ebene
+      ÜBER dem dunklen Sektions-BG, UNTER dem Inhalt (z-0). Ohne JS/reduced-motion aus. */}
+  <canvas class="p3-canvas" data-p3-canvas aria-hidden="true"></canvas>
+
   <div class="p3-inner">
     {/* 1 · Partikel-Zahl (Display, KEIN Heading) + eng gekoppelter Statistik-Satz.
-        Die „Stage" ist der Container, in dem sich die Zahl aus Partikeln FORMT
-        (dekoratives Canvas ÜBER dem echten DOM-Text). Ohne JS/reduced-motion:
-        statische „43.000" sichtbar (Canvas aus). */}
+        Die „Stage" reserviert nur die Layout-Position der Zahl (Canvas zeichnet die
+        Zahl dort). Ohne JS/reduced-motion: statische DOM-„43.000" sichtbar. */}
     <div class="p3-stat-block">
       <div class="p3-stage" data-p3-stage>
-        <canvas class="p3-canvas" data-p3-canvas aria-hidden="true"></canvas>
         <span class="p3-num" data-p3-num>{P.bigNumber}</span>
       </div>
 
-      {/* 2 · Statistik-Satz — deutlich kleiner, gedämpft, ENG unter der Zahl */}
-      <p class="p3-stat">
+      {/* 2 · Statistik-Satz — kleiner, gedämpft, ENG unter der Zahl. Während der grauen
+          Fläche verborgen (data-p3-reveal), sonst würde Text auf der Fläche „schweben". */}
+      <p class="p3-stat" data-p3-reveal>
         {P.stat}<a
           href="#quelle-statistik"
           class="p3-ast"
@@ -150,8 +154,10 @@ const ICONS = [
     overflow: hidden;
   }
   .p3-inner {
+    position: relative;
+    z-index: 1; /* über dem vollflächigen Partikel-Canvas (z-0) */
     width: 100%;
-    /* Volle Sektionsbreite → die Partikel-„43.000" rendert dominant (~78%).
+    /* Volle Sektionsbreite → die Partikel-„43.000" rendert dominant (~66%).
        Text-Blöcke (Satz/Trust/H2) begrenzen sich selbst über eigene max-widths. */
     max-width: none;
     margin-inline: auto;
@@ -178,14 +184,16 @@ const ICONS = [
     width: 100%;
     height: clamp(140px, 34vw, 300px);
   }
+  /* Vollflächiges Partikel-Canvas: deckt die GANZE Sektion (graue Fläche → Zahl).
+     Über dem dunklen Sektions-BG, unter dem Inhalt (.p3-inner z-1). Größe setzt JS. */
   .p3-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
-    /* nur mit JS+Motion sichtbar; ohne JS bleibt die statische Zahl */
+    /* nur mit JS+Motion sichtbar; ohne JS bleibt die statische Zahl auf Dunkel */
     display: none;
   }
   /* Echte DOM-Zahl: Fallback (No-JS/reduced-motion), mittig in der Stage. Bei
@@ -204,9 +212,9 @@ const ICONS = [
     color: var(--color-offwhite);
     white-space: nowrap;
   }
-  /* ENGE Kopplung: kleiner Abstand Zahl → Satz (ein Statistik-Block). */
+  /* ENGE Kopplung: sehr kleiner Abstand Zahl → Satz (ein Statistik-Block). */
   .p3-stat {
-    margin-top: clamp(0.25rem, 1vw, 0.6rem);
+    margin-top: clamp(0.1rem, 0.5vw, 0.35rem);
     font-size: clamp(1rem, 2.4vw, 1.4rem);
     font-weight: 400;
     line-height: 1.3;

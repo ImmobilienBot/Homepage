@@ -571,21 +571,23 @@ function initHeroScrollCue() {
 }
 
 /**
- * Problem „3c": die Zahl „43.000" FORMT sich aus Partikeln (erprobter Sampling-
- * Algorithmus) — EIGENE, vom Hero vollständig entkoppelte Canvas-Instanz.
+ * Problem „3c": Der Hero→Problem-Übergang. Die Sektion startet als LÜCKENLOSE graue
+ * Fläche in der Hero-BG-Farbe (#eaebeb) und ZERFÄLLT beim Eintritt EINMALIG + elastisch
+ * in die Partikel-„43.000" — dabei wird der dunkle Sektions-BG (#3b3b3a) frei.
  *
- *  - FONT-GATE: erst sampeln/zeichnen, wenn Roboto Black geladen ist
- *    (`document.fonts.load('900 250px Roboto')`) — sonst würde die Zahl leer/kaputt
- *    gesampelt (das war der alte Bug).
- *  - SAMPLING: „43.000" auf ein Offscreen-Canvas zeichnen, Alpha-Pixel abtasten →
- *    Ziel-Positionen; pro Ziel ein Partikel, das aus zufälliger Startlage zum Ziel
- *    east → die Zahl entsteht.
- *  - MAUS-REPEL nur Desktop (pointer:fine); Touch: kein Repel.
- *  - „DU"-MOMENT (~2300ms): das Partikel nahe der Zahl-Mitte wächst, wird gelb mit
- *    Glow + winziges „du"/„you"-Label; ~400ms später Reveal der Headline-Gruppe.
- *  - TRIGGER: Formung startet, sobald die Sektion in den Viewport scrollt.
- *  - Läuft NUR im no-preference-Block. reduced-motion / ohne JS: statische „43.000"
- *    (DOM-Text) + Headline sofort sichtbar (Reveal ist reine JS-Zugabe). DPR ≤ 2.
+ * EIN fester, gedeckelter Partikelsatz mit zwei Positions-Zuständen:
+ *  - RASTER: großes, überlappendes Kachel-Grid über die GANZE Sektion → solide graue
+ *    Fläche, verdeckt den dunklen BG komplett → nahtlose Fortsetzung des (hellen) Heros,
+ *    KEINE Kante an der Sektionsgrenze.
+ *  - ZAHL: aus den Alpha-Pixeln von „43.000" gesampelte Zielpositionen (Font-Gate!).
+ * Beim Eintritt (ScrollTrigger onEnter, once, KEIN Pin/Scrub) tweenen die Partikel
+ * Raster→Zahl: per-Partikel-Stagger, elastischer ease-out-back, Größe groß→klein,
+ * Farbe Hero-Grau→Zahl-Hellgrau. EIN Partikel wird isoliert über der Zahl zu einem
+ * runden GELBEN Punkt (Glow, kein Text). Danach Reveal der Headline-Gruppe.
+ *
+ * reduced-motion / ohne JS: KEINE Fläche, KEIN Effekt — statische „43.000" (DOM-Text)
+ * auf dunklem BG + alles sofort sichtbar (Canvas per CSS aus; Funktion nicht gerufen).
+ * DPR ≤ 2. Maus-Repel auf der fertigen Zahl (Desktop). Vom Hero-Canvas entkoppelt.
  */
 async function initProblem3c() {
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
@@ -598,9 +600,10 @@ async function initProblem3c() {
 
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
-  const duLabel = section.querySelector('.mark')?.textContent?.trim() || 'du';
+  const GREY = [234, 235, 235]; // Hero-BG #eaebeb → Raster-Fläche (nahtlos zum Hero)
+  const NUM_RGB = [220, 221, 220]; // Zahl-Partikelfarbe (hell, lesbar auf Dunkel)
 
-  // Headline-Gruppe initial verbergen — NUR JS-Zugabe (ohne JS/reduced-motion sichtbar).
+  // Headline-Gruppe (inkl. Statistik-Satz) initial verbergen — NUR JS-Zugabe.
   const reveals = gsap.utils.toArray<HTMLElement>('#problem [data-p3-reveal]');
   if (reveals.length) gsap.set(reveals, { autoAlpha: 0, y: 22 });
   let revealed = false;
@@ -608,37 +611,40 @@ async function initProblem3c() {
     if (revealed) return;
     revealed = true;
     if (reveals.length) {
-      gsap.to(reveals, {
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.7,
-        ease: 'power2.out',
-        stagger: 0.08,
-      });
+      gsap.to(reveals, { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.08 });
     }
   };
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const DUR = 1000; // Tween-Dauer je Partikel (ms)
+  const MAXDELAY = 700; // max. Per-Partikel-Stagger
 
-  type P = { x: number; y: number; hx: number; hy: number; delay: number; size: number; du: boolean };
+  type P = {
+    rx: number; ry: number; // Raster-Position (Start)
+    nx: number; ny: number; // Zahl-Position (Ziel)
+    x: number; y: number; // aktuell
+    delay: number;
+    du: boolean;
+  };
   let parts: P[] = [];
   let W = 0;
   let H = 0;
+  let rasterSize = 20;
+  let pSize = 3;
+  let duMax = 9;
   let started = false;
   let startT = 0;
-  let duPicked = false;
-  let duP: P | null = null;
-  let duStart = 0;
-  let duGrow = 0;
-  // Größen skalieren mit der (jetzt großen) Zahl — in setup() gesetzt.
-  let pSize = 2.5; // Basis-Partikelgröße
-  let duMax = 7.5; // „du"-Partikel-Endgröße
-  let duLabelPx = 15; // „du"-Label-Schriftgröße
-  let duLabelDy = 14; // „du"-Label-Abstand über dem Partikel
-  let numTop = 0; // Oberkante der Zahl (Canvas-px) — für den „du"-Zielpunkt
-  let numH = 0; // Höhe der Zahl (Canvas-px)
+  let duLandT = 0;
 
-  // FONT-GATE (Grund des alten Bugs): erst nach dem Laden der Schrift sampeln.
+  // Elastischer ease-out-back (leichtes Überschwingen → Pixel „schnappen" an die Zahl).
+  const easeOutBack = (t: number) => {
+    const c1 = 1.5;
+    const c3 = c1 + 1;
+    const u = t - 1;
+    return 1 + c3 * u * u * u + c1 * u * u;
+  };
+
+  // FONT-GATE (beibehalten): erst nach dem Laden der Schrift sampeln.
   try {
     await (document.fonts?.load('900 300px Roboto') ?? Promise.resolve());
   } catch {
@@ -646,44 +652,46 @@ async function initProblem3c() {
   }
 
   const setup = () => {
-    const stageW = stage.clientWidth;
-    if (!stageW) return;
-    W = stageW;
-
-    // Font DYNAMISCH aus der Stage-/Sektionsbreite: „43.000" füllt ~80% der Breite
-    // → DOMINANTER Blickfang. KEINE künstliche Deckelung (kein 1/250px) mehr; nur ein
-    // dezenter Höhen-Guard (Zahl soll den Viewport vertikal nicht sprengen).
-    const measurer = document.createElement('canvas').getContext('2d');
-    if (!measurer) return;
-    measurer.font = '900 100px Roboto';
-    const w100 = measurer.measureText('43.000').width || 300;
-    const targetW = stageW * 0.8; // Zielbreite der Zahl (~80% der Stage)
-    let fontPx = Math.round((100 * targetW) / w100);
-    // Höhen-Guard: Ziffernhöhe max ~40% der Viewporthöhe (sonst überläuft die Zahl).
-    fontPx = Math.max(56, Math.min(fontPx, Math.round(window.innerHeight * 0.4)));
-
-    // Verifikation (einmalig): finale Font-px + Verhältnis Zahlbreite/Stage-Breite.
-    if (!(window as unknown as { __p3logged?: boolean }).__p3logged) {
-      (window as unknown as { __p3logged?: boolean }).__p3logged = true;
-      const numW = (measurer.measureText('43.000').width / 100) * fontPx;
-      // eslint-disable-next-line no-console
-      console.info(
-        `[3c] Stage ${Math.round(stageW)}px · Font ${fontPx}px · Zahlbreite ${Math.round(numW)}px (${Math.round((numW / stageW) * 100)}% der Stage)`,
-      );
-    }
-
-    const ow = stageW; // Offscreen = volle Stage-Breite (Zahl zentriert)
-    const oh = Math.round(fontPx * 1.1); // knappe Höhe (Ziffern haben keine Unterlängen)
-    // Stage-Höhe an die Zahl koppeln (≈13% Luft oben/unten) → Satz bleibt ENG darunter.
-    H = Math.round(oh / 0.8);
-    stage.style.height = H + 'px';
+    W = section.clientWidth;
+    H = section.clientHeight;
+    if (!W || !H) return;
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // in CSS-px zeichnen
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Offscreen: „43.000" groß zeichnen und Alpha-Pixel abtasten.
+    // Zahl-Font aus der SEKTIONSBREITE: „43.000" ~66% breit (dominant, mit Luft).
+    const measurer = document.createElement('canvas').getContext('2d');
+    if (!measurer) return;
+    measurer.font = '900 100px Roboto';
+    const w100 = measurer.measureText('43.000').width || 314;
+    const targetW = W * 0.66;
+    let fontPx = Math.round((100 * targetW) / w100);
+    // Höhen-Guard: Ziffernhöhe max ~34% der Viewporthöhe.
+    fontPx = Math.max(48, Math.min(fontPx, Math.round(window.innerHeight * 0.34)));
+    const numW = (measurer.measureText('43.000').width / 100) * fontPx;
+
+    if (!(window as unknown as { __p3logged?: boolean }).__p3logged) {
+      (window as unknown as { __p3logged?: boolean }).__p3logged = true;
+      // eslint-disable-next-line no-console
+      console.info(
+        `[3c] Sektion ${Math.round(W)}px · Font ${fontPx}px · Zahlbreite ${Math.round(numW)}px (${Math.round((numW / W) * 100)}% der Sektion)`,
+      );
+    }
+
+    const ow = W;
+    const oh = Math.round(fontPx * 1.05);
+
+    // Stage-Höhe = Zahlhöhe → der Statistik-Satz sitzt ENG darunter. Danach messen,
+    // wo die Zahl in der (mitte-mitte zentrierten) Sektion liegt = Canvas-Zielband.
+    stage.style.height = oh + 'px';
+    const secR = section.getBoundingClientRect();
+    const stR = stage.getBoundingClientRect();
+    const offX = 0;
+    const offY = stR.top - secR.top; // Canvas-Y der Zahl-Oberkante
+
+    // Offscreen: „43.000" zeichnen + Alpha-Pixel abtasten.
     const off = document.createElement('canvas');
     off.width = ow;
     off.height = oh;
@@ -696,56 +704,76 @@ async function initProblem3c() {
     octx.fillText('43.000', ow / 2, oh / 2);
     const data = octx.getImageData(0, 0, ow, oh).data;
 
-    const offX = (W - ow) / 2; // = 0 (Zahl füllt die Stage-Breite)
-    const offY = H * 0.14;
-
-    // DICHTE: kleine Schrittweite (scharfe, definierte Ziffern), aber Gesamtzahl
-    // deckeln (Performance-Budget, flüssig auf Mobile) — bei Überschreitung gröber.
-    const CAP = fine ? 4000 : 1800;
+    // Dichte deckeln (Performance): bei Überschreitung gröber sampeln.
+    const CAP = fine ? 2800 : 1300;
     let step = fine ? 4 : 5;
-    let next: P[] = [];
-    for (let iter = 0; iter < 8; iter++) {
-      next = [];
+    let nums: Array<{ x: number; y: number }> = [];
+    for (let iter = 0; iter < 10; iter++) {
+      nums = [];
       for (let y = 0; y < oh; y += step) {
         for (let x = 0; x < ow; x += step) {
-          if (data[(y * ow + x) * 4 + 3] > 128) {
-            next.push({
-              x: Math.random() * W,
-              y: Math.random() * H,
-              hx: x + offX,
-              hy: y + offY,
-              delay: Math.random() * 900,
-              size: pSize,
-              du: false,
-            });
-          }
+          if (data[(y * ow + x) * 4 + 3] > 128) nums.push({ x: x + offX, y: y + offY });
         }
       }
-      if (next.length <= CAP) break;
-      step += 1; // zu viele Partikel → eine Stufe gröber sampeln
+      if (nums.length <= CAP) break;
+      step += 1;
+    }
+    const M = nums.length;
+    if (!M) {
+      if (numEl) numEl.style.opacity = '';
+      return;
     }
 
-    // „du"-/Partikel-Größen mit der großen Zahl skalieren (skalieren mit).
-    pSize = Math.max(2.2, fontPx / 95);
-    duMax = pSize * 3;
-    duLabelPx = Math.max(13, Math.round(fontPx * 0.085));
-    duLabelDy = duMax + Math.max(6, Math.round(fontPx * 0.03));
-    for (const p of next) p.size = pSize;
-    numTop = offY;
-    numH = oh;
+    pSize = Math.max(2, fontPx / 110);
+    duMax = pSize * 3.2;
 
+    // RASTER über die GANZE Sektion (M Kacheln) → deckt den dunklen BG lückenlos.
+    // Kachel groß + überlappend (×1.5) → wirkt wie eine solide graue Fläche.
+    const cols = Math.max(1, Math.round(Math.sqrt((M * W) / H)));
+    const rows = Math.ceil(M / cols);
+    const cellW = W / cols;
+    const cellH = H / rows;
+    rasterSize = Math.max(cellW, cellH) * 1.5;
+
+    // „du"-Partikel: das der Zahl-Oberkante-Mitte nächste Sample → wird isoliert
+    // ÜBER die Zahl gesetzt (freigestellt, fällt sofort auf).
+    let duIdx = 0;
+    let duBd = Infinity;
+    const tcx = W / 2;
+    const tcy = offY;
+    for (let i = 0; i < M; i++) {
+      const d = (nums[i].x - tcx) * (nums[i].x - tcx) + (nums[i].y - tcy) * (nums[i].y - tcy);
+      if (d < duBd) {
+        duBd = d;
+        duIdx = i;
+      }
+    }
+
+    const next: P[] = [];
+    for (let i = 0; i < M; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const rx = (col + 0.5) * cellW;
+      const ry = (row + 0.5) * cellH;
+      let nx = nums[i].x;
+      let ny = nums[i].y;
+      let du = false;
+      if (i === duIdx) {
+        du = true;
+        nx = W / 2;
+        ny = offY - fontPx * 0.32; // isoliert ÜBER der Zahl
+      }
+      next.push({ rx, ry, nx, ny, x: rx, y: ry, delay: Math.random() * MAXDELAY, du });
+    }
     parts = next;
-    duPicked = false;
-    duP = null;
-    duGrow = 0;
-    // Nur wenn wirklich Partikel gesampelt wurden, die DOM-Zahl verstecken (sonst
-    // bliebe die Fläche leer). DOM-Zahl bleibt für a11y/SEO/No-JS im Markup.
-    if (numEl) numEl.style.opacity = parts.length ? '0' : '';
+    duLandT = 0;
+    // DOM-Zahl verstecken (bleibt für a11y/SEO/No-JS im Markup); Canvas übernimmt.
+    if (numEl) numEl.style.opacity = '0';
   };
 
   setup();
 
-  // Maus relativ zur Stage (nur Desktop).
+  // Maus relativ zur Sektion/Canvas (nur Desktop).
   let mx = -9999;
   let my = -9999;
   if (fine) {
@@ -767,34 +795,14 @@ async function initProblem3c() {
     ctx.clearRect(0, 0, W, H);
     const elapsed = started ? now - startT : 0;
 
-    // „DU"-Moment: nach ~2300ms das der Zahl-Mitte nächste Partikel wählen.
-    if (started && !duPicked && elapsed >= 2300 && parts.length) {
-      const tx = W / 2;
-      const ty = numTop + numH * 0.5; // Mitte der Zahl (skaliert mit der Größe)
-      let best = parts[0];
-      let bd = Infinity;
-      for (const p of parts) {
-        const d = (p.hx - tx) * (p.hx - tx) + (p.hy - ty) * (p.hy - ty);
-        if (d < bd) {
-          bd = d;
-          best = p;
-        }
-      }
-      best.du = true;
-      duP = best;
-      duPicked = true;
-      duStart = now;
-      gsap.delayedCall(0.4, doReveal); // Reveal ~400ms nach dem „du"-Partikel
-    }
-
     for (const p of parts) {
-      // Formung: nach Ablauf des delays zum Ziel easen.
-      if (started && elapsed > p.delay) {
-        p.x += (p.hx - p.x) * 0.075;
-        p.y += (p.hy - p.y) * 0.075;
-      }
-      // Maus-Repel (nur Desktop): d² < 62² = 3844.
-      if (fine) {
+      const t = started ? Math.min(1, Math.max(0, (elapsed - p.delay) / DUR)) : 0;
+      const e = started ? easeOutBack(t) : 0;
+      p.x = p.rx + (p.nx - p.rx) * e;
+      p.y = p.ry + (p.ny - p.ry) * e;
+
+      // Maus-Repel auf der fertigen Zahl (nur Desktop, nur gelandete Partikel).
+      if (fine && t >= 1) {
         const dx = p.x - mx;
         const dy = p.y - my;
         const d2 = dx * dx + dy * dy;
@@ -805,75 +813,88 @@ async function initProblem3c() {
           p.y += (dy / d) * f;
         }
       }
-      // „du"-Partikel wächst pSize→duMax über 500ms (skaliert mit der Zahlgröße).
-      if (p.du) {
-        duGrow = Math.min(1, (now - duStart) / 500);
-        p.size = pSize + duGrow * (duMax - pSize);
-      }
-      if (p.du) {
+
+      const size = rasterSize + (pSize - rasterSize) * t;
+
+      if (p.du && t >= 1) {
+        // Gelandet → runder gelber Punkt mit Glow, wächst pSize→duMax (kein Text).
+        if (!duLandT) duLandT = now;
+        const g = Math.min(1, (now - duLandT) / 500);
+        const r = pSize + g * (duMax - pSize);
         ctx.fillStyle = YELLOW;
         ctx.shadowColor = YELLOW;
-        ctx.shadowBlur = duMax * 1.8;
-      } else {
-        ctx.fillStyle = 'rgba(220,221,220,0.66)';
+        ctx.shadowBlur = duMax * 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
         ctx.shadowBlur = 0;
+      } else {
+        // Raster→Zahl: Farbe Hero-Grau→Zahl-Grau, Alpha 1→0.66.
+        const cr = (GREY[0] + (NUM_RGB[0] - GREY[0]) * t) | 0;
+        const cg = (GREY[1] + (NUM_RGB[1] - GREY[1]) * t) | 0;
+        const cb = (GREY[2] + (NUM_RGB[2] - GREY[2]) * t) | 0;
+        const a = 1 + (0.66 - 1) * t;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
+        if (p.du) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
+        }
       }
-      const s = p.size;
-      ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
-    }
-    ctx.shadowBlur = 0;
-
-    // Winziges „du"/„you"-Label ab halbem Wachstum, knapp über dem Partikel.
-    if (duP && duGrow >= 0.5) {
-      ctx.fillStyle = YELLOW;
-      ctx.font = `700 ${duLabelPx}px Roboto`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText(duLabel, duP.x, duP.y - duLabelDy);
     }
 
     rafId = requestAnimationFrame(loop);
   };
 
-  // TRIGGER: Formung startet beim Scrollen in die Sektion.
+  // TRIGGER: EINMAL beim Eintritt (Oberkante ~60% der Viewporthöhe). Kein Pin/Scrub.
   ScrollTrigger.create({
     trigger: section,
-    start: 'top 75%',
+    start: 'top 60%',
     once: true,
     onEnter: () => {
       if (!started) {
         started = true;
         startT = performance.now();
-        // Sicherheitsnetz: Headline SPÄTESTENS ~2,7s nach Eintritt einblenden —
-        // auch falls der Loop (schnelles Wegscrollen) den „du"-Moment nie erreicht.
-        gsap.delayedCall(2.7, doReveal);
+        // Reveal, nachdem Zahl + gelber Punkt stehen (~Ende der Formung). Safety-Net.
+        gsap.delayedCall(2.0, doReveal);
+        gsap.delayedCall(2.8, doReveal);
       }
     },
   });
 
-  // Loop nur laufen lassen, wenn die Sektion sichtbar ist (Performance).
-  const io = new IntersectionObserver((entries) => {
-    const vis = entries[0]?.isIntersecting ?? false;
-    if (vis && !running) {
-      running = true;
-      rafId = requestAnimationFrame(loop);
-    } else if (!vis && running) {
-      running = false;
-      cancelAnimationFrame(rafId);
-      mx = -9999;
-      my = -9999;
-    }
-  });
+  // Loop laufen lassen, sobald die Sektion NAHE ist (rootMargin) → graue Fläche steht
+  // schon, bevor die Kante in den Blick kommt (kein Dunkel-Flash am Seam).
+  const io = new IntersectionObserver(
+    (entries) => {
+      const vis = entries[0]?.isIntersecting ?? false;
+      if (vis && !running) {
+        running = true;
+        rafId = requestAnimationFrame(loop);
+      } else if (!vis && running) {
+        running = false;
+        cancelAnimationFrame(rafId);
+        mx = -9999;
+        my = -9999;
+      }
+    },
+    { rootMargin: '400px' },
+  );
   io.observe(section);
 
-  // Resize: sauber neu aufsetzen (Partikel + Stage-Höhe). Läuft die Formung schon,
-  // re-formt sie aus neuen Startlagen; „du"/Reveal-Zustand bleibt (revealed-Latch).
+  // Resize: neu aufsetzen. War die Formung schon durch, direkt im Endzustand bleiben
+  // (kein erneutes Zerfallen), Reveal-Latch bleibt.
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     window.clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => {
+      const wasStarted = started;
       setup();
-      if (started) startT = performance.now();
+      if (wasStarted) {
+        started = true;
+        startT = performance.now() - (MAXDELAY + DUR + 1000);
+      }
     }, 150);
   });
 }
@@ -894,39 +915,6 @@ function initReveals() {
       },
     });
   });
-}
-
-/**
- * Dunkel-Übergang Hero → 3c: scroll-gescrubbte Opacity-Ebene (0 → 1) über dem
- * GESAMTEN Hero-Inhalt (Text, Phones, Konstellation-Canvas; z-20 > deren z ≤ 10,
- * aber < Nav-Pille z-40 → Nav bleibt lesbar). Overlay-Farbe = #3b3b3a = exakt die
- * 3c-Sektionsfarbe → nahtlos, kein Farbsprung an der Grenze.
- *
- * Rampe (leicht justierbar): Abdunkeln beginnt bei ~40% durch den Hero und erreicht
- * VOLLE Deckung (opacity 1.0) bereits bei ~85% → die letzten 15% des Hero-Scrolls
- * sind komplett dunkel, sodass am 3c-Eintritt keine Kante/kein Sprung sichtbar ist.
- * An Lenis gehängt (ScrollTrigger.update hängt an Lenis' scroll) — KEIN Pin, KEIN
- * preventDefault, KEIN Auto-Jump. Nur opacity.
- */
-const HERO_DARK_START = '40% top'; // Beginn der Abdunkelung (~40% durch den Hero)
-const HERO_DARK_END = '85% top'; // volle Deckung (opacity 1.0) bei ~85% des Hero-Scrolls
-function initHeroDarkOverlay() {
-  const overlay = document.querySelector<HTMLElement>('[data-hero-dark]');
-  if (!overlay) return;
-  gsap.fromTo(
-    overlay,
-    { opacity: 0 },
-    {
-      opacity: 1, // Endwert VOLL dunkel (#3b3b3a deckt den Hero komplett)
-      ease: 'none',
-      scrollTrigger: {
-        trigger: '#hero',
-        start: HERO_DARK_START,
-        end: HERO_DARK_END,
-        scrub: true,
-      },
-    },
-  );
 }
 
 /**
@@ -1045,7 +1033,6 @@ if (!prefersReducedMotion) {
   initHeroChoreography();
   initHeroCanvas();
   initHeroScrollCue();
-  initHeroDarkOverlay();
   initProblem3c();
   initBenefitLottie();
   initReveals();
