@@ -157,13 +157,27 @@ function initPhoneCluster() {
     }
   }
 
-  // b) Danach hintere Phones aufrecht seitlich hervorfahren (gestaffelt).
-  //    Start = deckungsgleich hinter dem Front-Phone (xPercent 0), aufrecht.
-  //    transform-origin OBEN (50% 0%) → beim Skalieren bleibt die Oberkante
+  // NUR Desktop: mobil sind die hinteren Phones ausgeblendet (hidden md:block).
+  if (!isDesktopHero) return;
+
+  // Reveal-Reihenfolge: 1) mittleres Phone (oben) → 2) gelber Glow dahinter →
+  //    3) die zwei seitlichen Phones. b) Der Glow fadet NACH dem Haupt-Phone ein
+  //    (Endzustand = CSS-Ruhe-Opacity, additiv via gsap.from → kein CLS).
+  const glow = document.querySelector<HTMLElement>('#hero .phone-glow');
+  if (glow) {
+    gsap.from(glow, {
+      autoAlpha: 0,
+      duration: 0.6,
+      ease: 'power3.out',
+      delay: HERO_START_DELAY + 0.55, // nach dem mittleren Phone
+    });
+  }
+
+  // c) DANACH (nach dem Glow) die hinteren Phones aufrecht seitlich hervorfahren
+  //    (gestaffelt). Start = deckungsgleich hinter dem Front-Phone (xPercent 0),
+  //    aufrecht. transform-origin OBEN (50% 0%) → beim Skalieren bleibt die Oberkante
   //    verankert; mit positivem yPercent liegen die Oberkanten unter der Notch.
   //    Muss zur Hero.astro-CSS passen. x:0/y:0 neutralisieren geerbten px-Versatz.
-  //    NUR Desktop: mobil sind die hinteren Phones ausgeblendet (hidden md:block).
-  if (!isDesktopHero) return;
   backs.forEach((el, i) => {
     const rest = FAN_REST[el.dataset.fan as keyof typeof FAN_REST];
     if (!rest) return;
@@ -178,7 +192,7 @@ function initPhoneCluster() {
         transformOrigin: '50% 0%',
         duration: 0.8,
         ease: 'power3.out',
-        delay: HERO_START_DELAY + 0.7 + i * 0.15, // nach dem Haupt-Phone, gestaffelt
+        delay: HERO_START_DELAY + 1.1 + i * 0.15, // nach dem Glow, gestaffelt
       },
     );
   });
@@ -610,8 +624,14 @@ async function initProblem3c() {
   const DUR = 950; // Formung: Tween-Dauer je Partikel (ms) — ruhig
   const MAXDELAY = 350; // Formung: dezenter Per-Partikel-Stagger (ms)
   const FADE = 0.55; // Anteil des Tweens, über den ein Partikel einfadet
-  const REPEL_R = 150; // Maus-Lupe: Radius (px)
-  const REPEL_STRENGTH = 55; // Maus-Lupe: max. px-Verschiebung nach außen (satt)
+  // Maus-Lupe — GEKOPPELTES Modell: Repel UND Homing wirken auf die ECHTE Position
+  // (p.x/p.y). Nahe dem Cursor akkumuliert der Repel → Partikel „schweben davon";
+  // das Homing zieht sie langsam-elastisch zurück. Clamp hält die Zahl stabil.
+  // Gleichgewicht ≈ FORCE/HOME ≈ 120px, per MAXDISP auf 200 gedeckelt.
+  const HOME = 0.075; // elastische Rückkehr-Rate pro Frame
+  const REPEL_R = 140; // Radius (px)
+  const REPEL_FORCE = 9; // per-Frame-Kraft
+  const MAXDISP = 200; // max. Auslenkung von der Zielposition (Stabilitäts-Clamp)
   const CLEAR_R = 20; // grau-freie Zone um den gelben Punkt (px)
   const CLEAR_R2 = CLEAR_R * CLEAR_R;
 
@@ -632,7 +652,7 @@ async function initProblem3c() {
   type P = {
     sx: number; sy: number; // Startlage (nah am Ziel)
     tx: number; ty: number; // Ziel (Zahl-Pixel)
-    bx: number; by: number; // aktuelle Basis (gehomt) — Repel wirkt NICHT hierauf
+    x: number; y: number; // ECHTE aktuelle Position (Formung + Homing + Repel wirken hier)
     delay: number;
     t: number; // Tween-Fortschritt 0..1
     du: boolean;
@@ -754,7 +774,7 @@ async function initProblem3c() {
       const ty = nums[i].y;
       const sx = tx + (Math.random() - 0.5) * spread;
       const sy = ty + (Math.random() - 0.5) * spread;
-      next.push({ sx, sy, tx, ty, bx: sx, by: sy, delay: Math.random() * MAXDELAY, t: 0, du: i === duIdx });
+      next.push({ sx, sy, tx, ty, x: sx, y: sy, delay: Math.random() * MAXDELAY, t: 0, du: i === duIdx });
     }
     parts = next;
     duPart = next[duIdx] || null;
@@ -792,46 +812,61 @@ async function initProblem3c() {
     const elapsed = now - startT;
     const mouseOn = fine && mx > -9998;
 
-    // Pass 0: Basis (gehomt) + Fortschritt für alle Partikel berechnen.
+    // Pass 0: ECHTE Position pro Partikel fortschreiben.
+    //  - Formung (t<1): weiches Ease von Startlage → Ziel (Fade-in bleibt unberührt).
+    //  - Fertig (t≥1): GEKOPPELT — Homing (langsam-elastisch) + Repel (akkumuliert) +
+    //    Stabilitäts-Clamp. Gilt für ALLE Partikel inkl. dem gelben „du" (reagiert mit).
     for (const p of parts) {
       const t = Math.min(1, Math.max(0, (elapsed - p.delay) / DUR));
-      const e = easeSoft(t);
-      p.bx = p.sx + (p.tx - p.sx) * e;
-      p.by = p.sy + (p.ty - p.sy) * e;
       p.t = t;
+      if (t < 1) {
+        const e = easeSoft(t);
+        p.x = p.sx + (p.tx - p.sx) * e;
+        p.y = p.sy + (p.ty - p.sy) * e;
+        continue;
+      }
+      // 1) Homing — langsame elastische Rückkehr auf die ECHTE Position.
+      p.x += (p.tx - p.x) * HOME;
+      p.y += (p.ty - p.y) * HOME;
+      // 2) Repel — verschiebt die ECHTE Position (akkumuliert nahe der Maus).
+      if (mouseOn) {
+        const dx = p.x - mx;
+        const dy = p.y - my;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < REPEL_R * REPEL_R && d2 > 1) {
+          const d = Math.sqrt(d2);
+          const f = ((REPEL_R - d) / REPEL_R) * REPEL_FORCE;
+          p.x += (dx / d) * f;
+          p.y += (dy / d) * f;
+        }
+      }
+      // 3) Stabilitäts-Clamp — starke Werte zerreißen die Zahl nicht.
+      const ddx = p.x - p.tx;
+      const ddy = p.y - p.ty;
+      const md = Math.hypot(ddx, ddy);
+      if (md > MAXDISP) {
+        p.x = p.tx + (ddx / md) * MAXDISP;
+        p.y = p.ty + (ddy / md) * MAXDISP;
+      }
     }
 
     const du = duPart;
 
-    // Pass A: GRAUE Partikel — du überspringen + graue-freie Zone (CLEAR_R) um den Punkt.
+    // Pass A: GRAUE Partikel (Live-Position) — du überspringen + grau-freie Zone (CLEAR_R).
     ctx.shadowBlur = 0;
     for (const p of parts) {
       if (p.du) continue;
       if (du) {
-        const ddx = p.bx - du.bx;
-        const ddy = p.by - du.by;
+        const ddx = p.x - du.x;
+        const ddy = p.y - du.y;
         if (ddx * ddx + ddy * ddy < CLEAR_R2) continue;
-      }
-      // Repel-OFFSET nur für die Darstellung (Basis bleibt unverschoben → snappt zurück).
-      let ox = 0;
-      let oy = 0;
-      if (mouseOn) {
-        const dx = p.bx - mx;
-        const dy = p.by - my;
-        const d = Math.hypot(dx, dy);
-        if (d < REPEL_R && d > 0.001) {
-          const falloff = 1 - d / REPEL_R;
-          const push = falloff * REPEL_STRENGTH;
-          ox = (dx / d) * push;
-          oy = (dy / d) * push;
-        }
       }
       const a = 0.66 * Math.min(1, p.t / FADE);
       ctx.fillStyle = `rgba(${NUM_RGB[0]},${NUM_RGB[1]},${NUM_RGB[2]},${a})`;
-      ctx.fillRect(p.bx + ox - pSize / 2, p.by + oy - pSize / 2, pSize, pSize);
+      ctx.fillRect(p.x - pSize / 2, p.y - pSize / 2, pSize, pSize);
     }
 
-    // Pass B: gelber „du"-Punkt OBENAUF (Basisposition, KEIN Repel-Offset).
+    // Pass B: gelber „du"-Punkt OBENAUF an seiner LIVE-Position (folgt der Wölbung).
     if (du) {
       const landed = du.t >= 1;
       let r = pSize;
@@ -848,17 +883,17 @@ async function initProblem3c() {
         ctx.shadowBlur = 0;
       }
       ctx.beginPath();
-      ctx.arc(du.bx, du.by, r, 0, Math.PI * 2);
+      ctx.arc(du.x, du.y, r, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Pass C: „du"-Label OBENAUF, knapp über dem Punkt (gelb, Roboto 700).
+      // Pass C: „du"-Label OBENAUF, knapp über dem Punkt (gelb, Roboto 700) — Live-Position.
       if (landed) {
         ctx.fillStyle = YELLOW;
         ctx.font = `700 ${labelPx}px Roboto`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(duLabel, du.bx, du.by - r - 8);
+        ctx.fillText(duLabel, du.x, du.y - r - 8);
       }
     }
 

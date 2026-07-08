@@ -19,7 +19,6 @@
  * prefers-reduced-motion: statische „43.000", kein Count-up/keine Partikel,
  * alles sofort sichtbar. Genau EINE H1 bleibt im Hero; hier H2. Fakten aus site.ts.
  */
-import StoreBadges from '../StoreBadges.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import { portalCountRounded } from '../../data/site';
 import type { Locale } from '../../data/site';
@@ -38,10 +37,6 @@ const headSuffix = headIdx >= 0 ? P.headline.slice(headIdx + headMark.length) : 
 const benefits = P.benefits.map((b) => ({
   label: b.label.replace('{n}', String(portalCountRounded)),
 }));
-
-// Trust-Zeile: Rating/Downloads aus hero.trust (per-Sprache, Fakten aus site.ts),
-// Zusatz („kostenlos, kündbar") aus dem Problem-Block.
-const trust = t.hero.trust;
 
 // Lottie-Animationen je Vorteil (lazy via animations.ts geladen). Reihenfolge =
 // benefits: Glocke (Push) · Globus (Portale) · Stift (Bewerbung). Als ?url →
@@ -120,20 +115,8 @@ const ICONS = [
       }
     </ul>
 
-    {/* 5 · Store-Badges (Hauptaktion) + 6 · Trust-Zeile */}
-    <div class="p3-cta" data-p3-reveal>
-      <StoreBadges position="problem" lang={lang} />
-      <p class="p3-trust">
-        <span class="p3-trust-star" aria-hidden="true">★</span>
-        <span class="p3-trust-strong">{trust.rating}</span> {trust.ratingLabel}
-        <span class="p3-trust-sep" aria-hidden="true">·</span>
-        {trust.downloads}
-        <span class="p3-trust-sep" aria-hidden="true">·</span>
-        {P.trustCancel}
-      </p>
-    </div>
-
-    {/* 7 · Features-Verweis (Anker leicht repointbar) */}
+    {/* 5 · Features-Verweis — direkt unter der Vorteils-Reihe. Store-Badges/Trust
+        bewusst NICHT hier (CTA lebt im Header/Hero). Scrollt smooth zur nächsten Sektion. */}
     <a href="#features" class="p3-more" data-p3-more data-p3-reveal>
       <span>{P.moreLink}</span>
       <span class="p3-more-arrow" aria-hidden="true">↓</span>
@@ -327,35 +310,7 @@ const ICONS = [
     display: block;
   }
 
-  /* ---- 5/6 · CTA + Trust ---- */
-  .p3-cta {
-    margin-top: clamp(2.25rem, 5vw, 3rem);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(0.9rem, 2vw, 1.15rem);
-  }
-  .p3-trust {
-    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
-    font-weight: 400;
-    letter-spacing: 0.02em;
-    color: rgb(246 246 246 / 0.62);
-    max-width: 44rem;
-    line-height: 1.5;
-  }
-  .p3-trust-star {
-    color: var(--color-yellow);
-  }
-  .p3-trust-strong {
-    font-weight: 700;
-    color: rgb(246 246 246 / 0.85);
-  }
-  .p3-trust-sep {
-    margin-inline: 0.35em;
-    opacity: 0.5;
-  }
-
-  /* ---- 7 · Features-Verweis („Wir zeigen dir wie ↓") ---- */
+  /* ---- 5 · Features-Verweis („Wir zeigen dir wie ↓") — direkt unter den Vorteilen ---- */
   .p3-more {
     margin-top: clamp(2rem, 5vh, 3.25rem);
     display: inline-flex;
