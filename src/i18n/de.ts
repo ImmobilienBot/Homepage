@@ -68,7 +68,7 @@ export const de = {
       // Scanbare Vorteile (kein Fließsatz), je mit Icon. {n} = Portalanzahl (site.ts).
       benefits: [
         { label: 'Echtzeit-Push' },
-        { label: 'Über {n} Portale' },
+        { label: '{n} Portale' },
         { label: 'Bewerbung per Klick' },
       ],
       // Zusatz zur Trust-Zeile (Rating/Downloads kommen aus hero.trust bzw. site.ts).
@@ -79,8 +79,8 @@ export const de = {
     features: { title: 'Features' },
     portals: {
       title: 'Alle Portale in einer App',
-      // {n} wird aus site.ts (portalCountRounded) ersetzt — wachstumssicher.
-      count: 'Über {n} Immobilienportale – in einer App.',
+      // {n} wird aus site.ts (portalCount) ersetzt — exakte Zahl.
+      count: '{n} Immobilienportale – in einer App.',
     },
     pricing: { title: 'Preise' },
     socialProof: { title: 'Das sagen Nutzer' },

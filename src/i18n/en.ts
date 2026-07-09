@@ -66,7 +66,7 @@ export const en: Dict = {
       // Scannable benefits (no prose), each with an icon. {n} = portal count (site.ts).
       benefits: [
         { label: 'Real-time push' },
-        { label: 'Over {n} portals' },
+        { label: '{n} portals' },
         { label: 'Apply in one tap' },
       ],
       // Add-on to the trust line (rating/downloads come from hero.trust / site.ts).
@@ -77,7 +77,7 @@ export const en: Dict = {
     features: { title: 'Features' },
     portals: {
       title: 'All portals in one app',
-      count: 'Over {n} property portals – in a single app.',
+      count: '{n} property portals – in a single app.',
     },
     pricing: { title: 'Pricing' },
     socialProof: { title: 'What users say' },

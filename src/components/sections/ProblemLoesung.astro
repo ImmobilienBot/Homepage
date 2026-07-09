@@ -20,7 +20,7 @@
  * alles sofort sichtbar. Genau EINE H1 bleibt im Hero; hier H2. Fakten aus site.ts.
  */
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { portalCountRounded } from '../../data/site';
+import { portalCount } from '../../data/site';
 import type { Locale } from '../../data/site';
 
 const lang: Locale = getLangFromUrl(Astro.url);
@@ -33,9 +33,9 @@ const headIdx = P.headline.indexOf(headMark);
 const headPrefix = headIdx >= 0 ? P.headline.slice(0, headIdx) : P.headline;
 const headSuffix = headIdx >= 0 ? P.headline.slice(headIdx + headMark.length) : '';
 
-// Scanbare Vorteile: {n} → Portalanzahl aus site.ts (wachstumssicher).
+// Scanbare Vorteile: {n} → exakte Portalanzahl aus site.ts.
 const benefits = P.benefits.map((b) => ({
-  label: b.label.replace('{n}', String(portalCountRounded)),
+  label: b.label.replace('{n}', String(portalCount)),
 }));
 
 // Lottie-Animationen je Vorteil (lazy via animations.ts geladen). Reihenfolge =

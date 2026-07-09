@@ -13,7 +13,7 @@ import {
   aggregateRating,
   pricing,
   portals,
-  portalCountRounded,
+  portalCount,
 } from '../../data/site';
 import { getAlternates, hreflangCodes } from '../../i18n';
 import type { Locale } from '../../data/site';
@@ -55,7 +55,7 @@ const jsonLd = {
       downloadUrl: [storeLinks.ios, storeLinks.android],
       // Überwachte Portale mit voller Domain (für strukturierte Daten).
       featureList: [
-        `Überwacht über ${portalCountRounded} Immobilienportale in Echtzeit`,
+        `Überwacht ${portalCount} Immobilienportale in Echtzeit`,
         ...portals.map((p) => `${p.name} (${p.domain})`),
       ],
       offers: pricing.map((p) => ({

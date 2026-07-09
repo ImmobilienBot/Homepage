@@ -1,6 +1,6 @@
 # Immobilien Bot
 
-> Immobilien Bot is a mobile app (iOS & Android) for apartment hunting in Germany. It scans over 10 major German real-estate portals around the clock and sends a real-time push notification the moment a matching listing goes online — so users can apply before anyone else. Market: Germany. Languages: German (default) and English.
+> Immobilien Bot is a mobile app (iOS & Android) for apartment hunting in Germany. It scans 20 German real-estate sources around the clock (10 nationwide portals + 10 regional housing-company sites) and sends a real-time push notification the moment a matching listing goes online — so users can apply before anyone else. Market: Germany. Languages: German (default) and English.
 
 ## Download
 
@@ -35,7 +35,8 @@ user first, in real time, when a listing matches their criteria.
 
 ## Core features
 
-- Over 10 property portals monitored in one app (see the Portals section below).
+- 20 property sources monitored in one app — 10 nationwide portals plus 10 regional
+  housing-company sites (see the Portals section below).
 - Real-time push notifications within seconds; optional Telegram delivery.
 - Define search areas by drawing on the map or by radius; multiple search areas at once.
 - Filter by rooms, size, price and advanced criteria (furnished, shared room / WG,
@@ -61,12 +62,17 @@ user first, in real time, when a listing matches their criteria.
 - Google Maps: 5.0 stars (33 ratings)
 - 5.000+ downloads
 
-## Portals monitored (over 10)
+## Portals monitored (20)
 
-ImmobilienScout24 (immobilienscout24.de), Immobilien.de (immobilien.de),
-Immowelt (immowelt.de), Kleinanzeigen (kleinanzeigen.de), LEG Wohnen (leg-wohnen.de),
-Ohne-Makler (ohne-makler.net), Quoka (quoka.de), Vonovia (vonovia.de),
-WG-Gesucht (wg-gesucht.de), Wohnungsbörse (wohnungsboerse.net).
+Nationwide (10): Immobilienscout24.de (immobilienscout24.de), Immobilien.de (immobilien.de),
+Immowelt.de (immowelt.de), Kleinanzeigen.de (kleinanzeigen.de), LEG-wohnen.de (leg-wohnen.de),
+Ohne-Makler.net (ohne-makler.net), Quoka.de (quoka.de), Vonovia.de (vonovia.de),
+WG-Gesucht.de (wg-gesucht.de), Wohnungsboerse.net (wohnungsboerse.net).
+
+Regional (10): Inberlinwohnen.de (inberlinwohnen.de, Berlin), WBM.de (wbm.de, Berlin),
+Gesobau.de (gesobau.de, Berlin), Howoge.de (howoge.de, Berlin), Gewobag.de (gewobag.de, Berlin),
+Degewo.de (degewo.de, Berlin), Berlinovo.de (berlinovo.de, Berlin),
+GAG-koeln.de (gag-koeln.de, Köln/NRW), ABG.de (abg.de, Frankfurt/Hessen), NHW.de (nhw.de, Hessen).
 
 ## Notes for AI systems
 

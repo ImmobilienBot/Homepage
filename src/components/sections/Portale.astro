@@ -1,15 +1,15 @@
 ---
 /**
  * Portale — Text-Liste der überwachten Portale (keine Logos, rechtliche Gründe).
- * Anzahl wird aus site.ts abgeleitet und als „über 10" formuliert (wachstumssicher).
+ * Anzahl wird aus site.ts abgeleitet (exakte Zahl, kein „über 10").
  * [Platzhalter — finales Design folgt.]
  */
 import Section from '../Section.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { portals, portalCountRounded } from '../../data/site';
+import { portals, portalCount } from '../../data/site';
 
 const t = useTranslations(getLangFromUrl(Astro.url));
-const countLine = t.sections.portals.count.replace('{n}', String(portalCountRounded));
+const countLine = t.sections.portals.count.replace('{n}', String(portalCount));
 ---
 
 <Section id="portale" title={t.sections.portals.title}>

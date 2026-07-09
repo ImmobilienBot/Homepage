@@ -143,34 +143,52 @@ export const pricingBenefits: string[] = [
 /* ------------------------------------------------------------------ */
 
 export interface Portal {
-  /** Anzeige-Name ohne Endung — nur dieser wird sichtbar gezeigt. */
+  /** Anzeige-Name in Domain-Schreibweise — nur dieser wird sichtbar gezeigt. */
   name: string;
   /** Volle Domain — nur für strukturierte Daten (JSON-LD), nicht als Logo/Link. */
   domain: string;
+  /** Reichweite: bundesweit (`national`) oder regional (`regional`). */
+  scope: 'national' | 'regional';
+  /** Bei regionalen Portalen: abgedeckte Region (z. B. „Berlin"). */
+  region?: string;
 }
 
 export const portals: Portal[] = [
-  { name: 'ImmobilienScout24', domain: 'immobilienscout24.de' },
-  { name: 'Immobilien.de', domain: 'immobilien.de' },
-  { name: 'Immowelt', domain: 'immowelt.de' },
-  { name: 'Kleinanzeigen', domain: 'kleinanzeigen.de' },
-  { name: 'LEG Wohnen', domain: 'leg-wohnen.de' },
-  { name: 'Ohne-Makler', domain: 'ohne-makler.net' },
-  { name: 'Quoka', domain: 'quoka.de' },
-  { name: 'Vonovia', domain: 'vonovia.de' },
-  { name: 'WG-Gesucht', domain: 'wg-gesucht.de' },
-  { name: 'Wohnungsbörse', domain: 'wohnungsboerse.net' },
+  // Bundesweite Portale
+  { name: 'Immobilienscout24.de', domain: 'immobilienscout24.de', scope: 'national' },
+  { name: 'Immobilien.de', domain: 'immobilien.de', scope: 'national' },
+  { name: 'Immowelt.de', domain: 'immowelt.de', scope: 'national' },
+  { name: 'Kleinanzeigen.de', domain: 'kleinanzeigen.de', scope: 'national' },
+  { name: 'LEG-wohnen.de', domain: 'leg-wohnen.de', scope: 'national' },
+  { name: 'Ohne-Makler.net', domain: 'ohne-makler.net', scope: 'national' },
+  { name: 'Quoka.de', domain: 'quoka.de', scope: 'national' },
+  { name: 'Vonovia.de', domain: 'vonovia.de', scope: 'national' },
+  { name: 'WG-Gesucht.de', domain: 'wg-gesucht.de', scope: 'national' },
+  { name: 'Wohnungsboerse.net', domain: 'wohnungsboerse.net', scope: 'national' },
+  // Regionale Portale
+  { name: 'Inberlinwohnen.de', domain: 'inberlinwohnen.de', scope: 'regional', region: 'Berlin' },
+  { name: 'WBM.de', domain: 'wbm.de', scope: 'regional', region: 'Berlin' },
+  { name: 'Gesobau.de', domain: 'gesobau.de', scope: 'regional', region: 'Berlin' },
+  { name: 'Howoge.de', domain: 'howoge.de', scope: 'regional', region: 'Berlin' },
+  { name: 'Gewobag.de', domain: 'gewobag.de', scope: 'regional', region: 'Berlin' },
+  { name: 'Degewo.de', domain: 'degewo.de', scope: 'regional', region: 'Berlin' },
+  { name: 'Berlinovo.de', domain: 'berlinovo.de', scope: 'regional', region: 'Berlin' },
+  { name: 'GAG-koeln.de', domain: 'gag-koeln.de', scope: 'regional', region: 'Köln/NRW' },
+  { name: 'ABG.de', domain: 'abg.de', scope: 'regional', region: 'Frankfurt/Hessen' },
+  { name: 'NHW.de', domain: 'nhw.de', scope: 'regional', region: 'Hessen' },
 ];
 
-/** Anzahl IMMER aus der Liste ableiten — nie hart codieren. */
-export const portalCount = portals.length;
+/** Bundesweite Portale (abgeleitet — nicht hart codieren). */
+export const nationalPortals = portals.filter((p) => p.scope === 'national');
+
+/** Regionale Portale (abgeleitet — nicht hart codieren). */
+export const regionalPortals = portals.filter((p) => p.scope === 'regional');
 
 /**
- * Wachstumssichere, nach unten auf Zehner gerundete Basiszahl für sichtbare
- * Texte. In der UI stets als „über {n}" / „{n}+" formulieren (nicht als starre
- * exakte Zahl), damit die Aussage bei Wachstum korrekt bleibt. 10 Portale → 10.
+ * Anzahl IMMER aus der Liste ableiten — nie hart codieren. Sichtbare Texte
+ * nennen die exakte Zahl (kein „über 10"); {n} wird aus diesem Wert ersetzt.
  */
-export const portalCountRounded = Math.floor(portalCount / 10) * 10;
+export const portalCount = portals.length;
 
 /* ------------------------------------------------------------------ */
 /* Tracking / GTM                                                     */

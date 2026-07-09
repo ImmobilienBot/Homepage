@@ -167,7 +167,7 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
 5. **Features** — die 4 Säulen (siehe unten), scroll-animiert, je mit echtem Screenshot.
    Bento-Grid. Ersetzt eine geklickte Demo.
 6. **Portale** — die überwachten Portale als **Text-Liste** (keine Logos, rechtliche Gründe).
-   Anzahl wird aus `site.ts` abgeleitet und sichtbar als **„über 10"** formuliert (wachstumssicher).
+   Anzahl wird aus `site.ts` abgeleitet (`portalCount`) und als **exakte Zahl** gezeigt (kein „über 10").
 7. **Preise** — 3 Karten (siehe unten) + 4-Vorteile-Streifen. CTA-Fokus auf
    „7 Tage kostenlos testen – kein Risiko".
 8. **Social Proof** — Bewertungszahlen + Testimonials. [TODO: Testimonials]
@@ -206,7 +206,7 @@ Nicht als flache Liste — als **Ablauf einer Wohnungssuche** gruppieren:
 **Extras** (schmaler Streifen, klein): DE/EN · Light- & Dark-Mode.
 
 **Hero-Features** (groß rausgestellt, die echten Differenzierer):
-Über 10 Portale in einer App · Echtzeit-Push · Suchbereich auf der Karte zeichnen · Bewerbung-Auto-Copy.
+20 Portale in einer App · Echtzeit-Push · Suchbereich auf der Karte zeichnen · Bewerbung-Auto-Copy.
 
 ---
 
@@ -226,10 +226,18 @@ Nicht als flache Liste — als **Ablauf einer Wohnungssuche** gruppieren:
 - Vorteile-Streifen: Echtzeit-Push (auch via Telegram) · Alle Portale in einer App ·
   Alle Features (Favoriten, Bewerbungsschreiben etc.) · Kein Risiko: jederzeit kündbar.
 
-**Portale:** über 10 (Anzahl aus `site.ts` abgeleitet, sichtbar als „über 10" / „10+"):
-ImmobilienScout24, Immobilien.de, Immowelt, Kleinanzeigen, LEG Wohnen, Ohne-Makler, Quoka,
-Vonovia, WG-Gesucht, Wohnungsbörse. Anzeige-Name sichtbar; volle Domain nur in `site.ts`
-(`Portal.domain`) für strukturierte Daten/JSON-LD.
+**Portale:** 20 Quellen (10 bundesweit + 10 regional). **Anzahl immer aus `site.ts` ableiten
+(`portalCount`); sichtbare Formulierung = exakte Zahl, kein „über 10" mehr.** Struktur je Portal:
+`{ name, domain, scope: 'national' | 'regional', region? }`. Abgeleitete Exports: `portalCount`,
+`nationalPortals`, `regionalPortals`.
+- **Bundesweit (10):** Immobilienscout24.de, Immobilien.de, Immowelt.de, Kleinanzeigen.de,
+  LEG-wohnen.de, Ohne-Makler.net, Quoka.de, Vonovia.de, WG-Gesucht.de, Wohnungsboerse.net.
+- **Regional (10):** Inberlinwohnen.de (Berlin), WBM.de (Berlin), Gesobau.de (Berlin),
+  Howoge.de (Berlin), Gewobag.de (Berlin), Degewo.de (Berlin), Berlinovo.de (Berlin),
+  GAG-koeln.de (Köln/NRW), ABG.de (Frankfurt/Hessen), NHW.de (Hessen).
+
+Anzeige-Name (Domain-Schreibweise) sichtbar; volle Domain nur in `site.ts` (`Portal.domain`) für
+strukturierte Daten/JSON-LD.
 
 ---
 
