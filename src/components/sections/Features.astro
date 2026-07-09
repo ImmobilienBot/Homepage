@@ -164,14 +164,26 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
             aria-pressed="false"
             aria-label={F.darkmode.ariaChain}
           >
-            <span class="ft-chain-line" aria-hidden="true"></span>
-            <span class="ft-chain-grip" aria-hidden="true"></span>
+            {/* Perlen-/Kugelkette: 9 Kügelchen + länglicher Griff. fill=currentColor
+                → Farbe steuert der Zustand (#3b3b3a hell, #fff03c dunkel). */}
+            <svg class="ft-chain-svg" viewBox="0 0 10 70" fill="currentColor" aria-hidden="true">
+              <circle cx="5" cy="4" r="2.5" />
+              <circle cx="5" cy="10" r="2.5" />
+              <circle cx="5" cy="16" r="2.5" />
+              <circle cx="5" cy="22" r="2.5" />
+              <circle cx="5" cy="28" r="2.5" />
+              <circle cx="5" cy="34" r="2.5" />
+              <circle cx="5" cy="40" r="2.5" />
+              <circle cx="5" cy="46" r="2.5" />
+              <circle cx="5" cy="52" r="2.5" />
+              <rect x="1" y="55" width="8" height="14" rx="4" />
+            </svg>
           </button>
           <span class="ft-tile-icon" data-ft-dark-icon aria-hidden="true">
-            {/* Mond (Light-Zustand) */}
-            <svg class="ft-ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8Z"/></svg>
-            {/* Sonne (Dark-Zustand) */}
+            {/* Das Icon zeigt den AKTUELLEN Zustand: Light → Sonne, Dark → Mond.
+                Exklusivität per display:none (kein opacity). Default (No-JS): Sonne. */}
             <svg class="ft-ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+            <svg class="ft-ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8Z"/></svg>
           </span>
           <h4 class="ft-tile-h4">{F.darkmode.h4}</h4>
           <p class="ft-tile-body">{F.darkmode.body}</p>
@@ -222,7 +234,11 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
           <span class="ft-tile-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M2.8 12h18.4"/><path d="M12 2.8c2.6 2.6 4 5.9 4 9.2s-1.4 6.6-4 9.2c-2.6-2.6-4-5.9-4-9.2s1.4-6.6 4-9.2Z"/></svg>
           </span>
-          <h4 class="ft-tile-h4">{F.language.h4}</h4>
+          {/* Beide Titel in derselben Grid-Zelle (1/1) → Crossfade ohne Layout-Shift. */}
+          <h4 class="ft-tile-h4 ft-lang-h4">
+            <span class="ft-lang-title ft-lang-title--base">{F.language.h4}</span>
+            <span class="ft-lang-title ft-lang-title--hover" aria-hidden="true">{F.language.hoverTitle}</span>
+          </h4>
           <p class="ft-tile-body">{F.language.body}</p>
         </article>
       </div>
@@ -239,7 +255,11 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     background-color: var(--color-grey);
     padding-block: var(--spacing-section);
     padding-inline: var(--spacing-inset);
-    overflow: hidden;
+    /* WICHTIG: overflow: clip statt hidden. `hidden` macht die Sektion zum
+       Scroll-Container → bricht position:sticky des Tier-1-Phones (Phone scrollt
+       mit Block 01 weg). `clip` klippt weiterhin Glow/Reveal-Überstände, erzeugt
+       aber KEINEN Scroll-Container → sticky bleibt intakt. */
+    overflow: clip;
   }
   .ft-inner {
     max-width: 72rem;
@@ -491,25 +511,30 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
      ===================================================================== */
   .ft-steps.is-enhanced {
     display: grid;
-    grid-template-columns: minmax(300px, 0.9fr) 1.1fr;
+    grid-template-columns: minmax(280px, 0.9fr) 1.1fr;
     gap: clamp(3rem, 6vw, 6rem);
-    align-items: start;
+    /* stretch (NICHT start/center): die Phone-SPALTE nimmt die volle Höhe der
+       Textspalte ein → das Sticky-KIND darin hat Reiseweg über alle drei Blöcke. */
+    align-items: stretch;
   }
+  /* Die Phone-SPALTE (Grid-Item) füllt die volle Höhe — ist selbst NICHT sticky,
+     hat KEINE eigene height/max-height-Begrenzung. */
   .ft-steps.is-enhanced .ft-sticky {
     display: block;
-    /* top = Header-Höhe + Abstand; max-height begrenzt für flache Screens. */
-    position: sticky;
-    top: calc(var(--header-h) + 2.5rem);
-    align-self: start;
+    align-self: stretch;
   }
+  /* Das Sticky-Element ist das KIND der Spalte: definiertes top (Header-Höhe +
+     Abstand) + Eigenhöhe deutlich unter dem Viewport (Phone skaliert proportional). */
   .ft-steps.is-enhanced .ft-sticky-inner {
+    position: sticky;
+    top: calc(var(--header-h) + 1.75rem);
+    max-height: calc(100svh - var(--header-h) - 3.5rem);
     display: flex;
     flex-direction: column;
     align-items: center;
   }
   .ft-steps.is-enhanced .ft-sticky .ft-phone-stage {
-    width: min(320px, 30vw);
-    max-height: calc(100svh - var(--header-h) - 8rem);
+    width: clamp(230px, 24vw, 280px);
   }
   .ft-steps.is-enhanced .ft-progress {
     display: flex;
@@ -767,14 +792,20 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
      Easter-Egg B — Dark-Mode-Kachel mit Lichtschalter-Kette
      ===================================================================== */
   .ft-tile--dark {
-    /* Icon: Mond sichtbar, Sonne aus (Light-Zustand). */
     transition: background-color 0.13s linear;
   }
   .ft-tile--dark .ft-tile-icon {
-    color: var(--color-black);
+    color: var(--color-black); /* Sonne = #3b3b3a im Light-Zustand */
   }
-  .ft-ic-sun {
+  /* Icon-Exklusivität: das Icon zeigt den AKTUELLEN Zustand.
+     Light → Sonne sichtbar, Mond aus · Dark → Mond sichtbar, Sonne aus.
+     Höhere Spezifität (svg.Klasse) schlägt das generische .ft-tile-icon svg
+     { display:block }; Umschalten rein über display (KEIN opacity). */
+  .ft-tile-icon svg.ft-ic-moon {
     display: none;
+  }
+  .ft-tile-icon svg.ft-ic-sun {
+    display: block;
   }
   /* Dark-Zustand (Toggle) — harter Cut ~130ms linear. */
   .ft-tile--dark.is-dark {
@@ -788,12 +819,12 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   }
   .ft-tile--dark.is-dark .ft-tile-icon {
     background-color: rgb(246 246 246 / 0.1);
-    color: var(--color-yellow);
+    color: var(--color-yellow); /* Mond = #fff03c im Dark-Zustand */
   }
-  .ft-tile--dark.is-dark .ft-ic-moon {
+  .ft-tile--dark.is-dark .ft-tile-icon svg.ft-ic-sun {
     display: none;
   }
-  .ft-tile--dark.is-dark .ft-ic-sun {
+  .ft-tile--dark.is-dark .ft-tile-icon svg.ft-ic-moon {
     display: block;
   }
   .ft-tile--dark .ft-tile-h4,
@@ -816,35 +847,22 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     cursor: pointer;
     z-index: 3;
     transform-origin: top center;
+    color: var(--color-black); /* Kugelkette #3b3b3a (currentColor) */
+    transition: color 0.13s linear;
   }
-  .ft-chain-line {
+  .ft-chain-svg {
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 2px;
-    height: 50px;
-    background-color: rgb(59 59 58 / 0.55);
-    border-radius: 1px;
-    transition: background-color 0.13s linear;
+    width: 10px;
+    height: 69px;
+    display: block;
+    filter: drop-shadow(0 2px 3px rgb(59 59 58 / 0.35));
   }
-  .ft-chain-grip {
-    position: absolute;
-    top: 46px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    background-color: var(--color-black);
-    box-shadow: 0 2px 6px -2px rgb(59 59 58 / 0.5);
-    transition: background-color 0.13s linear;
-  }
-  .ft-tile--dark.is-dark .ft-chain-line {
-    background-color: var(--color-yellow);
-  }
-  .ft-tile--dark.is-dark .ft-chain-grip {
-    background-color: var(--color-yellow);
+  /* Dark-Zustand: Kugelkette gelb (harter 130ms-Cut über die color-Transition). */
+  .ft-tile--dark.is-dark .ft-chain {
+    color: var(--color-yellow);
   }
   /* Sanfter Pendel-Sway (nur erlaubte Bewegung). */
   @media (prefers-reduced-motion: no-preference) {
@@ -868,6 +886,74 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   }
   .ft-tile--dark.is-dark .ft-chain:focus-visible {
     outline-color: var(--color-yellow);
+  }
+
+  /* =====================================================================
+     Sprach-Kachel: beide Titel in derselben Grid-Zelle (1/1) übereinander →
+     Crossfade ohne Layout-Shift (gilt immer; Hover-Swap nur unten im Media-Query).
+     ===================================================================== */
+  .ft-lang-h4 {
+    display: grid;
+  }
+  .ft-lang-title {
+    grid-area: 1 / 1;
+    transition: opacity 200ms ease;
+  }
+  .ft-lang-title--hover {
+    opacity: 0;
+  }
+
+  /* =====================================================================
+     BENTO-HOVER-SYSTEM — NUR bei echtem Hover-Pointer und erlaubter Bewegung.
+     Touch & reduced-motion: komplett statisch (dieser Block greift dann nicht).
+     Nur transform/opacity (Guardrails).
+     ===================================================================== */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    /* A) Basis-Lift (alle 5 Kacheln identisch). */
+    .ft-tile {
+      transition: transform 250ms ease-out;
+    }
+    /* Dark-Kachel liftet in BEIDEN Farbzuständen; 130ms-BG-Cut bleibt erhalten. */
+    .ft-tile--dark {
+      transition: transform 250ms ease-out, background-color 0.13s linear;
+    }
+    .ft-tile:hover {
+      transform: translateY(-4px);
+    }
+    /* Schattenverstärkung NICHT über animiertes box-shadow, sondern via ::after
+       (gleiche border-radius, hinter dem Inhalt, opacity 0→1). Ruhezustand behält
+       den weichen Basis-Schatten der Kachel. */
+    .ft-tile::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      box-shadow: 0 34px 60px -24px rgb(59 59 58 / 0.5);
+      opacity: 0;
+      transition: opacity 250ms ease-out;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .ft-tile:hover::after {
+      opacity: 1;
+    }
+
+    /* B) Telegram-Mikroreaktion: der Flieger neigt sich in Flugrichtung (nur Icon,
+       nicht der Chip-Hintergrund). */
+    .ft-tile--tg .ft-tile-icon svg {
+      transition: transform 300ms ease-out;
+    }
+    .ft-tile--tg:hover .ft-tile-icon svg {
+      transform: rotate(-12deg) translate(2px, -2px);
+    }
+
+    /* C) Sprach-Titel crossfadet zur anderen Sprache (nur opacity, Body bleibt). */
+    .ft-tile--lang:hover .ft-lang-title--base {
+      opacity: 0;
+    }
+    .ft-tile--lang:hover .ft-lang-title--hover {
+      opacity: 1;
+    }
   }
 
   /* =====================================================================

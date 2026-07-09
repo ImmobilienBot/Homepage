@@ -151,6 +151,8 @@ export const de = {
       },
       language: {
         h4: 'Deutsch & Englisch',
+        // Hover-Titel (Crossfade zur anderen Sprache).
+        hoverTitle: 'German & English',
         body: 'Die komplette App in beiden Sprachen.',
       },
     },
