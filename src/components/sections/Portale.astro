@@ -1,24 +1,634 @@
 ---
 /**
- * Portale — Text-Liste der überwachten Portale (keine Logos, rechtliche Gründe).
- * Anzahl wird aus site.ts abgeleitet (exakte Zahl, kein „über 10").
- * [Platzhalter — finales Design folgt.]
+ * Portale — „Alle Portale. Ein Feed." (Desktop-Fokus).
+ *
+ * Folgt direkt auf die dunkle Problem-Sektion und ist die erste konkrete Antwort:
+ * {portalCount} Quellen → EIN Feed → sofortige Benachrichtigung. Links alle Portale
+ * als Pills (2 Gruppen: bundesweit + regional), rechts das bekannte Hero-Phone —
+ * diesmal mit Sperrbildschirm. Endlos-Choreografie (JS, nur Desktop): eine Pill
+ * blitzt gelb auf, eine Mini-Anzeigen-Karte fliegt zum Phone und erscheint dort
+ * als Push im Stapel.
+ *
+ * OBERSTES GEBOT (Guardrails): Inhalte IMMER sichtbar ohne JS — Pills, Labels,
+ * Phone, 2 statische Pushes stehen im SSR-Markup im Endzustand. Der Flug-Layer und
+ * der Lockscreen sind rein dekorativ (aria-hidden). prefers-reduced-motion / kein
+ * JS: statischer Endzustand. Genau EINE H1 auf der Seite (Hero) → hier H2/H3.
+ * Zahlen/Namen aus site.ts, Texte aus i18n.
  */
-import Section from '../Section.astro';
+import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { portals, portalCount } from '../../data/site';
+import { portalCount, nationalPortals, regionalPortals } from '../../data/site';
+import type { Portal } from '../../data/site';
+
+import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
+import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
 
 const t = useTranslations(getLangFromUrl(Astro.url));
-const countLine = t.sections.portals.count.replace('{n}', String(portalCount));
+const P = t.sections.portals;
+
+// Subline: {count} = portalCount (fett). Am Platzhalter splitten.
+const [subPre, subPost] = P.subline.split('{count}');
+
+// Regional-Pool-Key je Portal (steuert den Wohnungs-Pool im Push-Text).
+function poolKey(p: Portal): string {
+  if (p.scope === 'national') return 'national';
+  const r = p.region || '';
+  if (r.startsWith('Berlin')) return 'berlin';
+  if (r.startsWith('Köln')) return 'koeln';
+  if (r.startsWith('Frankfurt')) return 'frankfurt';
+  if (r.startsWith('Hessen')) return 'hessen';
+  return 'national';
+}
+// Sichtbarer Stadt-Tag = erster Teil der Region (Berlin, Köln, Frankfurt, Hessen).
+const cityTag = (p: Portal) => (p.region ? p.region.split('/')[0] : '');
+
+const groups = [
+  { label: P.groupNational, items: nationalPortals },
+  { label: P.groupRegional, items: regionalPortals },
+];
+
+// Nur die für den Client-Flug nötigen i18n-Strings (Push-Texte + Wohnungs-Pools).
+const feedData = {
+  pushTemplate: P.pushTemplate,
+  timeNow: P.timeNow,
+  time3: P.time3,
+  time6: P.time6,
+  flats: P.flats,
+};
 ---
 
-<Section id="portale" title={t.sections.portals.title}>
-  <p class="text-body opacity-70">{countLine}</p>
-  <ul class="mt-4 flex flex-wrap gap-2">
-    {
-      portals.map((p) => (
-        <li class="rounded-pill bg-offwhite px-4 py-1 text-body">{p.name}</li>
-      ))
+<section id="portale" class="pf-section">
+  <div class="pf-inner">
+    {/* --- Kopf: H2 (Mask-Reveal, Text bleibt im h2) + Subline --- */}
+    <header class="pf-head">
+      <h2 class="pf-headline">
+        <span class="pf-line-mask"><span class="pf-line-inner">{P.headline}</span></span
+        ><span class="pf-line-mask"
+          ><span class="pf-line-inner"
+            ><span class="pf-mark"
+              ><span class="pf-mark-hl" aria-hidden="true"></span><span class="pf-mark-text"
+                >{P.headlineMark}</span
+              ></span
+            ></span
+          ></span
+        >
+      </h2>
+      <p class="pf-sub" data-pf-sub>
+        {subPre}<strong class="pf-count">{portalCount}</strong>{subPost}
+      </p>
+    </header>
+
+    {/* --- Zweispaltig: links Pill-Feld (~55%), Flug-Korridor, rechts Phone --- */}
+    <div class="pf-columns" data-pf-flightstage>
+      <div class="pf-pills">
+        {
+          groups.map((g) => (
+            <div class="pf-group">
+              <h3 class="pf-group-label">
+                <span class="pf-group-dot" aria-hidden="true" />
+                {g.label} · {g.items.length}
+              </h3>
+              <ul class="pf-grid">
+                {g.items.map((p) => (
+                  <li
+                    class="pf-pill"
+                    data-pf-pill
+                    data-name={p.name}
+                    data-pool={poolKey(p)}
+                  >
+                    <span class="pf-pill-name">{p.name}</span>
+                    {p.scope === 'regional' && (
+                      <span class="pf-pill-city">{cityTag(p)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+
+      {/* Rechts: Phone mit Sperrbildschirm — komplett dekorativ (aria-hidden). */}
+      <div class="pf-phone-col" aria-hidden="true">
+        <div class="pf-phone-stage" data-pf-phone-stage>
+          <div class="pf-glow"></div>
+          <div class="pf-phone" data-pf-phone>
+            <div class="pf-screen">
+              <span class="pf-notch"></span>
+              <div class="pf-lock">
+                <div class="pf-clock">
+                  <p class="pf-date" data-pf-date></p>
+                  <p class="pf-time" data-pf-time>09:41</p>
+                </div>
+
+                <div class="pf-pushstack" data-pf-pushstack>
+                  {
+                    P.fallbackPushes.map((msg, i) => (
+                      <div class="pf-push" data-pf-push>
+                        <div class="pf-push-inner">
+                          <Image
+                            src={appIcon}
+                            alt=""
+                            width={96}
+                            height={96}
+                            class="pf-push-icon"
+                          />
+                          <div class="pf-push-main">
+                            <p class="pf-push-head">
+                              <span class="pf-push-app">{P.pushTitle}</span>
+                              <span class="pf-push-time" data-pf-push-time>
+                                {i === 0 ? P.timeNow : P.time3}
+                              </span>
+                            </p>
+                            <p class="pf-push-msg">{msg}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+
+                <span class="pf-quick pf-quick--l" aria-hidden="true"></span>
+                <span class="pf-quick pf-quick--r" aria-hidden="true"></span>
+                <span class="pf-home" aria-hidden="true"></span>
+              </div>
+            </div>
+            <PhoneFrame class="pf-frame" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Client-Flug liest die Push-Texte/Wohnungs-Pools hier (nicht ausgeführt). */}
+  <script type="application/json" data-pf-i18n set:html={JSON.stringify(feedData)}></script>
+</section>
+
+<style>
+  /* =====================================================================
+     PORTALE — Layout & Basis (heller CD-Grund #eaebeb).
+     Einheitlicher Sektions-Rhythmus/Inset über die zentralen Tokens.
+     ===================================================================== */
+  .pf-section {
+    position: relative;
+    background-color: var(--color-grey);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+    overflow: hidden;
+  }
+  .pf-inner {
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* ---- Kopf: H2 + Subline (zentriert) ---- */
+  .pf-head {
+    text-align: center;
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+  .pf-headline {
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.4vw, 3.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  /* Mask-Reveal-Wrapper: klippt NUR die einfahrende Zeile (JS). Ruhezustand =
+     voll sichtbar (kein CSS-Vorverstecken). padding/margin schützen Ober-/Unterlängen. */
+  .pf-line-mask {
+    display: inline-block;
+    overflow: hidden;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
+    vertical-align: top;
+  }
+  .pf-line-inner {
+    display: inline-block;
+    will-change: transform;
+  }
+  /* „Alle Portale." und „Ein Feed." je auf eigene Zeile. */
+  .pf-line-mask:first-of-type {
+    display: block;
+  }
+  .pf-mark {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .pf-mark-hl {
+    position: absolute;
+    inset: 0.08em -0.08em 0.05em -0.08em;
+    background-color: var(--color-yellow);
+    border-radius: 0.08em;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .pf-mark-text {
+    position: relative;
+    z-index: 1;
+  }
+  .pf-sub {
+    margin-top: clamp(1rem, 2vw, 1.4rem);
+    margin-inline: auto;
+    max-width: 46rem;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.78);
+  }
+  .pf-count {
+    font-weight: 800;
+    color: var(--color-black);
+  }
+
+  /* =====================================================================
+     Zweispaltiges Layout (Desktop): links Pills ~55 %, Flug-Korridor (gap),
+     rechts Phone. Vertikal zueinander zentriert.
+     ===================================================================== */
+  .pf-columns {
+    position: relative; /* Flug-Overlay (SVG) hängt hier drin */
+    display: flex;
+    align-items: center;
+    gap: clamp(5rem, 8vw, 7.5rem); /* ~80–120px freier Flug-Korridor */
+  }
+  .pf-pills {
+    flex: 1 1 55%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* zwei Gruppen untereinander */
+  }
+
+  /* ---- Gruppen-Label: Kleinkapitälchen-Optik + gelbes 8px-Quadrat ---- */
+  .pf-group-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.7rem;
+    font-weight: 900;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8c8c8a;
+  }
+  .pf-group-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    background-color: var(--color-yellow);
+    border-radius: 1px;
+  }
+
+  /* ---- Pill-Grid: 2 Spalten × 5 Reihen, spaltenweise lesbar ---- */
+  .pf-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(5, auto);
+    grid-auto-flow: column;
+    gap: 7px;
+  }
+  .pf-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    height: 36px;
+    padding: 0 14px;
+    white-space: nowrap;
+    background-color: var(--color-offwhite);
+    border: 1px solid rgb(59 59 58 / 0.07);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 1px 2px rgb(59 59 58 / 0.05);
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--color-black);
+    /* NICHT klickbar — nur transform/bg werden animiert (Ping). */
+    transform-origin: center;
+    will-change: transform;
+  }
+  .pf-pill-name {
+    min-width: 0; /* erlaubt Ellipsis im Flex-Kontext (schmale Desktop-Breiten) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pf-pill-city {
+    flex: none;
+    font-weight: 400;
+    font-size: 11px;
+    color: #9d9d9b;
+  }
+  /* Ping-Ring (dekorativ) — nur während .is-ping sichtbar. */
+  .pf-pill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .pf-pill {
+    position: relative;
+  }
+
+  /* Pill-Ping (JS toggelt .is-ping): Gelb-Blitz + kurzer Scale + ausbreitender Ring. */
+  .pf-pill.is-ping {
+    animation: pfPillPing 0.62s ease-out;
+  }
+  .pf-pill.is-ping::after {
+    animation: pfPillRing 0.6s ease-out;
+  }
+  @keyframes pfPillPing {
+    0% {
+      background-color: var(--color-yellow);
+      transform: scale(1);
     }
-  </ul>
-</Section>
+    16% {
+      transform: scale(1.06);
+    }
+    40% {
+      background-color: var(--color-yellow);
+    }
+    100% {
+      background-color: var(--color-offwhite);
+      transform: scale(1);
+    }
+  }
+  @keyframes pfPillRing {
+    0% {
+      box-shadow: 0 0 0 0 rgb(255 240 60 / 0.95);
+      opacity: 1;
+    }
+    100% {
+      box-shadow: 0 0 0 11px rgb(255 240 60 / 0);
+      opacity: 0;
+    }
+  }
+
+  /* =====================================================================
+     Phone mit Sperrbildschirm (rechts). Rahmen = exakt der Hero-Rahmen
+     (smartphone-rahmen.svg) mit identischer Screen-Geometrie.
+     cqw-Einheiten skalieren den Lockscreen proportional zur Phone-Breite.
+     ===================================================================== */
+  .pf-phone-col {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+  .pf-phone-stage {
+    position: relative;
+    width: clamp(240px, 26vw, 320px);
+    will-change: transform, opacity;
+  }
+  /* Weiches gelbes Aurora-Glow hinter dem Phone (Signature-Moment). */
+  .pf-glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 210%;
+    height: 150%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 74%);
+    filter: blur(70px);
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .pf-phone {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    container-type: inline-size; /* cqw = 1 % der Phone-Breite */
+  }
+  .pf-frame {
+    position: relative;
+    z-index: 10;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  /* Screen-Aussparung — exakt wie im Hero (frameless), etwas heller als der Rahmen. */
+  .pf-screen {
+    position: absolute;
+    left: 2.4%;
+    top: 0.6%;
+    width: 95.4%;
+    height: 98.9%;
+    border-radius: 11.5% / 5.3%;
+    overflow: hidden;
+    z-index: 0;
+    background-color: #474746;
+  }
+  .pf-lock {
+    position: absolute;
+    inset: 0;
+  }
+  /* Notch/Island (dunkler als der Screen). */
+  .pf-notch {
+    position: absolute;
+    top: 3.4%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30%;
+    height: 3.4%;
+    background-color: #2b2b2a;
+    border-radius: 999px;
+  }
+  /* Uhr: Datum klein, Uhrzeit groß (Roboto Black ~20 % der Phone-Breite). */
+  .pf-clock {
+    position: absolute;
+    top: 15%;
+    left: 0;
+    right: 0;
+    text-align: center;
+  }
+  .pf-date {
+    font-size: 4.2cqw;
+    font-weight: 400;
+    line-height: 1;
+    color: rgb(246 246 246 / 0.72);
+    min-height: 4.2cqw;
+  }
+  .pf-time {
+    margin-top: 1.4cqw;
+    font-size: 20cqw;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--color-offwhite);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Push-Stack (oberes Drittel), 3 Slots ---- */
+  .pf-pushstack {
+    position: absolute;
+    top: 34%;
+    left: 4.5%;
+    right: 4.5%;
+    /* Fallback/No-JS: Flow-Stapel (2 statische Karten). JS schaltet auf Slots. */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pf-pushstack--live {
+    display: block;
+  }
+  .pf-pushstack--live .pf-push {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    will-change: transform, opacity;
+  }
+  .pf-push-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 2.6cqw;
+    padding: 3cqw;
+    border-radius: 3.2cqw;
+    background-color: rgb(255 255 255 / 0.96);
+    box-shadow: 0 7px 16px rgb(20 20 19 / 0.35);
+  }
+  .pf-push-icon {
+    width: 11cqw;
+    height: 11cqw;
+    flex: none;
+    border-radius: 24%;
+  }
+  .pf-push-main {
+    min-width: 0;
+    flex: 1;
+  }
+  .pf-push-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2cqw;
+    color: #1c1c1b;
+  }
+  .pf-push-app {
+    font-weight: 700;
+    font-size: 4cqw;
+    line-height: 1.1;
+  }
+  .pf-push-time {
+    flex: none;
+    font-weight: 400;
+    font-size: 3.3cqw;
+    color: #8a8a89;
+  }
+  .pf-push-msg {
+    margin-top: 0.6cqw;
+    font-size: 3.7cqw;
+    line-height: 1.25;
+    color: #3b3b3a;
+    /* Immer 2 Zeilen hoch → konstante Kartenhöhe (stabile Slot-Rechnung). */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: calc(2 * 1.25 * 3.7cqw);
+  }
+
+  /* ---- Quick-Actions + Home-Indicator ---- */
+  .pf-quick {
+    position: absolute;
+    bottom: 5.5%;
+    width: 11cqw;
+    height: 11cqw;
+    border-radius: 999px;
+    background-color: rgb(246 246 246 / 0.13);
+    box-shadow: inset 0 0 0 1.3px rgb(246 246 246 / 0.55);
+  }
+  .pf-quick--l {
+    left: 10%;
+  }
+  .pf-quick--r {
+    right: 10%;
+  }
+  .pf-home {
+    position: absolute;
+    bottom: 1.6%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34%;
+    height: 0.9cqw;
+    min-height: 3px;
+    border-radius: 999px;
+    background-color: rgb(246 246 246 / 0.8);
+  }
+
+  /* Flug-Overlay (per JS eingehängt) — nie klickbar, nie beschnitten. */
+  :global(.pf-flight-overlay) {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  /* Sanftes Glow-Atmen (nur bei erlaubter Bewegung). */
+  @media (prefers-reduced-motion: no-preference) {
+    .pf-glow {
+      animation: pfGlowBreath 10s ease-in-out infinite;
+    }
+  }
+  @keyframes pfGlowBreath {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translate(-50%, -52%) scale(1.06);
+      opacity: 0.62;
+    }
+  }
+
+  /* =====================================================================
+     MOBILE (< 768px) — bewusst nur „sauber": gestapelt, kompaktere Chips,
+     Phone zentriert darunter. KEIN Ticker/Ping/Flug/Hover (JS-Gate).
+     ===================================================================== */
+  @media (max-width: 767.98px) {
+    .pf-headline {
+      font-size: clamp(1.85rem, 8vw, 2.5rem);
+    }
+    .pf-columns {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 2.5rem;
+    }
+    .pf-pills {
+      flex: none;
+    }
+    /* Pills als kompakte flex-wrap-Chips (kein starres 2×5-Grid). */
+    .pf-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pf-pill {
+      height: 30px;
+      padding: 0 11px;
+      font-size: 12px;
+    }
+    .pf-phone-col {
+      justify-content: center;
+    }
+    .pf-phone-stage {
+      width: min(72vw, 260px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pf-glow {
+      animation: none;
+    }
+  }
+</style>

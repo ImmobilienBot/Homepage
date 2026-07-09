@@ -81,6 +81,47 @@ export const de = {
       title: 'Alle Portale in einer App',
       // {n} wird aus site.ts (portalCount) ersetzt — exakte Zahl.
       count: '{n} Immobilienportale – in einer App.',
+      // --- „Portale"-Sektion (Lockscreen-Phone + Anzeigen-Flug) ---
+      // H2 zweizeilig; „Ein Feed." trägt den gelben Marker.
+      headline: 'Alle Portale.',
+      headlineMark: 'Ein Feed.',
+      // {count} = portalCount (site.ts), fett interpoliert.
+      subline:
+        '{count} Quellen, rund um die Uhr überwacht — jedes neue Angebot landet in Echtzeit in deiner App.',
+      groupNational: 'Bundesweit',
+      groupRegional: 'Regional',
+      // Push-Benachrichtigung (Lockscreen). {flat}/{portal} zur Laufzeit ersetzt.
+      pushTitle: 'Immobilien Bot',
+      pushTemplate: 'Neues Angebot: {flat} – via {portal}',
+      timeNow: 'jetzt',
+      time3: 'vor 3 Sek.',
+      time6: 'vor 6 Sek.',
+      // Wohnungs-Pool je Region (für die Push-Texte). Nach Portal-Region gewählt.
+      flats: {
+        berlin: [
+          '3-Zimmer, Prenzlauer Berg',
+          '2-Zimmer Altbau, Kreuzberg',
+          '4-Zimmer, Pankow',
+          '2-Zimmer, Neukölln',
+          '1-Zimmer, Friedrichshain',
+        ],
+        koeln: ['3-Zimmer, Ehrenfeld', '2-Zimmer, Nippes'],
+        frankfurt: ['2-Zimmer, Bockenheim', '3-Zimmer, Sachsenhausen'],
+        hessen: ['3-Zimmer in Wiesbaden', '2-Zimmer in Darmstadt'],
+        national: [
+          '3-Zimmer in Berlin',
+          '2-Zimmer in Hamburg',
+          '4-Zimmer in München',
+          '2-Zimmer in Köln',
+          '3-Zimmer in Leipzig',
+          '2-Zimmer in Stuttgart',
+        ],
+      },
+      // Statische SSR-Pushes (No-JS / reduced-motion): 2 Karten im Endzustand.
+      fallbackPushes: [
+        'Neues Angebot: 3-Zimmer in Berlin – via Immowelt.de',
+        'Neues Angebot: 2-Zimmer Altbau, Kreuzberg – via Howoge.de',
+      ],
     },
     pricing: { title: 'Preise' },
     socialProof: { title: 'Das sagen Nutzer' },

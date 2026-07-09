@@ -967,6 +967,351 @@ async function initProblem3c() {
   });
 }
 
+/**
+ * Portale-Lockscreen-Uhr: echte Uhrzeit + Datum in der aktiven Sprache
+ * (de-DE / en-GB), Update alle 15s. Läuft IMMER (auch reduced-motion — reine
+ * Text-Aktualisierung, keine Bewegung). Ohne JS bleibt der Fallback „09:41".
+ */
+function initPortaleClock() {
+  const section = document.querySelector<HTMLElement>('#portale');
+  if (!section) return;
+  const timeEl = section.querySelector<HTMLElement>('[data-pf-time]');
+  const dateEl = section.querySelector<HTMLElement>('[data-pf-date]');
+  if (!timeEl && !dateEl) return;
+  const locale = (document.documentElement.lang || 'de').startsWith('en') ? 'en-GB' : 'de-DE';
+  const update = () => {
+    const now = new Date();
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    if (dateEl)
+      dateEl.textContent = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  };
+  update();
+  window.setInterval(update, 15000);
+}
+
+/**
+ * Portale-Sektion: Entry-Reveal (beide Breakpoints) + Anzeigen-Flug-Choreografie
+ * (nur Desktop-Breakpoint, nur sichtbar). Additiv/ohne CSS-Vorverstecken: ohne JS /
+ * reduced-motion steht alles im Endzustand (Pills, Phone, 2 statische Pushes).
+ */
+function initPortale() {
+  const section = document.querySelector<HTMLElement>('#portale');
+  if (!section) return;
+  const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+  const fine = window.matchMedia('(pointer: fine)').matches;
+
+  // --- Entry-Reveal: Headline-Mask + Marker-Wipe → Subline → Pills → Phone ---
+  const lineInners = gsap.utils.toArray<HTMLElement>('#portale .pf-line-inner');
+  const markHls = gsap.utils.toArray<HTMLElement>('#portale .pf-mark-hl');
+  const sub = section.querySelector<HTMLElement>('[data-pf-sub]');
+  const pills = gsap.utils.toArray<HTMLElement>('#portale [data-pf-pill]');
+  const phoneStage = section.querySelector<HTMLElement>('[data-pf-phone-stage]');
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: section, start: 'top 78%', once: true },
+    defaults: { ease: 'power3.out' },
+  });
+  if (lineInners.length) tl.from(lineInners, { yPercent: 110, duration: 0.9, stagger: 0.12 }, 0);
+  if (markHls.length)
+    tl.from(markHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
+  if (sub) tl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
+  if (pills.length) tl.from(pills, { autoAlpha: 0, y: 16, duration: 0.5, stagger: 0.035 }, 0.55);
+  if (phoneStage)
+    tl.from(phoneStage, { autoAlpha: 0, xPercent: isDesktop ? 10 : 0, y: isDesktop ? 0 : 20, duration: 0.85 }, 0.45);
+
+  // Flug-Choreografie nur am Desktop-Breakpoint.
+  if (isDesktop) setupPortaleFlight(section, pills, fine);
+}
+
+/**
+ * Anzeigen-Flug: Ticker wählt (oder Hover löst) eine Pill → Ping → Mini-Anzeigen-
+ * Karte fliegt entlang eines Bézier-Pfads zum Phone → erscheint als Push im Stapel.
+ * rAF + getPointAtLength/atan2 (tangential). Ticker + Loop per IntersectionObserver
+ * an die Sichtbarkeit gekoppelt (offscreen vollständig pausiert). Pfade nur bei
+ * Start/Resize gemessen — keine Layout-Reads im Frame-Loop.
+ */
+function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: boolean) {
+  const stage = section.querySelector<HTMLElement>('[data-pf-flightstage]');
+  const phoneEl = section.querySelector<HTMLElement>('[data-pf-phone]');
+  const pushstack = section.querySelector<HTMLElement>('[data-pf-pushstack]');
+  if (!stage || !phoneEl || !pushstack || !pills.length) return;
+
+  type Feed = {
+    pushTemplate: string;
+    timeNow: string;
+    time3: string;
+    time6: string;
+    flats: Record<string, string[]>;
+  };
+  let feed: Feed;
+  try {
+    feed = JSON.parse(section.querySelector('[data-pf-i18n]')?.textContent || '');
+  } catch {
+    return;
+  }
+  const slotTimes = [feed.timeNow, feed.time3, feed.time6];
+
+  // ---- Live-Push-Stack (aus den 2 SSR-Karten adoptiert; kein Flackern) ----
+  const existing = Array.from(pushstack.querySelectorAll<HTMLElement>('[data-pf-push]'));
+  if (!existing.length) return;
+  const template = existing[0].cloneNode(true) as HTMLElement;
+  let cardH = existing[0].offsetHeight;
+  let step = cardH + 6;
+  const TRANS = 'transform .5s cubic-bezier(.3,1.3,.5,1), opacity .4s ease';
+  const slotOpacity = [1, 0.93, 0.82];
+
+  pushstack.classList.add('pf-pushstack--live');
+  pushstack.style.height = 3 * step + 'px';
+  let stackArr = existing.slice(0, 3);
+  const layout = () => {
+    stackArr.forEach((card, i) => {
+      card.style.transition = TRANS;
+      card.style.transform = `translateY(${i * step}px)`;
+      card.style.opacity = String(slotOpacity[i] ?? 0);
+      const tEl = card.querySelector<HTMLElement>('[data-pf-push-time]');
+      if (tEl) tEl.textContent = slotTimes[i] ?? feed.time6;
+    });
+  };
+  layout();
+
+  const buildCard = (msg: string): HTMLElement => {
+    const card = template.cloneNode(true) as HTMLElement;
+    const msgEl = card.querySelector<HTMLElement>('.pf-push-msg');
+    if (msgEl) msgEl.textContent = msg;
+    const tEl = card.querySelector<HTMLElement>('[data-pf-push-time]');
+    if (tEl) tEl.textContent = feed.timeNow;
+    return card;
+  };
+
+  const pushNotif = (portal: string, poolKey: string) => {
+    const flats = feed.flats[poolKey] || feed.flats.national || [];
+    const flat = flats.length ? flats[Math.floor(Math.random() * flats.length)] : '';
+    const msg = feed.pushTemplate.replace('{flat}', flat).replace('{portal}', portal);
+    const card = buildCard(msg);
+    card.style.transition = 'none';
+    card.style.transform = 'translateY(-20px) scale(0.93)';
+    card.style.opacity = '0';
+    pushstack.insertBefore(card, pushstack.firstChild);
+    stackArr.unshift(card);
+    // Überzählige Karte (Slot 3) rausfallen lassen.
+    if (stackArr.length > 3) {
+      const dropped = stackArr.pop() as HTMLElement;
+      dropped.style.transition = TRANS;
+      dropped.style.transform = `translateY(${3 * step + 10}px) scale(0.96)`;
+      dropped.style.opacity = '0';
+      window.setTimeout(() => dropped.remove(), 430);
+    }
+    void card.offsetWidth; // Reflow → Start-Transform greift
+    requestAnimationFrame(() => {
+      card.style.transition = TRANS;
+      card.style.transform = 'translateY(0) scale(1)';
+      card.style.opacity = '1';
+      layout(); // bestehende Karten einen Slot tiefer + Zeitlabels
+    });
+  };
+
+  // ---- Flug-Overlay (SVG) + Flieger-Pool (5 Instanzen, recycelt) ----
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'pf-flight-overlay');
+  svg.setAttribute('aria-hidden', 'true');
+  stage.appendChild(svg);
+
+  const REF = 240; // Referenz-Phonebreite → proportionale Flieger-Skalierung
+  let baseScale = phoneEl.getBoundingClientRect().width / REF;
+
+  const createFlierCard = (): SVGGElement => {
+    const g = document.createElementNS(NS, 'g') as SVGGElement;
+    const mk = (tag: string, attrs: Record<string, string | number>) => {
+      const el = document.createElementNS(NS, tag);
+      for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+      g.appendChild(el);
+    };
+    // Schatten → Karte → 2 graue Zeilen → gelber Preis-Marker (um (0,0) zentriert).
+    mk('rect', { x: -10, y: -5.8, width: 20, height: 14, rx: 3, fill: 'rgba(59,59,58,0.16)' });
+    mk('rect', { x: -10, y: -7, width: 20, height: 14, rx: 3, fill: '#ffffff', stroke: 'rgba(59,59,58,0.22)', 'stroke-width': 0.8 });
+    mk('rect', { x: -7.5, y: -4, width: 11, height: 1.7, rx: 0.6, fill: '#c6c6c5' });
+    mk('rect', { x: -7.5, y: -1, width: 8, height: 1.7, rx: 0.6, fill: '#d8d8d7' });
+    mk('rect', { x: -7.5, y: 2.2, width: 6.4, height: 2.6, rx: 0.7, fill: '#fff03c', stroke: 'rgba(59,59,58,0.5)', 'stroke-width': 0.4 });
+    g.style.visibility = 'hidden';
+    return g;
+  };
+
+  type Flier = {
+    path: SVGPathElement;
+    g: SVGGElement;
+    active: boolean;
+    running: boolean;
+    startTime: number;
+    dur: number;
+    len: number;
+    portal: string;
+    poolKey: string;
+    pending: number;
+  };
+  const fliers: Flier[] = [];
+  for (let i = 0; i < 5; i++) {
+    const path = document.createElementNS(NS, 'path') as SVGPathElement;
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'none');
+    svg.appendChild(path);
+    const g = createFlierCard();
+    svg.appendChild(g);
+    fliers.push({ path, g, active: false, running: false, startTime: 0, dur: 0, len: 0, portal: '', poolKey: '', pending: 0 });
+  }
+
+  let activeCount = 0;
+  let running = false;
+  let rafId = 0;
+  let tickId = 0;
+
+  // Pill-Ping (dekorativ): Gelb-Blitz + Scale + Ring (CSS). Neu triggerbar.
+  const pinging = new WeakSet<HTMLElement>();
+  const pingPill = (pill: HTMLElement) => {
+    if (pinging.has(pill)) return;
+    pinging.add(pill);
+    pill.classList.remove('is-ping');
+    void pill.offsetWidth;
+    pill.classList.add('is-ping');
+    window.setTimeout(() => {
+      pill.classList.remove('is-ping');
+      pinging.delete(pill);
+    }, 660);
+  };
+
+  // power1.inOut (quad in-out)
+  const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+  const launchFlight = (pill: HTMLElement) => {
+    if (!running) return;
+    const f = fliers.find((x) => !x.active);
+    if (!f) return;
+    f.active = true;
+    activeCount++;
+    pingPill(pill);
+    const portal = pill.dataset.name || '';
+    const poolKey = pill.dataset.pool || 'national';
+    f.g.style.visibility = 'hidden';
+    // Nach 260ms (Ping läuft) den Flieger an der Pill-Rechtskante starten.
+    f.pending = window.setTimeout(() => {
+      f.pending = 0;
+      if (!running) {
+        f.active = false;
+        activeCount = Math.max(0, activeCount - 1);
+        return;
+      }
+      const sr = stage.getBoundingClientRect();
+      const pr = pill.getBoundingClientRect();
+      const phr = phoneEl.getBoundingClientRect();
+      const ps = pushstack.getBoundingClientRect();
+      const sx = pr.right - sr.left;
+      const sy = pr.top + pr.height / 2 - sr.top;
+      const tx = phr.left - sr.left + 5; // linke Phone-Außenkante +5px
+      const ty = ps.top + cardH / 2 - sr.top; // Mitte der obersten Stack-Position
+      const dx = tx - sx;
+      f.path.setAttribute('d', `M ${sx},${sy} C ${sx + dx * 0.42},${sy} ${tx - dx * 0.32},${ty} ${tx},${ty}`);
+      f.len = f.path.getTotalLength();
+      f.dur = 1750 + Math.random() * 550;
+      f.portal = portal;
+      f.poolKey = poolKey;
+      f.startTime = performance.now();
+      f.g.style.visibility = '';
+      f.running = true;
+    }, 260);
+  };
+
+  const frame = (now: number) => {
+    if (!running) return;
+    for (const f of fliers) {
+      if (!f.active || !f.running) continue;
+      const p = Math.min(1, (now - f.startTime) / f.dur);
+      if (p >= 1) {
+        f.running = false;
+        f.active = false;
+        activeCount = Math.max(0, activeCount - 1);
+        f.g.style.visibility = 'hidden';
+        f.g.removeAttribute('transform');
+        pushNotif(f.portal, f.poolKey);
+        continue;
+      }
+      const at = f.len * easeInOut(p);
+      const pt = f.path.getPointAtLength(at);
+      const pt2 = f.path.getPointAtLength(Math.min(f.len, at + 1));
+      const ang = (Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180) / Math.PI;
+      // Scale-Dramaturgie: 0→1 (erste 11 %), 1→0 (letzte 14 %).
+      let s = 1;
+      if (p < 0.11) s = p / 0.11;
+      else if (p > 0.86) s = (1 - p) / 0.14;
+      s = Math.max(0, s) * baseScale;
+      f.g.setAttribute('transform', `translate(${pt.x} ${pt.y}) rotate(${ang}) scale(${s})`);
+    }
+    rafId = requestAnimationFrame(frame);
+  };
+
+  const tick = () => {
+    if (!running || activeCount >= 2) return; // max 2 gleichzeitige Flüge (Ticker)
+    const pill = pills[Math.floor(Math.random() * pills.length)];
+    if (pill) launchFlight(pill);
+  };
+
+  const start = () => {
+    if (running) return;
+    running = true;
+    rafId = requestAnimationFrame(frame);
+    tickId = window.setInterval(tick, 2900);
+  };
+  const stop = () => {
+    if (!running) return;
+    running = false;
+    cancelAnimationFrame(rafId);
+    window.clearInterval(tickId);
+    for (const f of fliers) {
+      if (f.pending) window.clearTimeout(f.pending);
+      f.pending = 0;
+      f.active = false;
+      f.running = false;
+      f.g.style.visibility = 'hidden';
+      f.g.removeAttribute('transform');
+    }
+    activeCount = 0;
+  };
+
+  // Sichtbarkeits-Gate: offscreen komplett pausiert (Ticker + rAF + Flüge).
+  const io = new IntersectionObserver((entries) => {
+    if (entries[0]?.isIntersecting) start();
+    else stop();
+  });
+  io.observe(section);
+
+  // Hover (nur pointer:fine): löst zusätzlich die Sequenz für genau diese Pill aus.
+  if (fine) {
+    stage.addEventListener('mouseover', (e) => {
+      if (!running) return;
+      const pill = (e.target as Element).closest?.('[data-pf-pill]') as HTMLElement | null;
+      if (pill) launchFlight(pill);
+    });
+  }
+
+  // Resize: Maße/Scale neu, laufende Flüge sauber abbrechen (Debounce).
+  let rt = 0;
+  const ro = new ResizeObserver(() => {
+    window.clearTimeout(rt);
+    rt = window.setTimeout(() => {
+      const wasRunning = running;
+      stop();
+      const anyCard = pushstack.querySelector<HTMLElement>('[data-pf-push]');
+      if (anyCard) cardH = anyCard.offsetHeight || cardH;
+      step = cardH + 6;
+      pushstack.style.height = 3 * step + 'px';
+      stackArr = Array.from(pushstack.querySelectorAll<HTMLElement>('[data-pf-push]')).slice(0, 3);
+      layout();
+      baseScale = phoneEl.getBoundingClientRect().width / REF;
+      if (wasRunning) start();
+    }, 160);
+  });
+  ro.observe(stage);
+}
+
 function initReveals() {
   // Convention: Elemente mit [data-reveal] gleiten dezent herein.
   const targets = gsap.utils.toArray<HTMLElement>('[data-reveal]');
@@ -1091,6 +1436,10 @@ function initBenefitLottie() {
   near.observe(section);
 }
 
+// Läuft IMMER (auch reduced-motion / mobil): reine Text-Aktualisierung der
+// Lockscreen-Uhr, keine Bewegung. Ohne JS bleibt der Fallback „09:41".
+initPortaleClock();
+
 if (!prefersReducedMotion) {
   const lenis = initSmoothScroll();
   initAnchorScroll(lenis);
@@ -1103,5 +1452,6 @@ if (!prefersReducedMotion) {
   initHeroScrollCue();
   initProblem3c();
   initBenefitLottie();
+  initPortale();
   initReveals();
 }

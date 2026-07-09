@@ -78,6 +78,42 @@ export const en: Dict = {
     portals: {
       title: 'All portals in one app',
       count: '{n} property portals – in a single app.',
+      // --- „Portals" section (lockscreen phone + listing flight) ---
+      headline: 'All portals.',
+      headlineMark: 'One feed.',
+      subline:
+        '{count} sources, monitored around the clock — every new listing lands in your app in real time.',
+      groupNational: 'Nationwide',
+      groupRegional: 'Regional',
+      pushTitle: 'Immobilien Bot',
+      pushTemplate: 'New listing: {flat} – via {portal}',
+      timeNow: 'now',
+      time3: '3 sec ago',
+      time6: '6 sec ago',
+      flats: {
+        berlin: [
+          '3-room flat, Prenzlauer Berg',
+          '2-room period flat, Kreuzberg',
+          '4-room flat, Pankow',
+          '2-room flat, Neukölln',
+          '1-room flat, Friedrichshain',
+        ],
+        koeln: ['3-room flat, Ehrenfeld', '2-room flat, Nippes'],
+        frankfurt: ['2-room flat, Bockenheim', '3-room flat, Sachsenhausen'],
+        hessen: ['3-room flat in Wiesbaden', '2-room flat in Darmstadt'],
+        national: [
+          '3-room flat in Berlin',
+          '2-room flat in Hamburg',
+          '4-room flat in Munich',
+          '2-room flat in Cologne',
+          '3-room flat in Leipzig',
+          '2-room flat in Stuttgart',
+        ],
+      },
+      fallbackPushes: [
+        'New listing: 3-room flat in Berlin – via Immowelt.de',
+        'New listing: 2-room period flat, Kreuzberg – via Howoge.de',
+      ],
     },
     pricing: { title: 'Pricing' },
     socialProof: { title: 'What users say' },

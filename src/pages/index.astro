@@ -1,9 +1,11 @@
 ---
 /**
  * Startseite DE (auf /).
- * Sektionen in der Reihenfolge laut CLAUDE.md:
- * Hero → Problem → Lösung → Features → Portale → Preise → Social Proof
+ * Sektionen in der Reihenfolge:
+ * Hero → Problem → Portale → Features → Preise → Social Proof
  * → FAQ → Kontakt → Finaler CTA. (Header/Footer via BaseLayout.)
+ * Portale folgt direkt auf die Problem-Sektion = erste konkrete Antwort
+ * (der „Wir zeigen dir wie ↓"-Verweis der Problem-Sektion zeigt auf #portale).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { useTranslations } from '../i18n';
@@ -23,8 +25,8 @@ const t = useTranslations('de');
 <BaseLayout title={t.meta.title} description={t.meta.description}>
   <Hero />
   <ProblemLoesung />
-  <Features />
   <Portale />
+  <Features />
   <Preise />
   <SocialProof />
   <FAQ />
