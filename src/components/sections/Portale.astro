@@ -42,9 +42,10 @@ function poolKey(p: Portal): string {
 // Sichtbarer Stadt-Tag = erster Teil der Region (Berlin, Köln, Frankfurt, Hessen).
 const cityTag = (p: Portal) => (p.region ? p.region.split('/')[0] : '');
 
+// Zwei Stufen: „Bundesweit" prominenter (größere Pills) als „Regional".
 const groups = [
-  { label: P.groupNational, items: nationalPortals },
-  { label: P.groupRegional, items: regionalPortals },
+  { label: P.groupNational, items: nationalPortals, tier: 'national' },
+  { label: P.groupRegional, items: regionalPortals, tier: 'regional' },
 ];
 
 // Nur die für den Client-Flug nötigen i18n-Strings (Push-Texte + Wohnungs-Pools).
@@ -83,7 +84,7 @@ const feedData = {
       <div class="pf-pills">
         {
           groups.map((g) => (
-            <div class="pf-group">
+            <div class={`pf-group pf-group--${g.tier}`}>
               <h3 class="pf-group-label">
                 <span class="pf-group-dot" aria-hidden="true" />
                 {g.label} · {g.items.length}
@@ -114,7 +115,6 @@ const feedData = {
           <div class="pf-glow"></div>
           <div class="pf-phone" data-pf-phone>
             <div class="pf-screen">
-              <span class="pf-notch"></span>
               <div class="pf-lock">
                 <div class="pf-clock">
                   <p class="pf-date" data-pf-date></p>
@@ -236,6 +236,7 @@ const feedData = {
     font-size: clamp(1.05rem, 1.6vw, 1.3rem);
     line-height: 1.5;
     color: rgb(59 59 58 / 0.78);
+    text-wrap: balance; /* schönerer zweizeiliger Umbruch (progressive enhancement) */
   }
   .pf-count {
     font-weight: 800;
@@ -253,28 +254,28 @@ const feedData = {
     gap: clamp(5rem, 8vw, 7.5rem); /* ~80–120px freier Flug-Korridor */
   }
   .pf-pills {
-    flex: 1 1 55%;
+    flex: 1 1 58%;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 20px; /* zwei Gruppen untereinander */
+    gap: 28px; /* Abstand zwischen den beiden Gruppen */
   }
 
-  /* ---- Gruppen-Label: Kleinkapitälchen-Optik + gelbes 8px-Quadrat ---- */
+  /* ---- Gruppen-Label: Kleinkapitälchen-Optik + gelbes Quadrat ---- */
   .pf-group-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin: 0 0 0.7rem;
     font-weight: 900;
-    font-size: 0.72rem;
+    font-size: 0.8rem; /* ~13px */
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #8c8c8a;
   }
   .pf-group-dot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     flex: none;
     background-color: var(--color-yellow);
     border-radius: 1px;
@@ -289,26 +290,39 @@ const feedData = {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: repeat(5, auto);
     grid-auto-flow: column;
-    gap: 7px;
+    gap: 9px;
   }
+  /* Basis-Pill (Maße = Regional-Stufe; „Bundesweit" überschreibt größer). */
   .pf-pill {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    height: 36px;
-    padding: 0 14px;
+    height: 40px;
+    padding: 0 15px;
     white-space: nowrap;
     background-color: var(--color-offwhite);
     border: 1px solid rgb(59 59 58 / 0.07);
     border-radius: var(--radius-pill);
     box-shadow: 0 1px 2px rgb(59 59 58 / 0.05);
     font-weight: 700;
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--color-black);
     /* NICHT klickbar — nur transform/bg werden animiert (Ping). */
     transform-origin: center;
     will-change: transform;
+  }
+  /* Stufe 1 (prominent): bundesweite Portale — größer. */
+  .pf-group--national .pf-pill {
+    height: 48px;
+    padding: 0 18px;
+    font-size: 17px;
+  }
+  /* Stufe 2: regionale Portale — kompakter (Basis-Maße). */
+  .pf-group--regional .pf-pill {
+    height: 40px;
+    padding: 0 15px;
+    font-size: 14px;
   }
   .pf-pill-name {
     min-width: 0; /* erlaubt Ellipsis im Flex-Kontext (schmale Desktop-Breiten) */
@@ -318,7 +332,7 @@ const feedData = {
   .pf-pill-city {
     flex: none;
     font-weight: 400;
-    font-size: 11px;
+    font-size: 12px;
     color: #9d9d9b;
   }
   /* Ping-Ring (dekorativ) — nur während .is-ping sichtbar. */
@@ -426,18 +440,8 @@ const feedData = {
     position: absolute;
     inset: 0;
   }
-  /* Notch/Island (dunkler als der Screen). */
-  .pf-notch {
-    position: absolute;
-    top: 3.4%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 30%;
-    height: 3.4%;
-    background-color: #2b2b2a;
-    border-radius: 999px;
-  }
-  /* Uhr: Datum klein, Uhrzeit groß (Roboto Black ~20 % der Phone-Breite). */
+  /* Uhr: Datum klein, Uhrzeit groß (Roboto Black ~20 % der Phone-Breite).
+     Notch kommt aus dem Rahmen-SVG (keine zusätzliche im Lockscreen). */
   .pf-clock {
     position: absolute;
     top: 15%;

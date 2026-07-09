@@ -1117,8 +1117,11 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
   svg.setAttribute('aria-hidden', 'true');
   stage.appendChild(svg);
 
-  const REF = 240; // Referenz-Phonebreite → proportionale Flieger-Skalierung
-  let baseScale = phoneEl.getBoundingClientRect().width / REF;
+  // Referenz-Phonebreite → proportionale Flieger-Skalierung. Faktor 1.15: Flieger
+  // ~15 % größer, damit er zu den vergrößerten Pills passt.
+  const REF = 240;
+  const FLIER_SCALE = 1.15;
+  let baseScale = (phoneEl.getBoundingClientRect().width / REF) * FLIER_SCALE;
 
   const createFlierCard = (): SVGGElement => {
     const g = document.createElementNS(NS, 'g') as SVGGElement;
@@ -1305,7 +1308,7 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
       pushstack.style.height = 3 * step + 'px';
       stackArr = Array.from(pushstack.querySelectorAll<HTMLElement>('[data-pf-push]')).slice(0, 3);
       layout();
-      baseScale = phoneEl.getBoundingClientRect().width / REF;
+      baseScale = (phoneEl.getBoundingClientRect().width / REF) * FLIER_SCALE;
       if (wasRunning) start();
     }, 160);
   });
