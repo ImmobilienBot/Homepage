@@ -74,7 +74,84 @@ export const en: Dict = {
       // Subtle pointer to the next section (anchor easily repointable).
       moreLink: "We'll show you how",
     },
-    features: { title: 'Features' },
+    features: {
+      // sr/back-compat title; eyebrow + H2 carry the visible claim.
+      title: 'Features',
+      eyebrow: 'Features',
+      // H2 with a yellow marker on „first".
+      h2: 'Everything you need to be first.',
+      h2Mark: 'first',
+      subline: 'Three steps from search to application — all in one app.',
+      // Tier 1 — the three steps (order: map, listings, cover letter).
+      steps: [
+        {
+          num: '01',
+          h3: 'Search exactly where you want to live.',
+          body: 'Draw your search area right on the map or set a radius — multiple locations at once.',
+          checks: [
+            'Draw your area or set a radius',
+            'Multiple search locations',
+            'Rooms, size, price',
+          ],
+          alt: 'Map of Berlin with a self-drawn, yellow-outlined search area over the city center; a „Radius" and „Draw" toggle at the top.',
+        },
+        {
+          num: '02',
+          h3: 'Your feed instead of ten open tabs.',
+          body: 'Every matching listing lands in one tidy list — sorted, filtered, under control.',
+          checks: [
+            'Favorites & status filters',
+            'Unseen / applied at a glance',
+            'Share, delete, add notes',
+          ],
+          alt: 'App listings feed with 18 results: flat cards showing photo, price, number of rooms and square meters, plus filters for favorites and applications.',
+        },
+        {
+          num: '03',
+          h3: 'Your application. One tap. Done.',
+          body: "Save your cover letter once — tap a listing and it's automatically in your clipboard.",
+          checks: [
+            'Save your cover letter',
+            'Auto-copy on tap',
+            'Paste, send, done',
+          ],
+          alt: 'The app’s „cover letter" view: a saved application text in a text field with „Back" and „Save" buttons.',
+        },
+      ],
+      // Tier 2 — bento „And there's more inside." (marker on „more").
+      bentoTitle: "And there's more inside.",
+      bentoMark: 'more',
+      filter: {
+        h4: "Filters the others don't have.",
+        body: 'Advanced criteria for the searches that are painful on the portals:',
+        chips: [
+          'furnished',
+          'WG rooms',
+          'WBS',
+          'flat swap',
+          'temporary & sublet',
+          'no IS24 Plus listings',
+        ],
+      },
+      darkmode: {
+        h4: 'Light & dark mode',
+        body: 'Easy on the eyes at night — right when new listings come in.',
+        ariaChain: "Toggle this card's dark mode",
+      },
+      telegram: {
+        h4: 'Telegram integration',
+        body: 'Get your alerts as Telegram messages too.',
+      },
+      // h4Label + fixed letters S / M / L (universal, rendered in code).
+      listviews: {
+        h4Label: 'List views',
+        body: 'Scan compact or browse large.',
+      },
+      language: {
+        h4: 'German & English',
+        body: 'The entire app in both languages.',
+      },
+    },
     portals: {
       title: 'All portals in one app',
       count: '{n} property portals – in a single app.',

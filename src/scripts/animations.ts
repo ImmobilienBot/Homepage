@@ -1334,6 +1334,147 @@ function initReveals() {
 }
 
 /**
+ * Features-Sektion.
+ *
+ * IMMER (auch reduced-motion / mobil):
+ *  - Easter-Egg B: Dark-Mode-Kachel toggelt hart per Klick (aria-pressed).
+ *  - Easter-Egg A: S/M/L-Zyklus NUR bei erlaubter Bewegung + im Viewport;
+ *    reduced-motion bleibt statisch auf „M" (Markup-Default).
+ *
+ * NUR bei erlaubter Bewegung (prefersReducedMotion === false):
+ *  - Header-Mask-Reveal (H2-Zeile + Marker-Wipe) + Subline.
+ *  - Enhancement (≥lg + pointer:fine): zweispaltiges Sticky-Scrollytelling —
+ *    das gemeinsame Phone wird gepinnt, die Screens crossfaden je aktivem Block
+ *    (ScrollTrigger als reiner Trigger, kein Scrub); Progress-Balken folgen.
+ *    Sonst: dezenter einmaliger Block-Reveal (Basis-Stapel).
+ *  - Bento-Reveal (Titel-Marker + Kacheln gestaffelt).
+ * Additiv (gsap.from): ohne JS steht alles im Endzustand.
+ */
+function initFeatures() {
+  const section = document.querySelector<HTMLElement>('#features');
+  if (!section) return;
+
+  // ---- Easter-Egg B: Dark-Mode-Kachel (immer, auch reduced-motion) ----
+  const darkTile = section.querySelector<HTMLElement>('[data-ft-darktile]');
+  const chain = section.querySelector<HTMLButtonElement>('[data-ft-chain]');
+  if (darkTile && chain) {
+    chain.addEventListener('click', () => {
+      const on = darkTile.classList.toggle('is-dark');
+      chain.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // ---- Easter-Egg A: Listenansichten S/M/L (Zyklus nur bei Bewegung) ----
+  const layouts = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-layout]'));
+  const letters = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-vletter]'));
+  const viewsTile = section.querySelector<HTMLElement>('[data-ft-views]');
+  if (viewsTile && layouts.length === 3 && !prefersReducedMotion) {
+    let idx = 1; // Start bei M (Default-Zustand)
+    const setView = (n: number) => {
+      layouts.forEach((el, i) => el.classList.toggle('is-active', i === n));
+      letters.forEach((el, i) => el.classList.toggle('is-active', i === n));
+    };
+    let timer = 0;
+    // Intervall NUR laufen lassen, wenn die Kachel im Viewport ist.
+    const io = new IntersectionObserver((entries) => {
+      const vis = entries[0]?.isIntersecting ?? false;
+      if (vis && !timer) {
+        timer = window.setInterval(() => {
+          idx = (idx + 1) % 3;
+          setView(idx);
+        }, 1600);
+      } else if (!vis && timer) {
+        window.clearInterval(timer);
+        timer = 0;
+      }
+    });
+    io.observe(viewsTile);
+  }
+
+  if (prefersReducedMotion) return;
+
+  // ---- Header-Reveal: Mask-Zeile + Marker-Wipe → Subline ----
+  const maskIns = gsap.utils.toArray<HTMLElement>('#features .ft-head .ft-mask-in');
+  const headHls = gsap.utils.toArray<HTMLElement>('#features .ft-head .ft-mark-hl');
+  const sub = section.querySelector<HTMLElement>('[data-ft-sub]');
+  const headTl = gsap.timeline({
+    scrollTrigger: { trigger: '#features .ft-head', start: 'top 82%', once: true },
+    defaults: { ease: 'power3.out' },
+  });
+  if (maskIns.length) headTl.from(maskIns, { yPercent: 110, duration: 0.9 }, 0);
+  if (headHls.length)
+    headTl.from(headHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
+  if (sub) headTl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
+
+  // ---- TIER 1 ----
+  const steps = section.querySelector<HTMLElement>('[data-ft-steps]');
+  const blocks = gsap.utils.toArray<HTMLElement>('#features [data-ft-block]');
+  const canEnhance =
+    window.matchMedia('(min-width: 1024px)').matches &&
+    window.matchMedia('(pointer: fine)').matches;
+
+  if (canEnhance && steps) {
+    steps.classList.add('is-enhanced');
+    const shots = gsap.utils.toArray<HTMLElement>('#features [data-ft-sticky] [data-ft-shot]');
+    const bars = gsap.utils.toArray<HTMLElement>('#features [data-ft-bar]');
+    let active = 0;
+    const setActive = (n: number) => {
+      if (n === active) return;
+      active = n;
+      shots.forEach((el, i) => el.classList.toggle('is-active', i === n));
+      bars.forEach((el, i) => el.classList.toggle('is-active', i === n));
+      blocks.forEach((el, i) => el.classList.toggle('is-active', i === n));
+    };
+    // ScrollTrigger nur als Trigger (kein Scrub): erreicht ein Block die Mitte,
+    // wird er aktiv → Crossfade des zugehörigen Screens.
+    blocks.forEach((block, i) => {
+      ScrollTrigger.create({
+        trigger: block,
+        start: 'top center',
+        end: 'bottom center',
+        onToggle: (self) => {
+          if (self.isActive) setActive(i);
+        },
+      });
+    });
+    const sticky = section.querySelector<HTMLElement>('[data-ft-sticky]');
+    if (sticky) {
+      gsap.from(sticky, {
+        autoAlpha: 0,
+        y: 20,
+        duration: 0.7,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: steps, start: 'top 78%', once: true },
+      });
+    }
+  } else {
+    // Basis-Stapel: dezenter einmaliger Reveal je Block.
+    blocks.forEach((block) => {
+      gsap.from(block, {
+        autoAlpha: 0,
+        y: 24,
+        duration: 0.6,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: block, start: 'top 85%', once: true },
+      });
+    });
+  }
+
+  // ---- TIER 2: Bento-Reveal (Titel-Marker + Kacheln) ----
+  const bentoIns = gsap.utils.toArray<HTMLElement>('#features .ft-bento-title .ft-mask-in');
+  const bentoHls = gsap.utils.toArray<HTMLElement>('#features .ft-bento-title .ft-mark-hl');
+  const tiles = gsap.utils.toArray<HTMLElement>('#features .ft-tile');
+  const bentoTl = gsap.timeline({
+    scrollTrigger: { trigger: '#features .ft-bento-wrap', start: 'top 80%', once: true },
+    defaults: { ease: 'power3.out' },
+  });
+  if (bentoIns.length) bentoTl.from(bentoIns, { yPercent: 110, duration: 0.8 }, 0);
+  if (bentoHls.length)
+    bentoTl.from(bentoHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.3);
+  if (tiles.length) bentoTl.from(tiles, { autoAlpha: 0, y: 22, duration: 0.55, stagger: 0.08 }, 0.35);
+}
+
+/**
  * Vorteils-Icons (3c) als Lottie — LAZY. lottie-web (light build) erst per
  * dynamischem Import laden, wenn die 3c-Sektion nahe/im Viewport ist. Die JSONs
  * sind dunkel gefärbt (helle Vorlage) → zur Laufzeit auf CD-Gelb umfärben, damit
@@ -1458,3 +1599,8 @@ if (!prefersReducedMotion) {
   initPortale();
   initReveals();
 }
+
+// Features: Interaktion (Dark-Toggle) läuft IMMER; die Bewegungs-Teile sind in
+// initFeatures selbst per prefersReducedMotion gegated. Nach dem Motion-Block, damit
+// Lenis (falls aktiv) bereits initialisiert ist, bevor ScrollTrigger greifen.
+initFeatures();

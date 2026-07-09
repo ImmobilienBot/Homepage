@@ -76,7 +76,84 @@ export const de = {
       // Dezenter Verweis zur nächsten Sektion (Anker leicht repointbar).
       moreLink: 'Wir zeigen dir wie',
     },
-    features: { title: 'Features' },
+    features: {
+      // sr/back-compat-Titel; sichtbar tragen Eyebrow + H2 die Aussage.
+      title: 'Features',
+      eyebrow: 'Features',
+      // H2 mit gelbem Marker auf „der Erste".
+      h2: 'Alles, um der Erste zu sein.',
+      h2Mark: 'der Erste',
+      subline: 'Drei Schritte von der Suche bis zur Bewerbung — alles in einer App.',
+      // Tier 1 — die drei Schritte (Reihenfolge: Karte, Angebotsliste, Bewerbung).
+      steps: [
+        {
+          num: '01',
+          h3: 'Such genau dort, wo du wohnen willst.',
+          body: 'Zeichne deinen Suchbereich direkt auf der Karte oder wähle einen Radius — auch mehrere Orte gleichzeitig.',
+          checks: [
+            'Suchbereich zeichnen oder Radius',
+            'Mehrere Suchorte gleichzeitig',
+            'Zimmer, Größe, Preis',
+          ],
+          alt: 'Karte von Berlin mit gelb umrandetem, selbst gezeichnetem Suchbereich über der Innenstadt; oben die Umschalter „Radius" und „Zeichnen".',
+        },
+        {
+          num: '02',
+          h3: 'Dein Feed statt zehn offener Tabs.',
+          body: 'Alle passenden Angebote landen in einer aufgeräumten Liste — sortiert, gefiltert, im Griff.',
+          checks: [
+            'Favoriten & Status-Filter',
+            'Ungesehen / Beworben auf einen Blick',
+            'Teilen, löschen, Notizen',
+          ],
+          alt: 'Angebotsliste der App mit 18 Treffern: Wohnungskarten mit Foto, Preis, Zimmerzahl und Quadratmetern, dazu Filter für Favoriten und Bewerbungen.',
+        },
+        {
+          num: '03',
+          h3: 'Deine Bewerbung. Ein Tipp. Fertig.',
+          body: 'Hinterlege dein Anschreiben einmal — beim Antippen eines Angebots liegt es automatisch in der Zwischenablage.',
+          checks: [
+            'Anschreiben hinterlegen',
+            'Auto-Copy beim Antippen',
+            'Direkt einfügen & absenden',
+          ],
+          alt: 'Ansicht „Bewerbungsschreiben" der App: hinterlegtes Anschreiben in einem Textfeld mit den Buttons „Zurück" und „Speichern".',
+        },
+      ],
+      // Tier 2 — Bento „Und das steckt noch drin." (Marker auf „noch").
+      bentoTitle: 'Und das steckt noch drin.',
+      bentoMark: 'noch',
+      filter: {
+        h4: 'Filter, die andere nicht haben.',
+        body: 'Erweiterte Kriterien für die Fälle, die auf den Portalen mühsam sind:',
+        chips: [
+          'möbliert',
+          'WG-Zimmer',
+          'WBS',
+          'Tauschwohnung',
+          'Zwischen- & Untermiete',
+          'ohne IS24-Plus-Angebote',
+        ],
+      },
+      darkmode: {
+        h4: 'Light & Dark Mode',
+        body: 'Auch nachts angenehm — genau dann, wenn Angebote reinkommen.',
+        ariaChain: 'Dunkelmodus der Kachel umschalten',
+      },
+      telegram: {
+        h4: 'Telegram-Anbindung',
+        body: 'Benachrichtigungen auf Wunsch auch als Telegram-Nachricht.',
+      },
+      // h4Label + fixe Buchstaben S / M / L (universell, im Code gerendert).
+      listviews: {
+        h4Label: 'Listenansichten',
+        body: 'Kompakt scannen oder groß durchblättern.',
+      },
+      language: {
+        h4: 'Deutsch & Englisch',
+        body: 'Die komplette App in beiden Sprachen.',
+      },
+    },
     portals: {
       title: 'Alle Portale in einer App',
       // {n} wird aus site.ts (portalCount) ersetzt — exakte Zahl.

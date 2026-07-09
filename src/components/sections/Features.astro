@@ -1,27 +1,892 @@
 ---
 /**
- * Features — die 4 Säulen (Finden · Sofort benachrichtigt · Überblick behalten ·
- * Zuerst bewerben), scroll-animiert, Bento-Grid, je echter Screenshot.
- * [Platzhalter — Screenshots & Bento-Layout folgen.]
+ * Features — zwei Ebenen auf hellem CD-Grund (#eaebeb), einheitlicher
+ * Sektions-Rhythmus. Folgt direkt auf die Portale-Sektion, vor den Preisen.
+ *
+ * TIER 1 (content-first, progressive enhancement): drei Schritte als gestapelte
+ * Blöcke (Nummer-Chip · H3 · Body · Checkmark-Liste · zugehöriges Phone). Der
+ * Basis-Stapel gilt IMMER (ohne JS, reduced-motion, mobil). Nur ≥lg + pointer:fine
+ * + erlaubte Bewegung + JS schaltet auf ein zweispaltiges Scrollytelling: links ein
+ * per position:sticky gepinntes gemeinsames Phone (Crossfade der drei Screens),
+ * rechts scrollende Textblöcke. Das Sticky-Phone ist Deko (aria-hidden, leere Alts);
+ * die inhaltlichen Bilder mit Alt-Texten sind die in den Blöcken. Die Block-Phones
+ * werden AUSSCHLIESSLICH per JS-Klasse (.is-enhanced) versteckt — nie per CSS-Default.
+ *
+ * TIER 2: Bento „Und das steckt noch drin." — 5 Kacheln (Elevation, weiche Schatten).
+ * Zwei Easter-Eggs: Listenansichten S/M/L (Zyklus + wandernder Marker) und eine
+ * Dark-Mode-Kachel mit Lichtschalter-Kette (harter Toggle).
+ *
+ * Fakten/Texte aus i18n. Genau EINE H1 bleibt im Hero → hier H2/H3/H4.
  */
-import Section from '../Section.astro';
+import { Image } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
 
-const t = useTranslations(getLangFromUrl(Astro.url));
+import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
+import screenMap from '../../assets/images/immobilien-bot-suchbereich-karte-zeichnen.png';
+import screenList from '../../assets/images/immobilien-bot-app-angebotsliste.png';
+import screenLetter from '../../assets/images/immobilien-bot-bewerbungsschreiben.png';
 
-// Struktur-Platzhalter der 4 Säulen (Texte später nach i18n auslagern).
-const pillars = ['Finden', 'Sofort benachrichtigt', 'Überblick behalten', 'Zuerst bewerben'];
+const t = useTranslations(getLangFromUrl(Astro.url));
+const F = t.sections.features;
+
+// Screens je Schritt (Reihenfolge = steps): Karte, Angebotsliste, Bewerbung.
+const shots = [screenMap, screenList, screenLetter];
+
+// Marker-Split: Prefix + markiertes Keyword + Suffix (wie Hero/Problem/Portale).
+function markParts(text: string, mark: string) {
+  const i = text.indexOf(mark);
+  if (i < 0) return { pre: text, mark: '', post: '' };
+  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
+}
+const h2 = markParts(F.h2, F.h2Mark);
+const bento = markParts(F.bentoTitle, F.bentoMark);
+
+// Inline-Häkchen (currentColor) für die Check-Listen.
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
 ---
 
-<Section id="features" title={t.sections.features.title}>
-  <div class="grid gap-4 sm:grid-cols-2">
-    {
-      pillars.map((p) => (
-        <div class="rounded-card bg-offwhite p-6">
-          <p class="font-bold">[{p}]</p>
-          <p class="mt-2 text-body opacity-70">[Screenshot + Text folgt]</p>
+<section id="features" class="ft-section">
+  <div class="ft-inner">
+    {/* ---- Sektions-Header: Eyebrow · H2 (Mask-Reveal + Marker) · Subline ---- */}
+    <header class="ft-head">
+      <p class="ft-eyebrow">{F.eyebrow}</p>
+      <h2 class="ft-h2">
+        <span class="ft-mask"
+          ><span class="ft-mask-in"
+            >{h2.pre}<span class="ft-mark"
+              ><span class="ft-mark-hl" aria-hidden="true"></span><span class="ft-mark-tx"
+                >{h2.mark}</span
+              ></span
+            >{h2.post}</span
+          ></span
+        >
+      </h2>
+      <p class="ft-sub" data-ft-sub>{F.subline}</p>
+    </header>
+
+    {/* ================= TIER 1 — drei Schritte ================= */}
+    <div class="ft-steps" data-ft-steps>
+      {/* Gemeinsames Sticky-Phone (nur Desktop-Enhancement, per JS eingeblendet).
+          Deko-Duplikat: aria-hidden + leere Alts. Default per CSS versteckt. */}
+      <div class="ft-sticky" data-ft-sticky aria-hidden="true">
+        <div class="ft-sticky-inner">
+          <div class="ft-phone-stage">
+            <div class="ft-glow" aria-hidden="true"></div>
+            <div class="ft-phone">
+              {
+                shots.map((src, i) => (
+                  <div class:list={['ft-shot', i === 0 && 'is-active']} data-ft-shot={i}>
+                    <Image src={src} alt="" class="ft-shot-img" loading="lazy" />
+                  </div>
+                ))
+              }
+              <PhoneFrame class="ft-frame" />
+            </div>
+          </div>
+          {/* Progress-Indikator: drei Balken, aktiver gelb. */}
+          <div class="ft-progress" aria-hidden="true">
+            {
+              shots.map((_, i) => (
+                <span class:list={['ft-bar', i === 0 && 'is-active']} data-ft-bar={i} />
+              ))
+            }
+          </div>
         </div>
-      ))
-    }
+      </div>
+
+      {/* Basis-Blöcke: Copy + eigenes Phone. Immer sichtbar; die Phones werden nur
+          per JS-Klasse (.is-enhanced) versteckt. */}
+      <ol class="ft-blocks">
+        {
+          F.steps.map((s, i) => (
+            <li class:list={['ft-block', i === 0 && 'is-active']} data-ft-block data-index={i}>
+              <div class="ft-block-copy">
+                <span class="ft-chip">{s.num}</span>
+                <h3 class="ft-h3">{s.h3}</h3>
+                <p class="ft-body">{s.body}</p>
+                <ul class="ft-checks">
+                  {s.checks.map((c) => (
+                    <li class="ft-check">
+                      <span class="ft-check-ic" set:html={CHECK_SVG} />
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div class="ft-block-phone" data-ft-base-phone>
+                <div class="ft-phone-stage ft-phone-stage--inline">
+                  <div class="ft-glow" aria-hidden="true" />
+                  <div class="ft-phone">
+                    <div class="ft-shot is-active">
+                      <Image src={shots[i]} alt={s.alt} class="ft-shot-img" loading="lazy" />
+                    </div>
+                    <PhoneFrame class="ft-frame" />
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    {/* ================= TIER 2 — Bento ================= */}
+    <div class="ft-bento-wrap">
+      <h3 class="ft-bento-title">
+        <span class="ft-mask"
+          ><span class="ft-mask-in"
+            >{bento.pre}<span class="ft-mark"
+              ><span class="ft-mark-hl" aria-hidden="true"></span><span class="ft-mark-tx"
+                >{bento.mark}</span
+              ></span
+            >{bento.post}</span
+          ></span
+        >
+      </h3>
+
+      <div class="ft-bento">
+        {/* Filter (span 8) */}
+        <article class="ft-tile ft-tile--filter">
+          <h4 class="ft-tile-h4">{F.filter.h4}</h4>
+          <p class="ft-tile-body">{F.filter.body}</p>
+          <ul class="ft-chips">
+            {F.filter.chips.map((c) => <li class="ft-pill">{c}</li>)}
+          </ul>
+        </article>
+
+        {/* Light & Dark Mode (span 4) — Easter-Egg B: Lichtschalter-Kette */}
+        <article class="ft-tile ft-tile--dark" data-ft-darktile>
+          <button
+            type="button"
+            class="ft-chain"
+            data-ft-chain
+            aria-pressed="false"
+            aria-label={F.darkmode.ariaChain}
+          >
+            <span class="ft-chain-line" aria-hidden="true"></span>
+            <span class="ft-chain-grip" aria-hidden="true"></span>
+          </button>
+          <span class="ft-tile-icon" data-ft-dark-icon aria-hidden="true">
+            {/* Mond (Light-Zustand) */}
+            <svg class="ft-ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8Z"/></svg>
+            {/* Sonne (Dark-Zustand) */}
+            <svg class="ft-ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+          </span>
+          <h4 class="ft-tile-h4">{F.darkmode.h4}</h4>
+          <p class="ft-tile-body">{F.darkmode.body}</p>
+        </article>
+
+        {/* Telegram (span 4) */}
+        <article class="ft-tile ft-tile--tg">
+          <span class="ft-tile-icon" aria-hidden="true">
+            {/* Monochromer Papierflieger (CD-Schwarz, KEIN Markenlogo/keine Fremdfarbe) */}
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.7 3.3a1 1 0 0 0-1.05-.16L2.9 10.6c-.86.36-.8 1.6.09 1.87l4.5 1.38 1.7 5.2c.26.79 1.28.98 1.8.33l2.4-2.94 4.42 3.25c.6.44 1.46.12 1.62-.6l3.02-14.8a1 1 0 0 0-.4-1.02ZM9.53 13.9l8.2-6.03-6.86 7.36a1 1 0 0 0-.26.52l-.36 1.9-.72-3.75Z"/></svg>
+          </span>
+          <h4 class="ft-tile-h4">{F.telegram.h4}</h4>
+          <p class="ft-tile-body">{F.telegram.body}</p>
+        </article>
+
+        {/* Listenansichten (span 4) — Easter-Egg A: S/M/L-Zyklus + wandernder Marker.
+            Default (No-JS / reduced-motion): Ansicht M aktiv, „M" markiert. */}
+        <article class="ft-tile ft-tile--views" data-ft-views>
+          <span class="ft-views-icon" aria-hidden="true">
+            {/* S = 4 dünne Zeilen */}
+            <span class="ft-layout" data-ft-layout={0}>
+              <span class="ft-lrow"></span><span class="ft-lrow"></span>
+              <span class="ft-lrow"></span><span class="ft-lrow"></span>
+            </span>
+            {/* M = 2 Zeilen mit kleinem Thumbnail-Quadrat (default aktiv) */}
+            <span class="ft-layout is-active" data-ft-layout={1}>
+              <span class="ft-lline"><span class="ft-lthumb"></span><span class="ft-ltext"></span></span>
+              <span class="ft-lline"><span class="ft-lthumb"></span><span class="ft-ltext"></span></span>
+            </span>
+            {/* L = großer Bildblock + 1 Zeile */}
+            <span class="ft-layout" data-ft-layout={2}>
+              <span class="ft-lbig"></span><span class="ft-lrow ft-lrow--wide"></span>
+            </span>
+          </span>
+          <h4 class="ft-tile-h4">
+            {F.listviews.h4Label}{' '}
+            <span class="ft-views-letters">
+              <span class="ft-vletter" data-ft-vletter={0}>S</span
+              ><span class="ft-vsep">/</span><span class="ft-vletter is-active" data-ft-vletter={1}>M</span
+              ><span class="ft-vsep">/</span><span class="ft-vletter" data-ft-vletter={2}>L</span>
+            </span>
+          </h4>
+          <p class="ft-tile-body">{F.listviews.body}</p>
+        </article>
+
+        {/* Deutsch & Englisch (span 4) */}
+        <article class="ft-tile ft-tile--lang">
+          <span class="ft-tile-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M2.8 12h18.4"/><path d="M12 2.8c2.6 2.6 4 5.9 4 9.2s-1.4 6.6-4 9.2c-2.6-2.6-4-5.9-4-9.2s1.4-6.6 4-9.2Z"/></svg>
+          </span>
+          <h4 class="ft-tile-h4">{F.language.h4}</h4>
+          <p class="ft-tile-body">{F.language.body}</p>
+        </article>
+      </div>
+    </div>
   </div>
-</Section>
+</section>
+
+<style>
+  /* =====================================================================
+     Basis & Layout — heller CD-Grund, zentrale Rhythmus-/Inset-Tokens.
+     ===================================================================== */
+  .ft-section {
+    position: relative;
+    background-color: var(--color-grey);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+    overflow: hidden;
+  }
+  .ft-inner {
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* ---- Header ---- */
+  .ft-head {
+    text-align: center;
+    margin-bottom: clamp(2.75rem, 6vw, 4.5rem);
+  }
+  .ft-eyebrow {
+    margin: 0 0 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8c8c8a;
+  }
+  .ft-h2 {
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.4vw, 3.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  /* Mask-Reveal-Wrapper: klippt NUR die einfahrende Zeile (JS). Ruhezustand voll
+     sichtbar (kein CSS-Vorverstecken). padding/margin schützen Ober-/Unterlängen. */
+  .ft-mask {
+    display: inline-block;
+    overflow: hidden;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
+    vertical-align: top;
+  }
+  .ft-mask-in {
+    display: inline-block;
+    will-change: transform;
+  }
+  .ft-mark {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .ft-mark-hl {
+    position: absolute;
+    inset: 0.08em -0.08em 0.05em -0.08em;
+    background-color: var(--color-yellow);
+    border-radius: 0.08em;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .ft-mark-tx {
+    position: relative;
+    z-index: 1;
+  }
+  .ft-sub {
+    margin-top: clamp(1rem, 2vw, 1.4rem);
+    margin-inline: auto;
+    max-width: 55ch;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.78);
+    text-wrap: balance;
+  }
+
+  /* =====================================================================
+     TIER 1 — Basis-Stapel (gilt IMMER). Blöcke untereinander, je mit Phone.
+     ===================================================================== */
+  .ft-blocks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3.5rem, 8vw, 5.5rem);
+  }
+  .ft-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .ft-block-copy {
+    max-width: 34rem;
+  }
+  .ft-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.6rem;
+    height: 2.1rem;
+    padding: 0 0.7rem;
+    border-radius: 0.6rem;
+    background-color: var(--color-yellow);
+    color: var(--color-black);
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .ft-h3 {
+    margin-top: 1rem;
+    font-weight: 900;
+    font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+  }
+  .ft-body {
+    margin-top: 0.85rem;
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.78);
+  }
+  .ft-checks {
+    list-style: none;
+    margin: 1.4rem 0 0;
+    padding: 0;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    text-align: left;
+  }
+  .ft-check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+    font-weight: 500;
+    color: var(--color-black);
+  }
+  .ft-check-ic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    flex: none;
+    border-radius: 999px;
+    background-color: var(--color-yellow);
+    color: var(--color-black);
+  }
+  .ft-check-ic :global(svg) {
+    width: 0.85rem;
+    height: 0.85rem;
+    display: block;
+  }
+
+  /* ---- Phone-Bühne (Basis-Block-Phone + Sticky-Phone teilen dieselbe Optik) ---- */
+  .ft-phone-stage {
+    position: relative;
+    width: clamp(240px, 30vw, 320px);
+  }
+  .ft-glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 210%;
+    height: 150%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 74%);
+    filter: blur(70px);
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .ft-phone {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+  .ft-frame {
+    position: relative;
+    z-index: 10;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  /* Screenshots absolut übereinander (Crossfade). Geometrie = exakt Hero/Portale. */
+  .ft-shot {
+    position: absolute;
+    left: 2.4%;
+    top: 0.6%;
+    width: 95.4%;
+    height: 98.9%;
+    border-radius: 11.5% / 5.3%;
+    overflow: hidden;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .ft-shot.is-active {
+    opacity: 1;
+  }
+  .ft-shot-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+
+  /* Basis-Block-Phone: zentriert, von unten angeschnitten (nur oberer Teil sichtbar,
+     zitiert den Mobile-Hero) → spart Höhe. Der Anschnitt gilt für den Basis-Stapel. */
+  .ft-block-phone {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .ft-phone-stage--inline {
+    /* Angeschnitten: der untere Teil des Phones wird geклippt. */
+    width: clamp(220px, 62vw, 300px);
+    max-height: 340px;
+    overflow: hidden;
+    padding-top: 6px; /* Notch/Glow-Luft oben */
+  }
+
+  /* Progress-Balken (nur im Enhancement sichtbar). */
+  .ft-progress {
+    display: none;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+  .ft-bar {
+    width: 34px;
+    height: 4px;
+    border-radius: 999px;
+    background-color: rgb(59 59 58 / 0.18);
+    transition: background-color 0.3s ease;
+  }
+  .ft-bar.is-active {
+    background-color: var(--color-yellow);
+  }
+
+  /* Sticky-Phone-Spalte: Default versteckt (Deko-Duplikat). */
+  .ft-sticky {
+    display: none;
+  }
+
+  /* =====================================================================
+     DESKTOP-ENHANCEMENT — nur wenn JS die Klasse .is-enhanced setzt
+     (≥lg + pointer:fine + erlaubte Bewegung). Zweispaltig: links Sticky-Phone,
+     rechts scrollende Blöcke. Ohne die Klasse bleibt der Basis-Stapel (oben).
+     ===================================================================== */
+  .ft-steps.is-enhanced {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.9fr) 1.1fr;
+    gap: clamp(3rem, 6vw, 6rem);
+    align-items: start;
+  }
+  .ft-steps.is-enhanced .ft-sticky {
+    display: block;
+    /* top = Header-Höhe + Abstand; max-height begrenzt für flache Screens. */
+    position: sticky;
+    top: calc(var(--header-h) + 2.5rem);
+    align-self: start;
+  }
+  .ft-steps.is-enhanced .ft-sticky-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ft-steps.is-enhanced .ft-sticky .ft-phone-stage {
+    width: min(320px, 30vw);
+    max-height: calc(100svh - var(--header-h) - 8rem);
+  }
+  .ft-steps.is-enhanced .ft-progress {
+    display: flex;
+  }
+  .ft-steps.is-enhanced .ft-blocks {
+    gap: 0;
+  }
+  .ft-steps.is-enhanced .ft-block {
+    /* Jeder Textblock nimmt Viewport-Höhe ein → tritt beim Scrollen einzeln „aktiv". */
+    min-height: 82vh;
+    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    opacity: 0.35;
+    transition: opacity 0.4s ease;
+  }
+  .ft-steps.is-enhanced .ft-block.is-active {
+    opacity: 1;
+  }
+  .ft-steps.is-enhanced .ft-block-copy {
+    max-width: 38rem;
+  }
+  .ft-steps.is-enhanced .ft-checks {
+    align-items: flex-start;
+  }
+  /* Basis-Block-Phones NUR im Enhancement ausblenden (nie per CSS-Default). */
+  .ft-steps.is-enhanced .ft-block-phone {
+    display: none;
+  }
+
+  /* Glow-Atmen (nur bei erlaubter Bewegung). */
+  @media (prefers-reduced-motion: no-preference) {
+    .ft-glow {
+      animation: ftGlowBreath 10s ease-in-out infinite;
+    }
+  }
+  @keyframes ftGlowBreath {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translate(-50%, -52%) scale(1.06);
+      opacity: 0.58;
+    }
+  }
+
+  /* =====================================================================
+     TIER 2 — Bento
+     ===================================================================== */
+  .ft-bento-wrap {
+    margin-top: clamp(4rem, 9vw, 7rem);
+  }
+  .ft-bento-title {
+    text-align: center;
+    font-weight: 900;
+    font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+    margin-bottom: clamp(1.75rem, 4vw, 2.75rem);
+  }
+
+  .ft-bento {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(0.9rem, 1.6vw, 1.25rem);
+  }
+  /* ab md: 6 Spalten — filter(4)+dark(2), dann 3 kleine je 2. */
+  @media (min-width: 768px) {
+    .ft-bento {
+      grid-template-columns: repeat(6, 1fr);
+    }
+    .ft-tile--filter {
+      grid-column: span 4;
+    }
+    .ft-tile--dark {
+      grid-column: span 2;
+    }
+    .ft-tile--tg,
+    .ft-tile--views,
+    .ft-tile--lang {
+      grid-column: span 2;
+    }
+  }
+  /* ab lg: 12 Spalten — filter(8)+dark(4), dann 3 kleine je 4. */
+  @media (min-width: 1024px) {
+    .ft-bento {
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .ft-tile--filter {
+      grid-column: span 8;
+    }
+    .ft-tile--dark {
+      grid-column: span 4;
+    }
+    .ft-tile--tg,
+    .ft-tile--views,
+    .ft-tile--lang {
+      grid-column: span 4;
+    }
+  }
+
+  .ft-tile {
+    position: relative;
+    background-color: var(--color-offwhite);
+    border-radius: 16px;
+    padding: clamp(1.5rem, 2.6vw, 2.25rem);
+    /* weiche, große Elevation mit niedriger Opacity */
+    box-shadow: 0 24px 50px -28px rgb(59 59 58 / 0.4);
+    border: 1px solid rgb(59 59 58 / 0.04);
+  }
+  .ft-tile-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background-color: var(--color-grey);
+    color: var(--color-black);
+  }
+  .ft-tile-icon :global(svg) {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: block;
+  }
+  .ft-tile-h4 {
+    font-weight: 900;
+    font-size: clamp(1.15rem, 1.8vw, 1.35rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+  .ft-tile-body {
+    margin-top: 0.55rem;
+    font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+    line-height: 1.45;
+    color: rgb(59 59 58 / 0.75);
+  }
+
+  /* ---- Filter-Kachel: Chip-Wolke ---- */
+  .ft-chips {
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+  .ft-pill {
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-grey);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-black);
+    white-space: nowrap;
+  }
+
+  /* =====================================================================
+     Easter-Egg A — Listenansichten S / M / L
+     ===================================================================== */
+  .ft-views-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background-color: var(--color-grey);
+  }
+  .ft-layout {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 30px;
+    height: 24px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .ft-layout.is-active {
+    opacity: 1;
+  }
+  /* S: 4 dünne Zeilen */
+  .ft-lrow {
+    height: 3px;
+    border-radius: 1px;
+    background-color: #a9a9a7;
+  }
+  .ft-layout[data-ft-layout='0'] {
+    justify-content: center;
+    gap: 3px;
+  }
+  /* M: 2 Zeilen mit Thumbnail */
+  .ft-lline {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+  }
+  .ft-lthumb {
+    width: 9px;
+    height: 100%;
+    border-radius: 2px;
+    background-color: #8f8f8d;
+    flex: none;
+  }
+  .ft-ltext {
+    height: 3px;
+    border-radius: 1px;
+    background-color: #a9a9a7;
+    flex: 1;
+  }
+  .ft-layout[data-ft-layout='1'] {
+    gap: 3px;
+  }
+  /* L: großer Bildblock + 1 Zeile */
+  .ft-lbig {
+    flex: 1;
+    border-radius: 3px;
+    background-color: #8f8f8d;
+  }
+  .ft-lrow--wide {
+    height: 4px;
+  }
+
+  .ft-views-letters {
+    white-space: nowrap;
+  }
+  .ft-vletter {
+    display: inline-block;
+    padding: 0 0.14em;
+    border-radius: 0.14em;
+    transition: background-color 0.28s ease, color 0.28s ease;
+  }
+  .ft-vletter.is-active {
+    background-color: var(--color-yellow);
+    color: var(--color-black);
+  }
+  .ft-vsep {
+    color: rgb(59 59 58 / 0.35);
+    padding: 0 0.1em;
+  }
+
+  /* =====================================================================
+     Easter-Egg B — Dark-Mode-Kachel mit Lichtschalter-Kette
+     ===================================================================== */
+  .ft-tile--dark {
+    /* Icon: Mond sichtbar, Sonne aus (Light-Zustand). */
+    transition: background-color 0.13s linear;
+  }
+  .ft-tile--dark .ft-tile-icon {
+    color: var(--color-black);
+  }
+  .ft-ic-sun {
+    display: none;
+  }
+  /* Dark-Zustand (Toggle) — harter Cut ~130ms linear. */
+  .ft-tile--dark.is-dark {
+    background-color: var(--color-black);
+  }
+  .ft-tile--dark.is-dark .ft-tile-h4 {
+    color: var(--color-offwhite);
+  }
+  .ft-tile--dark.is-dark .ft-tile-body {
+    color: #c9c9c8;
+  }
+  .ft-tile--dark.is-dark .ft-tile-icon {
+    background-color: rgb(246 246 246 / 0.1);
+    color: var(--color-yellow);
+  }
+  .ft-tile--dark.is-dark .ft-ic-moon {
+    display: none;
+  }
+  .ft-tile--dark.is-dark .ft-ic-sun {
+    display: block;
+  }
+  .ft-tile--dark .ft-tile-h4,
+  .ft-tile--dark .ft-tile-body {
+    transition: color 0.13s linear;
+  }
+
+  /* Kette: hängt rechts von der Kachel-Oberkante, ABSOLUT (nie im Text-Flow).
+     Unsichtbare Klickfläche ≥44×44px, Griff + dünne Linie sichtbar. */
+  .ft-chain {
+    position: absolute;
+    top: 0;
+    right: clamp(1.4rem, 3vw, 2.1rem);
+    width: 44px;
+    height: 74px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 3;
+    transform-origin: top center;
+  }
+  .ft-chain-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 50px;
+    background-color: rgb(59 59 58 / 0.55);
+    border-radius: 1px;
+    transition: background-color 0.13s linear;
+  }
+  .ft-chain-grip {
+    position: absolute;
+    top: 46px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background-color: var(--color-black);
+    box-shadow: 0 2px 6px -2px rgb(59 59 58 / 0.5);
+    transition: background-color 0.13s linear;
+  }
+  .ft-tile--dark.is-dark .ft-chain-line {
+    background-color: var(--color-yellow);
+  }
+  .ft-tile--dark.is-dark .ft-chain-grip {
+    background-color: var(--color-yellow);
+  }
+  /* Sanfter Pendel-Sway (nur erlaubte Bewegung). */
+  @media (prefers-reduced-motion: no-preference) {
+    .ft-chain {
+      animation: ftChainSway 3.5s ease-in-out infinite;
+    }
+  }
+  @keyframes ftChainSway {
+    0%,
+    100% {
+      transform: rotate(-6deg);
+    }
+    50% {
+      transform: rotate(6deg);
+    }
+  }
+  .ft-chain:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  .ft-tile--dark.is-dark .ft-chain:focus-visible {
+    outline-color: var(--color-yellow);
+  }
+
+  /* =====================================================================
+     MOBILE — kompakter, ruhig. Kein Enhancement (JS-gated).
+     ===================================================================== */
+  @media (max-width: 767.98px) {
+    .ft-h2 {
+      font-size: clamp(1.85rem, 8vw, 2.5rem);
+    }
+    .ft-blocks {
+      gap: clamp(3rem, 10vw, 4rem);
+    }
+    .ft-h3 {
+      font-size: clamp(1.4rem, 6.5vw, 1.85rem);
+    }
+    /* Checks kompakter setzen (NICHT ausblenden — Inhalte bleiben sichtbar). */
+    .ft-checks {
+      margin-top: 1.1rem;
+      gap: 0.5rem;
+    }
+  }
+</style>

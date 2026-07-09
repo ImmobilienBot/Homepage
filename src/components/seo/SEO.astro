@@ -53,8 +53,16 @@ const jsonLd = {
       description,
       url: site.url,
       downloadUrl: [storeLinks.ios, storeLinks.android],
-      // Überwachte Portale mit voller Domain (für strukturierte Daten).
+      // App-Features (konsistent zur Features-Sektion + llms.txt) + überwachte
+      // Portale mit voller Domain (für strukturierte Daten).
       featureList: [
+        'Suchbereich auf der Karte zeichnen oder per Radius, mehrere Suchorte gleichzeitig',
+        'Echtzeit-Push, sobald ein passendes Angebot online geht (auch via Telegram)',
+        'Bewerbungsschreiben per Auto-Copy beim Antippen eines Angebots',
+        'Favoriten und Status-Filter (Alle, Ungesehen, Favoriten, Beworben)',
+        'Erweiterte Filter: möbliert, WG-Zimmer, WBS, Tauschwohnung, Zwischen-/Untermiete, ohne IS24-Plus',
+        'Listenansichten S/M/L',
+        'Deutsch & Englisch, Light- & Dark-Mode',
         `Überwacht ${portalCount} Immobilienportale in Echtzeit`,
         ...portals.map((p) => `${p.name} (${p.domain})`),
       ],
