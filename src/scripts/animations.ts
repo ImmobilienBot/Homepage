@@ -1344,15 +1344,18 @@ function initPreise() {
   const section = document.querySelector<HTMLElement>('#preise');
   if (!section) return;
 
+  const tile = section.querySelector<HTMLElement>('[data-pr-tile]');
   const lineIns = gsap.utils.toArray<HTMLElement>('#preise .pr-line-in');
   const markHls = gsap.utils.toArray<HTMLElement>('#preise .pr-mark-hl');
   const sub = section.querySelector<HTMLElement>('[data-pr-sub]');
   const cards = gsap.utils.toArray<HTMLElement>('#preise [data-pr-card]');
   const benefits = gsap.utils.toArray<HTMLElement>('#preise [data-pr-benefit]');
   const isMobile = !window.matchMedia('(min-width: 1024px)').matches;
+  // round-Wert an den tatsächlichen Kachel-Radius koppeln (clamp → aufgelöste px).
+  const radius = tile ? getComputedStyle(tile).borderTopLeftRadius || '40px' : '40px';
 
-  // Startzustände NUR per gsap.set.
-  gsap.set(section, { clipPath: 'inset(0 0 100% 0)' });
+  // Startzustände NUR per gsap.set (ohne JS / reduced-motion: Kachel sofort da).
+  if (tile) gsap.set(tile, { clipPath: `inset(0 0 100% 0 round ${radius})` });
   if (lineIns.length) gsap.set(lineIns, { yPercent: 110 });
   if (markHls.length) gsap.set(markHls, { scaleX: 0, transformOrigin: 'left center' });
   if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
@@ -1364,8 +1367,22 @@ function initPreise() {
     defaults: { ease: 'power3.out' },
   });
 
-  // Sektions-Wipe (Echo der Problem-Sektion, vertikal invertiert).
-  tl.to(section, { clipPath: 'inset(0% 0 0% 0)', duration: isMobile ? 0.7 : 0.9, ease: 'power3.inOut' }, 0);
+  // Kachel-Wipe (Echo der Problem-Sektion, vertikal invertiert) — clip-path nimmt
+  // den Radius mit. onComplete: clip-path lösen, sonst würde inset(0 0 0 0) den
+  // weichen Schatten der Kachel wegklippen.
+  if (tile)
+    tl.to(
+      tile,
+      {
+        clipPath: `inset(0% 0 0% 0 round ${radius})`,
+        duration: isMobile ? 0.7 : 0.9,
+        ease: 'power3.inOut',
+        onComplete: () => {
+          tile.style.clipPath = 'none';
+        },
+      },
+      0,
+    );
   // Headline zeilenweise aus der Maske, +0.45s nach Wipe-Beginn.
   if (lineIns.length) tl.to(lineIns, { yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.09 }, 0.45);
   // Marker ~0.35s nach seiner Zeile.

@@ -62,6 +62,15 @@ export function getStoreLinks(position = 'home_top'): StoreLinks {
   return { ios, android };
 }
 
+/**
+ * Physisch erreichbare Deploy-Basis-URL — AUSSCHLIESSLICH für gescannte Links
+ * (QR-Code), die auf die aktuell live erreichbare Seite zeigen müssen. Die
+ * kanonische Domain für SEO/Canonical/JSON-LD/Sitemap/hreflang bleibt die
+ * astro.config-`site` (immobilien-bot.de) — hier NICHTS anderes anhängen.
+ * TODO(Launch): auf 'https://immobilien-bot.de' umstellen (Launch-Checkliste).
+ */
+export const deployBaseUrl = 'https://homepage-4f3.pages.dev';
+
 /* ------------------------------------------------------------------ */
 /* Bewertungen                                                        */
 /* ------------------------------------------------------------------ */

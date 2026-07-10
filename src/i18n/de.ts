@@ -205,7 +205,7 @@ export const de = {
       // Headline zweizeilig; „testen" trägt den invertierten Marker.
       headline: { line1: 'Erst testen.', line2: 'Dann entscheiden.', mark: 'testen' },
       subline:
-        '7 Tage voller Zugriff auf alles — für 0 €. Danach entscheidest du dich: Woche oder Monat. Jederzeit kündbar.',
+        '7 Tage voller Zugriff auf alles — für 0 €. Woche oder Monat wählst du beim Start, bezahlt wird erst ab Tag 8. Jederzeit kündbar.',
       trial: {
         label: 'Kostenlos testen',
         // Preis („0 €") + Plan-Preise kommen aus site.ts (Intl-formatiert).
@@ -214,18 +214,18 @@ export const de = {
         timeline: [
           { lead: 'Heute', text: 'App laden, Woche oder Monat wählen, gratis starten' },
           { lead: 'Tag 1–7', text: 'alles testen, jederzeit kündbar' },
-          { lead: 'Tag 8', text: 'nur wenn du bleibst, läuft dein gewähltes Abo weiter' },
+          { lead: 'Tag 8', text: 'erst jetzt startet dein gewähltes Abo' },
         ],
         storeNote:
-          'Der Gratis-Zeitraum startet als Abo über Apple bzw. Google — du wählst Woche oder Monat, die ersten 7 Tage kosten 0 €. Kündigst du in dieser Zeit in den Store-Einstellungen, zahlst du nichts.',
+          'Du startest deine Testphase, indem du im Store Woche oder Monat wählst — Apple und Google nennen das „Abo abschließen", berechnet wird aber erst ab Tag 8. Kündigst du vorher, zahlst du nichts.',
         qrCaption: 'Mit dem Handy scannen — landet automatisch im richtigen Store.',
       },
       plans: {
-        label: 'Und danach?',
+        label: 'Ab Tag 8',
         // Namen + Suffixe sichtbar; Preise/Tagespreise aus site.ts abgeleitet.
         week: { name: 'Woche', suffix: '/ Woche', desc: 'kurz & intensiv für den Endspurt' },
         month: { name: 'Monat', suffix: '/ Monat', desc: 'der Standard für die ernsthafte Suche' },
-        chip: 'Bester Tagespreis',
+        chip: 'Spart 33 %',
         // {price} wird durch den Intl-formatierten Tagespreis ersetzt.
         perDay: '≈ {price} am Tag',
         note: 'Kein Kleingedrucktes: Beide Abos enthalten immer alle Funktionen, verlängern sich automatisch und sind jederzeit im Store kündbar.',

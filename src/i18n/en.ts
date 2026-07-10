@@ -197,7 +197,7 @@ export const en: Dict = {
       // Two-line headline; „Try it" carries the inverted marker.
       headline: { line1: 'Try it first.', line2: 'Then decide.', mark: 'Try it' },
       subline:
-        "7 days of full access to everything — for €0. Then it's your call: week or month. Cancel anytime.",
+        "7 days of full access to everything — for €0. You pick week or month at the start, and you're only charged from day 8. Cancel anytime.",
       trial: {
         label: 'Try it free',
         priceSuffix: '· 7 days',
@@ -205,17 +205,17 @@ export const en: Dict = {
         timeline: [
           { lead: 'Today', text: 'get the app, pick week or month, start for free' },
           { lead: 'Days 1–7', text: 'test everything, cancel anytime' },
-          { lead: 'Day 8', text: 'your chosen plan only continues if you stay' },
+          { lead: 'Day 8', text: 'only now does your chosen plan start' },
         ],
         storeNote:
-          'The free period starts as a subscription via Apple or Google — you pick week or month, and the first 7 days cost €0. Cancel in your store settings within those 7 days and you pay nothing.',
+          "You start your trial by picking week or month in the store — Apple and Google call this 'subscribing', but you're only charged from day 8. Cancel before then and you pay nothing.",
         qrCaption: "Scan with your phone — you'll land in the right store automatically.",
       },
       plans: {
-        label: 'And after that?',
+        label: 'From day 8',
         week: { name: 'Week', suffix: '/ week', desc: 'short and intense for the final sprint' },
         month: { name: 'Month', suffix: '/ month', desc: 'the standard for a serious search' },
-        chip: 'Best daily rate',
+        chip: 'Save 33%',
         perDay: '≈ {price} a day',
         note: 'No fine print: both plans always include every feature, renew automatically, and can be cancelled in the store at any time.',
       },

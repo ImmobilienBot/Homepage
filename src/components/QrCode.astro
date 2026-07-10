@@ -9,6 +9,7 @@
  * Nur Desktop einsetzen (Aufrufer gated hidden lg:block).
  */
 import QRCode from 'qrcode';
+import { deployBaseUrl } from '../data/site';
 
 interface Props {
   /** Tracking-/Positionsschlüssel im Ziel-Link (?c=…). */
@@ -23,8 +24,9 @@ interface Props {
 const { campaign = 'preise_qr', caption, ariaLabel, class: cls = '' } = Astro.props;
 
 const target = `/go/app?c=${campaign}`;
-// Absolute URL für den QR-Inhalt (Handy-Scan braucht die volle Domain).
-const encodeUrl = `${import.meta.env.SITE}${target}`;
+// Absolute URL für den QR-Inhalt (Handy-Scan braucht die volle Domain). Bewusst
+// deployBaseUrl (aktuell live erreichbare Seite), NICHT die kanonische SEO-Domain.
+const encodeUrl = `${deployBaseUrl}${target}`;
 
 // Build-Zeit-SVG: dunkle Module #3b3b3a, transparenter Hintergrund (#0000),
 // keine Quiet-Zone im SVG (die gelbe Kachel liefert sie als padding).

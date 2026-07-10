@@ -58,8 +58,11 @@ const BENEFIT_ICONS = [
 ---
 
 <section id="preise" aria-labelledby="preise-heading" class="pr-section" data-pr-section>
-  <div class="pr-inner">
-    {/* ---- Header: H2 (zwei Zeilen, invertierter Marker) + Subline ---- */}
+  {/* Schwebende Riesen-Kachel (das einzige Gelb) — breiter als der Content-Container;
+      der Inhalt fluchtet über .pr-inner exakt mit dem Content-Container (Features). */}
+  <div class="pr-tile" data-pr-tile>
+    <div class="pr-inner">
+      {/* ---- Header: H2 (zwei Zeilen, invertierter Marker) + Subline ---- */}
     <header class="pr-head">
       <h2 id="preise-heading" class="pr-h2">
         <span class="pr-line"
@@ -160,23 +163,45 @@ const BENEFIT_ICONS = [
         }
       </ul>
     </div>
+    </div>
   </div>
 </section>
 
 <style>
   /* =====================================================================
-     Preise — vollflächig gelb (#fff03c), einheitlicher Sektions-Rhythmus/Inset.
+     Preise — grauer Seitenhintergrund, das Gelb liegt in einer schwebenden
+     Riesen-Kachel (breiter als der Content-Container). Der Kachel-Inhalt fluchtet
+     über .pr-inner exakt mit dem globalen Content-Container (wie Features).
      ===================================================================== */
   .pr-section {
     position: relative;
-    background-color: var(--color-yellow);
+    background-color: var(--color-grey);
     padding-block: var(--spacing-section);
+  }
+  /* Riesen-Kachel: breiter als der Content, gelb, weiche große Elevation. */
+  .pr-tile {
+    --pr-radius: clamp(24px, 3vw, 40px);
+    margin-inline: clamp(12px, 3vw, 40px);
+    padding-block: clamp(48px, 7vw, 88px);
+    /* Content-Inset INNERHALB der Kachel = derselbe Inset wie in Features; zusammen
+       mit .pr-inner (72rem, zentriert) fluchtet der Text auf breiten Screens exakt
+       mit dem globalen Content-Container. */
     padding-inline: var(--spacing-inset);
-    overflow: clip;
+    border-radius: var(--pr-radius);
+    background-color: var(--color-yellow);
+    box-shadow: 0 24px 80px -24px rgb(59 59 58 / 0.25);
   }
   .pr-inner {
     max-width: 72rem;
     margin-inline: auto;
+  }
+  /* Mobile: schmalerer Seitenrand, kleinerer Radius, reduziertes Innen-Padding. */
+  @media (max-width: 1023.98px) {
+    .pr-tile {
+      --pr-radius: 24px;
+      margin-inline: 12px;
+      padding-block: 48px;
+    }
   }
 
   /* ---- Header ---- */
@@ -319,7 +344,7 @@ const BENEFIT_ICONS = [
   /* Timeline als semantische Liste mit Verbindungslinie + Punkten. */
   .pr-timeline {
     list-style: none;
-    margin: 1.75rem 0 0;
+    margin: 24px 0 0;
     padding: 0 0 0 22px;
     position: relative;
   }
@@ -366,11 +391,11 @@ const BENEFIT_ICONS = [
   }
 
   .pr-badges {
-    margin-top: 1.75rem;
+    margin-top: 32px;
     --badge-h: 48px;
   }
   .pr-store-note {
-    margin: 1rem 0 0;
+    margin: 16px 0 0;
     font-size: 0.75rem;
     line-height: 1.55;
     color: rgb(246 246 246 / 0.55);
@@ -382,10 +407,14 @@ const BENEFIT_ICONS = [
   .pr-plans {
     display: flex;
     flex-direction: column;
-    gap: 12px;
   }
+  /* Label → erste Karte 16px; zwischen den Karten 24px (überstehender Chip
+     top −11px braucht Freiraum); Karten → Notiz 16px. */
   .pr-plans-label {
-    margin-bottom: 0.25rem;
+    margin: 0 0 16px;
+  }
+  .pr-plan + .pr-plan {
+    margin-top: 24px;
   }
   .pr-plan {
     position: relative;
@@ -439,7 +468,7 @@ const BENEFIT_ICONS = [
     white-space: nowrap;
   }
   .pr-plan-note {
-    margin: 0.25rem 0 0;
+    margin: 16px 0 0;
     font-size: 0.8125rem;
     line-height: 1.5;
     color: rgb(59 59 58 / 0.75);
