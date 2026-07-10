@@ -49,11 +49,12 @@ user first, in real time, when a listing matches their criteria.
 
 ## Pricing
 
-- Free — 7-day free trial, no risk (0,00 €)
-- 7 days — 2,99 €
-- 1 month — 7,99 €
-- All plans: real-time push (incl. Telegram), all portals in one app, all features,
-  cancel anytime.
+- Try first, then decide: the first 7 days are free (0 €).
+- After the trial you choose a subscription: Week — 2,99 € / week, or Month — 7,99 € / month.
+- Both plans auto-renew and can be cancelled anytime in the App Store or Google Play; cancel
+  within the first 7 days and you pay nothing.
+- Both plans always include every feature: real-time push (incl. Telegram), all portals in one
+  app, favorites, application letter and more.
 
 ## Ratings
 

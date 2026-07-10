@@ -22,6 +22,8 @@ export default defineConfig({
 
   integrations: [
     sitemap({
+      // /go/app ist eine sprachneutrale Redirect-Weiche (noindex) → nicht in die Sitemap.
+      filter: (page) => !page.includes('/go/'),
       i18n: {
         defaultLocale: 'de',
         locales: {

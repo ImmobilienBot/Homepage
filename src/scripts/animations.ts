@@ -1334,6 +1334,51 @@ function initReveals() {
 }
 
 /**
+ * Preise-Sektion: eine Timeline (once:true). Startzustände AUSSCHLIESSLICH per
+ * gsap.set (ohne JS steht alles im Endzustand; reduced-motion überspringt die
+ * Funktion komplett — inkl. der sets). Sektions-Wipe per clip-path (bewusste
+ * Ausnahme wie Problem-Sektion, hier vertikal invertiert), Rest nur transform/
+ * opacity. Store-Badges kommen mit dem Karten-Stagger (kein separates Verzögern).
+ */
+function initPreise() {
+  const section = document.querySelector<HTMLElement>('#preise');
+  if (!section) return;
+
+  const lineIns = gsap.utils.toArray<HTMLElement>('#preise .pr-line-in');
+  const markHls = gsap.utils.toArray<HTMLElement>('#preise .pr-mark-hl');
+  const sub = section.querySelector<HTMLElement>('[data-pr-sub]');
+  const cards = gsap.utils.toArray<HTMLElement>('#preise [data-pr-card]');
+  const benefits = gsap.utils.toArray<HTMLElement>('#preise [data-pr-benefit]');
+  const isMobile = !window.matchMedia('(min-width: 1024px)').matches;
+
+  // Startzustände NUR per gsap.set.
+  gsap.set(section, { clipPath: 'inset(0 0 100% 0)' });
+  if (lineIns.length) gsap.set(lineIns, { yPercent: 110 });
+  if (markHls.length) gsap.set(markHls, { scaleX: 0, transformOrigin: 'left center' });
+  if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
+  if (cards.length) gsap.set(cards, { autoAlpha: 0, y: 24 });
+  if (benefits.length) gsap.set(benefits, { autoAlpha: 0, y: 16 });
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: section, start: 'top 75%', once: true },
+    defaults: { ease: 'power3.out' },
+  });
+
+  // Sektions-Wipe (Echo der Problem-Sektion, vertikal invertiert).
+  tl.to(section, { clipPath: 'inset(0% 0 0% 0)', duration: isMobile ? 0.7 : 0.9, ease: 'power3.inOut' }, 0);
+  // Headline zeilenweise aus der Maske, +0.45s nach Wipe-Beginn.
+  if (lineIns.length) tl.to(lineIns, { yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.09 }, 0.45);
+  // Marker ~0.35s nach seiner Zeile.
+  if (markHls.length) tl.to(markHls, { scaleX: 1, duration: 0.4, ease: 'power2.out' }, 0.8);
+  // Subline.
+  if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.5);
+  // Karten (Trial, Plan 1, Plan 2) gestaffelt — Store-Badges kommen mit.
+  if (cards.length) tl.to(cards, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.12 }, 0.5);
+  // Benefits-Items.
+  if (benefits.length) tl.to(benefits, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.06 }, 0.7);
+}
+
+/**
  * Sprach-Kachel: Globus als Lottie (dieselbe Player-Lösung wie die Problem-
  * Sektion → gemeinsamer lottie_light-Chunk, kein zweites Runtime-Bundle). Instanz
  * erst laden, wenn die Kachel den Viewport betritt (IntersectionObserver),
@@ -1753,6 +1798,7 @@ if (!prefersReducedMotion) {
   initProblem3c();
   initBenefitLottie();
   initPortale();
+  initPreise();
   initReveals();
 }
 

@@ -200,7 +200,46 @@ export const de = {
         'Neues Angebot: 2-Zimmer Altbau, Kreuzberg – via Howoge.de',
       ],
     },
-    pricing: { title: 'Preise' },
+    pricing: {
+      title: 'Preise',
+      // Headline zweizeilig; „testen" trägt den invertierten Marker.
+      headline: { line1: 'Erst testen.', line2: 'Dann entscheiden.', mark: 'testen' },
+      subline:
+        '7 Tage voller Zugriff auf alles — für 0 €. Danach entscheidest du dich: Woche oder Monat. Jederzeit kündbar.',
+      trial: {
+        label: 'Kostenlos testen',
+        // Preis („0 €") + Plan-Preise kommen aus site.ts (Intl-formatiert).
+        priceSuffix: '· 7 Tage',
+        desc: 'Voller Funktionsumfang ab Sekunde eins: alle Portale, Echtzeit-Push, Favoriten, Bewerbungsschreiben.',
+        timeline: [
+          { lead: 'Heute', text: 'App laden, Woche oder Monat wählen, gratis starten' },
+          { lead: 'Tag 1–7', text: 'alles testen, jederzeit kündbar' },
+          { lead: 'Tag 8', text: 'nur wenn du bleibst, läuft dein gewähltes Abo weiter' },
+        ],
+        storeNote:
+          'Der Gratis-Zeitraum startet als Abo über Apple bzw. Google — du wählst Woche oder Monat, die ersten 7 Tage kosten 0 €. Kündigst du in dieser Zeit in den Store-Einstellungen, zahlst du nichts.',
+        qrCaption: 'Mit dem Handy scannen — landet automatisch im richtigen Store.',
+      },
+      plans: {
+        label: 'Und danach?',
+        // Namen + Suffixe sichtbar; Preise/Tagespreise aus site.ts abgeleitet.
+        week: { name: 'Woche', suffix: '/ Woche', desc: 'kurz & intensiv für den Endspurt' },
+        month: { name: 'Monat', suffix: '/ Monat', desc: 'der Standard für die ernsthafte Suche' },
+        chip: 'Bester Tagespreis',
+        // {price} wird durch den Intl-formatierten Tagespreis ersetzt.
+        perDay: '≈ {price} am Tag',
+        note: 'Kein Kleingedrucktes: Beide Abos enthalten immer alle Funktionen, verlängern sich automatisch und sind jederzeit im Store kündbar.',
+      },
+      benefits: {
+        label: 'Alles drin — in jedem Plan',
+        items: [
+          'Echtzeit-Push, auch via Telegram',
+          'Alle Portale in einer App',
+          'Alle Features: Favoriten, Bewerbung & Co.',
+          'Kein Risiko: jederzeit kündbar',
+        ],
+      },
+    },
     socialProof: { title: 'Das sagen Nutzer' },
     faq: { title: 'Häufige Fragen' },
     contact: { title: 'Kontakt' },

@@ -1,0 +1,127 @@
+---
+/**
+ * /go/app — QR-/Universal-Link-Weiche. Erkennt das OS und leitet in den richtigen
+ * Store; Desktop/unbekannt bleibt auf dem sichtbaren Fallback. Optionaler ?c=-Param
+ * setzt das Platzierungs-Tracking (iOS: ct, Android: utm_content).
+ *
+ * Sprachneutral (keine EN-Duplikat-Route), noindex + aus der Sitemap gefiltert
+ * (siehe astro.config sitemap-Filter). Bewusst KEINE volle BaseLayout/SEO-Kette
+ * (kein Header/Footer, keine hreflang-Alternates auf nicht existierende Routen) —
+ * nur ein schlankes Redirect-Dokument mit robots=noindex.
+ */
+import '@fontsource/roboto/latin-400.css';
+import '@fontsource/roboto/latin-700.css';
+import '@fontsource/roboto/latin-900.css';
+import '../../styles/global.css';
+import Logo from '../../assets/images/immobilien-bot-logo.svg';
+import StoreBadges from '../../components/StoreBadges.astro';
+import { storeLinks } from '../../data/site';
+
+const title = 'App laden – Immobilien Bot';
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {/* Frühe OS-Weiche: Store-URLs aus site.ts eingebettet, ?c=-Param validiert
+        und ins jeweilige Tracking-Feld gesetzt, dann location.replace. */}
+    <script is:inline define:vars={{ ios: storeLinks.ios, android: storeLinks.android }}>
+      (function () {
+        try {
+          var ua = navigator.userAgent || '';
+          var params = new URLSearchParams(location.search);
+          var c = params.get('c');
+          if (c && !/^[a-z0-9_-]{1,40}$/i.test(c)) c = null;
+
+          function withCampaign(url, isIos) {
+            if (!c) return url;
+            try {
+              var u = new URL(url);
+              if (isIos) {
+                u.searchParams.set('ct', c);
+              } else {
+                var ref = u.searchParams.get('referrer') || '';
+                var rp = new URLSearchParams(ref);
+                rp.set('utm_content', c);
+                u.searchParams.set('referrer', rp.toString());
+              }
+              return u.toString();
+            } catch (e) {
+              return url;
+            }
+          }
+
+          var isIOS =
+            /iPad|iPhone|iPod/.test(ua) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          var isAndroid = /android/i.test(ua);
+
+          var target = null;
+          if (isIOS) target = withCampaign(ios, true);
+          else if (isAndroid) target = withCampaign(android, false);
+
+          if (target) location.replace(target);
+        } catch (e) {
+          /* Fallback-Seite bleibt sichtbar */
+        }
+      })();
+    </script>
+  </head>
+  <body class="ga-body">
+    <main class="ga">
+      <a href="/" class="ga-logo" aria-label="Immobilien Bot – Startseite">
+        <Logo class="ga-logo-svg" />
+      </a>
+      <p class="ga-text">
+        Du wirst zum Store weitergeleitet …<br />
+        <span class="ga-text-en">Redirecting you to the store …</span>
+      </p>
+      <StoreBadges position="go_app" class="ga-badges" />
+    </main>
+
+    <style>
+      .ga-body {
+        background-color: var(--color-grey);
+      }
+      .ga {
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.75rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+      .ga-logo {
+        display: inline-flex;
+      }
+      .ga-logo-svg {
+        width: clamp(180px, 45vw, 240px);
+        height: auto;
+        display: block;
+      }
+      .ga-text {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: rgb(59 59 58 / 0.8);
+      }
+      .ga-text-en {
+        color: rgb(59 59 58 / 0.55);
+      }
+      .ga-badges {
+        justify-content: center;
+        --badge-h: 48px;
+      }
+    </style>
+  </body>
+</html>

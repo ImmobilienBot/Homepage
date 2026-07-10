@@ -192,7 +192,43 @@ export const en: Dict = {
         'New listing: 2-room period flat, Kreuzberg – via Howoge.de',
       ],
     },
-    pricing: { title: 'Pricing' },
+    pricing: {
+      title: 'Pricing',
+      // Two-line headline; „Try it" carries the inverted marker.
+      headline: { line1: 'Try it first.', line2: 'Then decide.', mark: 'Try it' },
+      subline:
+        "7 days of full access to everything — for €0. Then it's your call: week or month. Cancel anytime.",
+      trial: {
+        label: 'Try it free',
+        priceSuffix: '· 7 days',
+        desc: 'The full feature set from second one: all portals, real-time push, favorites, application letters.',
+        timeline: [
+          { lead: 'Today', text: 'get the app, pick week or month, start for free' },
+          { lead: 'Days 1–7', text: 'test everything, cancel anytime' },
+          { lead: 'Day 8', text: 'your chosen plan only continues if you stay' },
+        ],
+        storeNote:
+          'The free period starts as a subscription via Apple or Google — you pick week or month, and the first 7 days cost €0. Cancel in your store settings within those 7 days and you pay nothing.',
+        qrCaption: "Scan with your phone — you'll land in the right store automatically.",
+      },
+      plans: {
+        label: 'And after that?',
+        week: { name: 'Week', suffix: '/ week', desc: 'short and intense for the final sprint' },
+        month: { name: 'Month', suffix: '/ month', desc: 'the standard for a serious search' },
+        chip: 'Best daily rate',
+        perDay: '≈ {price} a day',
+        note: 'No fine print: both plans always include every feature, renew automatically, and can be cancelled in the store at any time.',
+      },
+      benefits: {
+        label: 'Everything included — in every plan',
+        items: [
+          'Real-time push, also via Telegram',
+          'All portals in one app',
+          'All features: favorites, application letter & more',
+          'No risk: cancel anytime',
+        ],
+      },
+    },
     socialProof: { title: 'What users say' },
     faq: { title: 'Frequently asked questions' },
     contact: { title: 'Contact' },

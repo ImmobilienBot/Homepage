@@ -1,35 +1,531 @@
 ---
 /**
- * Preise — 3 Karten (Gratis · 7 Tage · 1 Monat) + 4-Vorteile-Streifen.
- * CTA-Fokus: „7 Tage kostenlos testen – kein Risiko".
- * [Platzhalter — finales Karten-Design folgt.]
+ * Preise — die einzige gelbe Sektion (#fff03c). Trial-Karte (schwarz) mit
+ * Timeline + QR (Desktop) + Store-Badges, daneben die Plan-Spalte (Woche/Monat),
+ * darunter die Benefits-Leiste. Alle Texte aus i18n, alle Preise aus site.ts
+ * (Intl-formatiert). Genau EINE H1 bleibt im Hero → hier H2.
+ *
+ * Guardrails: Animations-Startzustände NUR per gsap.set (initPreise) — ohne JS /
+ * reduced-motion steht alles im Endzustand. Hover-Flip der Plan-Karten nur
+ * (pointer: fine), reine CSS-Transition (background/color), keine Transform.
  */
-import Section from '../Section.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { pricing, pricingBenefits } from '../../data/site';
+import { pricing } from '../../data/site';
+import StoreBadges from '../StoreBadges.astro';
+import QrCode from '../QrCode.astro';
 
-const t = useTranslations(getLangFromUrl(Astro.url));
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const P = t.sections.pricing;
+
+// Preise ausschließlich aus site.ts, locale-abhängig via Intl formatiert.
+const trialPlan = pricing.find((p) => p.id === 'free')!;
+const weekPlan = pricing.find((p) => p.id === 'week')!;
+const monthPlan = pricing.find((p) => p.id === 'month')!;
+
+const nf = (value: number, frac: number) =>
+  new Intl.NumberFormat(lang === 'en' ? 'en-IE' : 'de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: frac,
+    maximumFractionDigits: frac,
+  }).format(value);
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+const trialPrice = nf(trialPlan.priceValue, 0); // „0 €" / „€0"
+const weekPrice = nf(weekPlan.priceValue, 2);
+const monthPrice = nf(monthPlan.priceValue, 2);
+const weekPerDay = P.plans.perDay.replace('{price}', nf(round2(weekPlan.priceValue / 7), 2));
+const monthPerDay = P.plans.perDay.replace('{price}', nf(round2(monthPlan.priceValue / 30), 2));
+
+// Marker-Split (Prefix + markiertes Keyword + Suffix) für die Headline-Zeile 1.
+function markParts(text: string, mark: string) {
+  const i = text.indexOf(mark);
+  if (i < 0) return { pre: text, mark: '', post: '' };
+  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
+}
+const h = markParts(P.headline.line1, P.headline.mark);
+
+// Benefits-Linienicons (26×26, stroke=currentColor 2, fill none, runde Caps):
+// Glocke · gestapelte Ebenen · Stern · Kreis mit X.
+const BENEFIT_ICONS = [
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.6.9-4.8 4.6 1.2 6.5-5.9-3.1-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9Z"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M15 9l-6 6M9 9l6 6"/></svg>`,
+];
 ---
 
-<Section id="preise" title={t.sections.pricing.title}>
-  <div class="grid gap-4 sm:grid-cols-3">
-    {
-      pricing.map((plan) => (
-        <div
-          class:list={[
-            'rounded-card p-6',
-            plan.highlight ? 'bg-yellow text-black' : 'bg-offwhite',
-          ]}
+<section id="preise" aria-labelledby="preise-heading" class="pr-section" data-pr-section>
+  <div class="pr-inner">
+    {/* ---- Header: H2 (zwei Zeilen, invertierter Marker) + Subline ---- */}
+    <header class="pr-head">
+      <h2 id="preise-heading" class="pr-h2">
+        <span class="pr-line"
+          ><span class="pr-line-in"
+            >{h.pre}<span class="pr-mark"
+              ><span class="pr-mark-hl" aria-hidden="true"></span><span class="pr-mark-tx"
+                >{h.mark}</span
+              ></span
+            >{h.post}</span
+          ></span
         >
-          <p class="font-bold">{plan.name}</p>
-          <p class="mt-2 text-subhead font-black">{plan.price}</p>
-          {plan.note && <p class="mt-2 text-body opacity-80">{plan.note}</p>}
-        </div>
-      ))
-    }
-  </div>
+        <span class="pr-line"><span class="pr-line-in">{P.headline.line2}</span></span>
+      </h2>
+      <p class="pr-sub" data-pr-sub>{P.subline}</p>
+    </header>
 
-  <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-body opacity-80">
-    {pricingBenefits.map((b) => <li>✓ {b}</li>)}
-  </ul>
-</Section>
+    {/* ---- Grid: Trial-Karte | Plan-Spalte ---- */}
+    <div class="pr-grid">
+      {/* ===== Trial-Karte (schwarz) ===== */}
+      <article class="pr-trial" data-pr-card>
+        <div class="pr-trial-head">
+          <div class="pr-trial-lead">
+            <p class="pr-label pr-label--light">{P.trial.label}</p>
+            <p class="pr-price">
+              <span class="pr-price-val">{trialPrice}</span>
+              <span class="pr-price-suffix">{P.trial.priceSuffix}</span>
+            </p>
+            <p class="pr-trial-desc">{P.trial.desc}</p>
+          </div>
+          {/* QR nur Desktop (hidden lg:block via CSS). */}
+          <div class="pr-qr">
+            <QrCode
+              campaign="preise_qr"
+              caption={P.trial.qrCaption}
+              ariaLabel={
+                lang === 'en'
+                  ? 'QR code: get the app — takes you to the right app store'
+                  : 'QR-Code: App laden — führt zum passenden App-Store'
+              }
+            />
+          </div>
+        </div>
+
+        <ol class="pr-timeline">
+          {
+            P.trial.timeline.map((item) => (
+              <li class="pr-tl-item">
+                <span class="pr-tl-lead">{item.lead}</span> — {item.text}
+              </li>
+            ))
+          }
+        </ol>
+
+        <StoreBadges position="preise" class="pr-badges" />
+        <p class="pr-store-note">{P.trial.storeNote}</p>
+      </article>
+
+      {/* ===== Plan-Spalte ===== */}
+      <div class="pr-plans">
+        <p class="pr-label pr-label--dark pr-plans-label">{P.plans.label}</p>
+
+        <div class="pr-plan" data-pr-card>
+          <div class="pr-plan-row">
+            <span class="pr-plan-name">{P.plans.week.name}</span>
+            <span class="pr-plan-price"
+              >{weekPrice}<span class="pr-plan-suffix">{P.plans.week.suffix}</span></span
+            >
+          </div>
+          <p class="pr-plan-sub">{weekPerDay} · {P.plans.week.desc}</p>
+        </div>
+
+        <div class="pr-plan pr-plan--month" data-pr-card>
+          <span class="pr-plan-chip">{P.plans.chip}</span>
+          <div class="pr-plan-row">
+            <span class="pr-plan-name">{P.plans.month.name}</span>
+            <span class="pr-plan-price"
+              >{monthPrice}<span class="pr-plan-suffix">{P.plans.month.suffix}</span></span
+            >
+          </div>
+          <p class="pr-plan-sub">{monthPerDay} · {P.plans.month.desc}</p>
+        </div>
+
+        <p class="pr-plan-note">{P.plans.note}</p>
+      </div>
+    </div>
+
+    {/* ===== Benefits-Leiste ===== */}
+    <div class="pr-benefits">
+      <p class="pr-label pr-label--dark">{P.benefits.label}</p>
+      <ul class="pr-benefits-list">
+        {
+          P.benefits.items.map((item, i) => (
+            <li class="pr-benefit" data-pr-benefit>
+              <span class="pr-benefit-ic" set:html={BENEFIT_ICONS[i]} />
+              <span class="pr-benefit-tx">{item}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* =====================================================================
+     Preise — vollflächig gelb (#fff03c), einheitlicher Sektions-Rhythmus/Inset.
+     ===================================================================== */
+  .pr-section {
+    position: relative;
+    background-color: var(--color-yellow);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+    overflow: clip;
+  }
+  .pr-inner {
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* ---- Header ---- */
+  .pr-head {
+    margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+  }
+  .pr-h2 {
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.4vw, 3.75rem);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  /* Zeilen-Mask-Wrapper (Reveal klippt nur die einfahrende Zeile). Heading-Text
+     bleibt im h2; Animation nur auf .pr-line-in. */
+  .pr-line {
+    display: block;
+    overflow: hidden;
+    padding-block: 0.08em;
+    margin-block: -0.08em;
+  }
+  .pr-line-in {
+    display: inline-block;
+    will-change: transform;
+  }
+  /* Invertierter Marker: schwarzer Grund, gelber Text, leicht geschert. */
+  .pr-mark {
+    position: relative;
+    display: inline-block;
+    padding: 0.05em 0.3em;
+    transform: skew(-8deg);
+  }
+  .pr-mark-hl {
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-black);
+    border-radius: 4px;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .pr-mark-tx {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    color: var(--color-yellow);
+    transform: skew(8deg); /* Text aufrecht */
+  }
+  .pr-sub {
+    margin-top: clamp(1rem, 2vw, 1.4rem);
+    max-width: 34rem;
+    font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+
+  /* ---- Grid ---- */
+  .pr-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (min-width: 1024px) {
+    .pr-grid {
+      grid-template-columns: 1.45fr 1fr;
+    }
+  }
+
+  /* ---- Label-Stil (überall wiederverwendet) ---- */
+  .pr-label {
+    font-size: clamp(0.7rem, 1vw, 0.75rem);
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .pr-label--light {
+    color: rgb(246 246 246 / 0.6);
+  }
+  .pr-label--dark {
+    color: var(--color-black);
+  }
+
+  /* =====================================================================
+     Trial-Karte (schwarz)
+     ===================================================================== */
+  .pr-trial {
+    background-color: var(--color-black);
+    border-radius: 24px;
+    padding: 32px;
+    color: var(--color-offwhite);
+  }
+  .pr-trial-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .pr-trial-lead {
+    min-width: 0;
+  }
+  .pr-price {
+    margin: 0.5rem 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .pr-price-val {
+    font-weight: 900;
+    font-size: clamp(3.5rem, 6vw, 4rem);
+    line-height: 1;
+    color: var(--color-yellow);
+    letter-spacing: -0.02em;
+  }
+  .pr-price-suffix {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: rgb(246 246 246 / 0.85);
+  }
+  .pr-trial-desc {
+    margin: 0.75rem 0 0;
+    max-width: 340px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: rgb(246 246 246 / 0.8);
+  }
+
+  /* QR nur Desktop. */
+  .pr-qr {
+    display: none;
+    flex: none;
+  }
+  @media (min-width: 1024px) {
+    .pr-qr {
+      display: block;
+    }
+  }
+
+  /* Timeline als semantische Liste mit Verbindungslinie + Punkten. */
+  .pr-timeline {
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0 0 0 22px;
+    position: relative;
+  }
+  .pr-timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background-color: rgb(246 246 246 / 0.22);
+  }
+  .pr-tl-item {
+    position: relative;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: rgb(246 246 246 / 0.75);
+    padding-bottom: 0.85rem;
+  }
+  .pr-tl-item:last-child {
+    padding-bottom: 0;
+  }
+  .pr-tl-item::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 0.35em;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background-color: var(--color-yellow);
+    transform: translateX(-1px);
+  }
+  /* Dritter Punkt nur umrandet (transparent, 9px). */
+  .pr-tl-item:last-child::before {
+    width: 9px;
+    height: 9px;
+    background-color: transparent;
+    border: 2px solid var(--color-yellow);
+  }
+  .pr-tl-lead {
+    font-weight: 900;
+    color: var(--color-offwhite);
+  }
+
+  .pr-badges {
+    margin-top: 1.75rem;
+    --badge-h: 48px;
+  }
+  .pr-store-note {
+    margin: 1rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: rgb(246 246 246 / 0.55);
+  }
+
+  /* =====================================================================
+     Plan-Spalte
+     ===================================================================== */
+  .pr-plans {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pr-plans-label {
+    margin-bottom: 0.25rem;
+  }
+  .pr-plan {
+    position: relative;
+    border: 2px solid var(--color-black);
+    border-radius: 20px;
+    padding: 20px 24px;
+    background-color: transparent;
+    color: var(--color-black);
+  }
+  .pr-plan-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .pr-plan-name {
+    font-size: 1.25rem;
+    font-weight: 900;
+  }
+  .pr-plan-price {
+    font-size: 1.25rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .pr-plan-suffix {
+    font-size: 0.75rem;
+    font-weight: 400;
+    margin-left: 0.3rem;
+  }
+  .pr-plan-sub {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: rgb(59 59 58 / 0.72);
+  }
+  /* Monats-Chip absolut oben rechts. */
+  .pr-plan--month {
+    overflow: visible;
+  }
+  .pr-plan-chip {
+    position: absolute;
+    top: -11px;
+    right: 16px;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-black);
+    color: var(--color-yellow);
+    font-size: 0.6875rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .pr-plan-note {
+    margin: 0.25rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.75);
+  }
+
+  /* Hover-Flip NUR (pointer: fine), reine Farb-Transition (keine Transform). */
+  @media (hover: hover) and (pointer: fine) {
+    .pr-plan {
+      transition: background-color 150ms ease-out, color 150ms ease-out;
+    }
+    .pr-plan-sub {
+      transition: color 150ms ease-out;
+    }
+    .pr-plan-chip {
+      transition: background-color 150ms ease-out, color 150ms ease-out;
+    }
+    .pr-plan:hover {
+      background-color: var(--color-black);
+      color: var(--color-offwhite);
+    }
+    .pr-plan:hover .pr-plan-sub {
+      color: rgb(246 246 246 / 0.7);
+    }
+    .pr-plan--month:hover .pr-plan-chip {
+      background-color: var(--color-yellow);
+      color: var(--color-black);
+    }
+  }
+
+  /* =====================================================================
+     Benefits-Leiste
+     ===================================================================== */
+  .pr-benefits {
+    margin-top: clamp(2rem, 4vw, 2.75rem);
+    border-top: 2px solid rgb(59 59 58 / 0.3);
+    padding-top: 20px;
+  }
+  .pr-benefits-list {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (min-width: 768px) {
+    .pr-benefits-list {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+  }
+  .pr-benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--color-black);
+  }
+  .pr-benefit-ic {
+    flex: none;
+    display: inline-flex;
+    color: var(--color-black);
+  }
+  .pr-benefit-ic :global(svg) {
+    width: 26px;
+    height: 26px;
+    display: block;
+  }
+  .pr-benefit-tx {
+    padding-top: 0.15rem;
+  }
+
+  /* =====================================================================
+     Mobile (< lg): kompakteres Karten-Padding, Badges volle Breite.
+     ===================================================================== */
+  @media (max-width: 1023.98px) {
+    .pr-trial {
+      padding: 24px;
+    }
+    .pr-plan {
+      padding: 16px 18px;
+    }
+    .pr-badges {
+      --badge-h: 44px;
+    }
+  }
+</style>
