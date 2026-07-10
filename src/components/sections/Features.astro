@@ -263,15 +263,15 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 
         {/* Deutsch & Englisch (span 4) — Sprach-Globus als Lottie (Hover). */}
         <article class="ft-tile ft-tile--lang">
-          <span
-            class="ft-tile-icon"
-            data-ft-lang-lottie
-            data-lottie-src={globeUrl}
-            aria-hidden="true"
-          >
-            {/* Fallback-SVG: No-JS / reduced-motion / Lottie-Fehler = statischer
-                Globus (entspricht Frame 0). JS ersetzt es durch die Lottie-Instanz. */}
-            <span class="ft-ic-fallback" set:html={GLOBE_SVG} />
+          <span class="ft-tile-icon" aria-hidden="true">
+            {/* Innerer 24px-Glyph-Container = Lottie-Mount. Lottie füllt seinen
+                Container (nicht den 40er-Chip) → sichtbare Kugel ≈ 20px (die JSON
+                zeichnet die Kugel auf ~83 % ihrer 500er-Canvas: 24 × 0.833 ≈ 20). */}
+            <span class="ft-lang-glyph" data-ft-lang-lottie data-lottie-src={globeUrl}>
+              {/* Fallback-SVG: No-JS / reduced-motion / Lottie-Fehler = statischer
+                  Globus (Frame 0). JS ersetzt es durch die Lottie-Instanz. */}
+              <span class="ft-ic-fallback" set:html={GLOBE_SVG} />
+            </span>
           </span>
           <h4 class="ft-tile-h4">{F.language.h4}</h4>
           <p class="ft-tile-body">{F.language.body}</p>
@@ -793,12 +793,23 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     height: 1.5rem;
     display: block;
   }
-  /* Sprach-Kachel: Lottie-/Fallback-Glyphe optisch normieren (~20px im 40er-Chip),
-     damit Weltkugel, Telegram-Flieger und Listen-Icons gleich schwer wirken.
-     Container skalieren (gilt für Ruhe-Frame UND Wiedergabe), nicht einzelne Frames. */
-  .ft-tile--lang .ft-tile-icon :global(svg) {
-    width: 20px;
-    height: 20px;
+  /* Sprach-Kachel: Lottie-/Fallback-Glyphe optisch normieren. Der Lottie-Renderer
+     füllt SEINEN Container; darum begrenzt ein innerer 24px-Container die Größe
+     (nicht der 40er-Chip). Die JSON zeichnet die Kugel auf ~83 % ihrer Canvas →
+     24 × 0.833 ≈ 20px sichtbar. Gilt für Ruhe-Frame UND laufende Wiedergabe
+     (preserveAspectRatio „meet" hält die Animation im 24px-Container). */
+  .ft-lang-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+  }
+  /* Fallback-SVG (viewBox 24) füllt den 24px-Container → sichtbarer Globus ≈ 20px. */
+  .ft-lang-glyph :global(svg) {
+    width: 24px;
+    height: 24px;
+    display: block;
   }
   .ft-tile-h4 {
     font-weight: 900;
@@ -844,20 +855,23 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     gap: 8px;
     margin-bottom: 1rem;
   }
+  /* Glyphe: 20×16-Box (≤ 20px Bounding-Box, wie der Flieger). Alle Zeichnungen
+     #3b3b3a, Strichgewicht bewusst leicht gehalten (dünne Balken/Blöcke), damit das
+     S-Icon nicht schwerer wirkt als die Outline-Icons. */
   .ft-glyph {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    width: 30px;
-    height: 24px;
+    width: 20px;
+    height: 16px;
   }
-  /* S: 4 dünne Zeilen (zentriert) */
+  /* S: 4 dünne Zeilen (zentriert) — dünn + luftig fürs gleiche Schwarz-Gewicht */
   .ft-glyph--s {
     justify-content: center;
-    gap: 3px;
+    gap: 2.4px;
   }
   .ft-lrow {
-    height: 3px;
+    height: 2px;
     border-radius: 1px;
     background-color: var(--color-black);
   }
@@ -868,18 +882,18 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   .ft-lline {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 2.5px;
     flex: 1;
   }
   .ft-lthumb {
-    width: 9px;
+    width: 6px;
     height: 100%;
-    border-radius: 2px;
+    border-radius: 1.5px;
     background-color: var(--color-black);
     flex: none;
   }
   .ft-ltext {
-    height: 3px;
+    height: 2px;
     border-radius: 1px;
     background-color: var(--color-black);
     flex: 1;
@@ -887,11 +901,11 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   /* L: großer Bildblock + 1 Zeile */
   .ft-lbig {
     flex: 1;
-    border-radius: 3px;
+    border-radius: 2px;
     background-color: var(--color-black);
   }
   .ft-lrow--wide {
-    height: 4px;
+    height: 2.5px;
   }
 
   /* =====================================================================
