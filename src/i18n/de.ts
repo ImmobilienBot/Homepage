@@ -200,6 +200,29 @@ export const de = {
         'Neues Angebot: 2-Zimmer Altbau, Kreuzberg – via Howoge.de',
       ],
     },
+    ablauf: {
+      // H2 mit gelbem Marker auf „Tag 8.".
+      h2: 'Von heute bis Tag 8.',
+      h2Mark: 'Tag 8.',
+      subline: 'Vier Schritte — und du zahlst erst, wenn du weißt, dass es funktioniert.',
+      // Vier Tickets (Reihenfolge = Bedeutung). {rate} kommt aus site.ts.
+      tickets: [
+        { label: 'Schritt 1', pill: 'Heute', title: 'App laden', desc: 'Kostenlos für iOS und Android.' },
+        {
+          label: 'Schritt 2',
+          pill: '2 Min später',
+          title: 'Gratis starten',
+          desc: 'Suchbereich zeichnen, Woche oder Monat wählen.',
+        },
+        {
+          label: 'Schritt 3',
+          pill: 'ab Tag 1',
+          title: 'Wohnung finden',
+          desc: 'Über {rate} % schaffen es im ersten Monat.',
+        },
+        { label: 'Schritt 4', pill: 'Tag 8', title: 'Abo startet', desc: 'Nur wenn du bleibst — jederzeit kündbar.' },
+      ],
+    },
     pricing: {
       title: 'Preise',
       // Headline zweizeilig; „testen" trägt den invertierten Marker.

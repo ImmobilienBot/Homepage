@@ -1334,6 +1334,38 @@ function initReveals() {
 }
 
 /**
+ * Ablauf-Sektion (Ticket-Leiste): eine Timeline (once:true). Startzustände NUR
+ * per gsap.set (ohne JS / reduced-motion alles im Endzustand). H2 zeilenweiser
+ * Mask-Reveal + Marker-Wipe → Subline → Tickets gestaffelt. Nur transform/opacity.
+ */
+function initAblauf() {
+  const section = document.querySelector<HTMLElement>('#ablauf');
+  if (!section) return;
+
+  const maskIns = gsap.utils.toArray<HTMLElement>('#ablauf .ab-mask-in');
+  const markHls = gsap.utils.toArray<HTMLElement>('#ablauf .ab-mark-hl');
+  const sub = section.querySelector<HTMLElement>('[data-ab-sub]');
+  const tickets = gsap.utils.toArray<HTMLElement>('#ablauf [data-ab-ticket]');
+  const isMobile = !window.matchMedia('(min-width: 1024px)').matches;
+
+  if (maskIns.length) gsap.set(maskIns, { yPercent: 110 });
+  if (markHls.length) gsap.set(markHls, { scaleX: 0, transformOrigin: 'left center' });
+  if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
+  if (tickets.length) gsap.set(tickets, { autoAlpha: 0, y: isMobile ? 16 : 24 });
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: section, start: 'top 80%', once: true },
+    defaults: { ease: 'power3.out' },
+  });
+  if (maskIns.length) tl.to(maskIns, { yPercent: 0, duration: 0.7, ease: 'power4.out' }, 0);
+  if (markHls.length)
+    tl.to(markHls, { scaleX: 1, duration: 0.4, ease: 'power2.out' }, 0.35);
+  if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.4);
+  if (tickets.length)
+    tl.to(tickets, { autoAlpha: 1, y: 0, duration: 0.55, ease: 'power3.out', stagger: 0.1 }, 0.45);
+}
+
+/**
  * Preise-Sektion: eine Timeline (once:true). Startzustände AUSSCHLIESSLICH per
  * gsap.set (ohne JS steht alles im Endzustand; reduced-motion überspringt die
  * Funktion komplett — inkl. der sets). Sektions-Wipe per clip-path (bewusste
@@ -1815,6 +1847,7 @@ if (!prefersReducedMotion) {
   initProblem3c();
   initBenefitLottie();
   initPortale();
+  initAblauf();
   initPreise();
   initReveals();
 }

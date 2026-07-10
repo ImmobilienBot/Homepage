@@ -192,6 +192,29 @@ export const en: Dict = {
         'New listing: 2-room period flat, Kreuzberg – via Howoge.de',
       ],
     },
+    ablauf: {
+      // H2 with a yellow marker on „day 8.".
+      h2: 'From today to day 8.',
+      h2Mark: 'day 8.',
+      subline: 'Four steps — and you only pay once you know it works.',
+      // Four tickets (order is meaning). {rate} comes from site.ts.
+      tickets: [
+        { label: 'Step 1', pill: 'Today', title: 'Get the app', desc: 'Free for iOS and Android.' },
+        {
+          label: 'Step 2',
+          pill: '2 min later',
+          title: 'Start for free',
+          desc: 'Draw your search area, pick week or month.',
+        },
+        {
+          label: 'Step 3',
+          pill: 'from day 1',
+          title: 'Find your home',
+          desc: 'Over {rate}% make it in the first month.',
+        },
+        { label: 'Step 4', pill: 'Day 8', title: 'Your plan starts', desc: 'Only if you stay — cancel anytime.' },
+      ],
+    },
     pricing: {
       title: 'Pricing',
       // Two-line headline; „Try it" carries the inverted marker.

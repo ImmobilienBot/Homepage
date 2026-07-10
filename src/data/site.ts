@@ -138,6 +138,14 @@ export const pricing: Plan[] = [
   },
 ];
 
+/**
+ * Anteil der Nutzer, die im ERSTEN Monat eine Wohnung finden — belegbarer,
+ * statischer Wert aus eigenen Nutzerdaten (siehe In-App-Paywall-Statistik).
+ * Sichtbar nur als „über {rate} %" formuliert (kein Live-Zähler). Von hier in
+ * beide Sprachen interpoliert.
+ */
+export const firstMonthSuccessRate = 70;
+
 /** Vorteile-Streifen unter den Preiskarten. */
 export const pricingBenefits: string[] = [
   'Echtzeit-Push (auch via Telegram)',

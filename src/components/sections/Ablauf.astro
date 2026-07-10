@@ -1,0 +1,318 @@
+---
+/**
+ * Ablauf — Ticket-Leiste „Von heute bis Tag 8." direkt über den Preisen. Vier
+ * Tickets als geordnete Liste (Reihenfolge = Bedeutung), Perforation + Stanzung
+ * zwischen den Tickets, Ticket 4 dunkel (= „noch nicht passiert"). Kartenfläche
+ * und Radius EXAKT wie die Bento-Karten der Features-Sektion.
+ *
+ * Guardrails: Animations-Startzustände nur per gsap.set (initAblauf) — ohne JS /
+ * reduced-motion steht alles im Endzustand. Genau EINE H1 bleibt im Hero → hier H2.
+ * Fakten (70 %) aus site.ts, Texte aus i18n. HowTo-JSON-LD lebt in dieser Komponente
+ * (rendert nur auf Seiten, die die Sektion einbinden) und ist pro Sprache korrekt.
+ */
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { firstMonthSuccessRate } from '../../data/site';
+
+const t = useTranslations(getLangFromUrl(Astro.url));
+const A = t.sections.ablauf;
+
+// {rate} zentral aus site.ts interpolieren (Anzeige UND JSON-LD identisch).
+const tickets = A.tickets.map((tk) => ({
+  ...tk,
+  desc: tk.desc.replace('{rate}', String(firstMonthSuccessRate)),
+}));
+
+// Marker-Split: Prefix + markiertes Keyword + Suffix (wie Features/Portale/Preise).
+function markParts(text: string, mark: string) {
+  const i = text.indexOf(mark);
+  if (i < 0) return { pre: text, mark: '', post: '' };
+  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
+}
+const h = markParts(A.h2, A.h2Mark);
+
+// HowTo-JSON-LD (pro Sprache): vier HowToStep aus den Ticket-Titeln/-Texten.
+const howToLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: A.h2,
+  description: A.subline,
+  step: tickets.map((tk, i) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    name: tk.title,
+    text: tk.desc,
+  })),
+};
+---
+
+<section id="ablauf" aria-labelledby="ablauf-heading" class="ab-section">
+  <div class="ab-inner">
+    {/* ---- Header: H2 (Mask-Reveal + gelber Marker) + Subline ---- */}
+    <header class="ab-head">
+      <h2 id="ablauf-heading" class="ab-h2">
+        <span class="ab-mask"
+          ><span class="ab-mask-in"
+            >{h.pre}<span class="ab-mark"
+              ><span class="ab-mark-hl" aria-hidden="true"></span><span class="ab-mark-tx"
+                >{h.mark}</span
+              ></span
+            >{h.post}</span
+          ></span
+        >
+      </h2>
+      <p class="ab-sub" data-ab-sub>{A.subline}</p>
+    </header>
+
+    {/* ---- Ticket-Reihe als geordnete Liste ---- */}
+    <ol class="ab-tickets">
+      {
+        tickets.map((tk, i) => (
+          <li class:list={['ab-ticket', i === 3 && 'ab-ticket--dark']} data-ab-ticket>
+            <div class="ab-ticket-head">
+              <span class="ab-step">{tk.label}</span>
+              <span class="ab-pill">{tk.pill}</span>
+            </div>
+            <h3 class="ab-ticket-title">{tk.title}</h3>
+            <p class="ab-ticket-desc">{tk.desc}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(howToLd)} />
+</section>
+
+<style>
+  /* =====================================================================
+     Basis — Standard-Grau, einheitlicher Rhythmus/Inset wie die übrigen Sektionen.
+     ===================================================================== */
+  .ab-section {
+    position: relative;
+    background-color: var(--color-grey);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+    /* Sektionsfarbe als Custom Property → Stanz-Kreise „stanzen" in exakt diesen Ton. */
+    --ab-punch: var(--color-grey);
+  }
+  .ab-inner {
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* ---- Header (Muster wie Features) ---- */
+  .ab-head {
+    text-align: center;
+    margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+  }
+  .ab-h2 {
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.4vw, 3.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  .ab-mask {
+    display: inline-block;
+    overflow: hidden;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
+    vertical-align: top;
+  }
+  .ab-mask-in {
+    display: inline-block;
+    will-change: transform;
+  }
+  .ab-mark {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .ab-mark-hl {
+    position: absolute;
+    inset: 0.08em -0.08em 0.05em -0.08em;
+    background-color: var(--color-yellow);
+    border-radius: 0.08em;
+    transform-origin: left center;
+    z-index: 0;
+  }
+  .ab-mark-tx {
+    position: relative;
+    z-index: 1;
+  }
+  .ab-sub {
+    margin-top: clamp(1rem, 2vw, 1.4rem);
+    margin-inline: auto;
+    max-width: 48ch;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.78);
+    text-wrap: balance;
+  }
+
+  /* =====================================================================
+     Ticket-Reihe — Karten kleben aneinander (gap 0). Kartenfläche + Radius +
+     Elevation EXAKT wie die Bento-Karten (Features): offwhite, 16px, weicher
+     großer Schatten, hauchdünner Rand. Schatten/Rand am STRIP (keine Innenkanten).
+     ===================================================================== */
+  .ab-tickets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-radius: 16px;
+    box-shadow: 0 24px 50px -28px rgb(59 59 58 / 0.4);
+    border: 1px solid rgb(59 59 58 / 0.04);
+    /* KEIN overflow:hidden — die Stanz-Kreise ragen bewusst über die Kante. */
+  }
+  .ab-ticket {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 28px 24px 24px;
+    background-color: var(--color-offwhite);
+  }
+  /* Außen-Radien nur an den echten Außenecken; innen eckig. */
+  .ab-ticket:first-child {
+    border-radius: 16px 0 0 16px;
+  }
+  .ab-ticket:nth-child(4) {
+    border-radius: 0 16px 16px 0;
+  }
+  /* Perforation zwischen den Tickets 1–3. */
+  .ab-ticket:not(:last-child) {
+    border-right: 2px dashed var(--color-darkgrey);
+  }
+  /* Ticket-Stanzung: zwei Kreise Ø14 in Sektionsfarbe an jeder Perforationskante
+     (oben/unten), mittig auf der dashed Line, über den Karten. */
+  .ab-ticket:not(:last-child)::before,
+  .ab-ticket:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background-color: var(--ab-punch);
+    z-index: 2;
+  }
+  .ab-ticket:not(:last-child)::before {
+    top: -7px;
+  }
+  .ab-ticket:not(:last-child)::after {
+    bottom: -7px;
+  }
+
+  /* Ticket 4 (dunkel = „noch nicht passiert"). */
+  .ab-ticket--dark {
+    background-color: var(--color-black);
+  }
+
+  /* ---- Kopfzeile ---- */
+  .ab-ticket-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .ab-step {
+    font-size: clamp(0.75rem, 1vw, 0.8125rem);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(59 59 58 / 0.45);
+  }
+  .ab-ticket--dark .ab-step {
+    color: rgb(246 246 246 / 0.55);
+  }
+  .ab-pill {
+    flex: none;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background-color: var(--color-yellow);
+    color: var(--color-black);
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  /* Ticket 4 invertiert: transparent, Rand + Text gelb. */
+  .ab-ticket--dark .ab-pill {
+    background-color: transparent;
+    border: 1.5px solid var(--color-yellow);
+    color: var(--color-yellow);
+  }
+
+  /* ---- Titel + Beschreibung ---- */
+  .ab-ticket-title {
+    font-weight: 900;
+    font-size: clamp(1.3rem, 2vw, 1.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+  .ab-ticket--dark .ab-ticket-title {
+    color: var(--color-offwhite);
+  }
+  .ab-ticket-desc {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: rgb(59 59 58 / 0.72);
+  }
+  .ab-ticket--dark .ab-ticket-desc {
+    color: rgb(246 246 246 / 0.7);
+  }
+
+  /* Hover-Lift nur bei feinem Zeiger (Tickets sind NICHT verlinkt). */
+  @media (hover: hover) and (pointer: fine) {
+    .ab-ticket {
+      transition: transform 0.2s ease-out;
+    }
+    .ab-ticket:hover {
+      transform: translateY(-6px);
+      z-index: 3;
+    }
+  }
+
+  /* =====================================================================
+     Mobile (< lg): Tickets stapeln; Perforation wird zur Unterkante, Stanz-Kreise
+     links/rechts. Radius: Ticket 1 oben, Ticket 4 unten.
+     ===================================================================== */
+  @media (max-width: 1023.98px) {
+    .ab-h2 {
+      font-size: clamp(1.85rem, 8vw, 2.5rem);
+    }
+    .ab-tickets {
+      grid-template-columns: 1fr;
+    }
+    .ab-ticket:first-child {
+      border-radius: 16px 16px 0 0;
+    }
+    .ab-ticket:nth-child(4) {
+      border-radius: 0 0 16px 16px;
+    }
+    .ab-ticket:not(:last-child) {
+      border-right: 0;
+      border-bottom: 2px dashed var(--color-darkgrey);
+    }
+    /* Stanz-Kreise auf die Unterkante: einer links -7, einer rechts -7. */
+    .ab-ticket:not(:last-child)::before,
+    .ab-ticket:not(:last-child)::after {
+      top: auto;
+      bottom: -7px;
+    }
+    .ab-ticket:not(:last-child)::before {
+      left: -7px;
+      right: auto;
+    }
+    .ab-ticket:not(:last-child)::after {
+      left: auto;
+      right: -7px;
+    }
+  }
+</style>
