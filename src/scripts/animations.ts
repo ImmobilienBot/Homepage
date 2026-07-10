@@ -1334,46 +1334,6 @@ function initReveals() {
 }
 
 /**
- * Easter-Egg A: Listenansichten S/M/L als HOVER-Zyklus (kein Autoloop mehr).
- * Ruhezustand = Ansicht M (Markup-Default). mouseenter → sofort S, dann zyklisch
- * S→M→L→S… alle 1200ms; mouseleave → Intervall stoppen, zurück auf M. Marker
- * (Buchstaben) wandert synchron. Nur bei echtem Hover-Pointer + erlaubter
- * Bewegung — Touch / reduced-motion bleiben statisch auf „M".
- */
-function initFeatureListViews(section: HTMLElement) {
-  const layouts = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-layout]'));
-  const letters = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-vletter]'));
-  const tile = section.querySelector<HTMLElement>('[data-ft-views]');
-  if (!tile || layouts.length !== 3) return;
-  const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (prefersReducedMotion || !hoverCapable) return; // statisch auf „M"
-
-  const setView = (n: number) => {
-    layouts.forEach((el, i) => el.classList.toggle('is-active', i === n));
-    letters.forEach((el, i) => el.classList.toggle('is-active', i === n));
-  };
-  let timer = 0;
-  let idx = 1;
-  tile.addEventListener('mouseenter', () => {
-    if (timer) return;
-    idx = 0;
-    setView(0); // sofort Ansicht S
-    timer = window.setInterval(() => {
-      idx = (idx + 1) % 3;
-      setView(idx);
-    }, 1200);
-  });
-  tile.addEventListener('mouseleave', () => {
-    if (timer) {
-      window.clearInterval(timer);
-      timer = 0;
-    }
-    idx = 1;
-    setView(1); // zurück auf M
-  });
-}
-
-/**
  * Sprach-Kachel: Globus als Lottie (dieselbe Player-Lösung wie die Problem-
  * Sektion → gemeinsamer lottie_light-Chunk, kein zweites Runtime-Bundle). Instanz
  * erst laden, wenn die Kachel den Viewport betritt (IntersectionObserver),
@@ -1458,16 +1418,18 @@ function initFeatureLangLottie(section: HTMLElement) {
 }
 
 /**
- * TIER 1 — Autoplay-Accordion (≥lg + JS) bzw. Basis-Stapel sonst.
+ * TIER 1 — Autoplay-Accordion V2 (≥lg + JS) bzw. Basis-Stapel sonst.
  *
  * ≥lg: zweispaltig [gemeinsames Phone | Accordion]. Ein Item offen; ein
- * 8s-Autoplay (rAF mit dt-Akkumulation, kein setInterval) klappt weiter und
- * treibt den Fortschrittsbalken (scaleX). Pausen NUR bei: Section außerhalb des
- * Viewports (IO, threshold 0.35) und Tastatur-Fokus im Accordion (focusin/out).
- * KEIN Hover-Pause. Manueller Klick → Autoplay ENDGÜLTIG aus, Balken ausblenden.
- * reduced-motion: Accordion erlaubt (Klick schaltet hart), aber KEIN Autoplay,
- * keine Balken, kein Crossfade. < lg: Basis-Stapel (dezenter Reveal nur bei
- * Bewegung); ohne Enhancement bleiben alle Bodies offen + eigene Phones sichtbar.
+ * ENDLOSES 8s-Autoplay (rAF mit dt-Akkumulation, kein setInterval) klappt weiter
+ * und treibt den Fortschrittsbalken (scaleX). Der Timer tickt NUR, wenn: Section
+ * im Viewport UND kein Hover über dem Tier-1-Container UND kein Tastatur-Fokus im
+ * Accordion UND kein reduced-motion. Hover friert den Füllstand ein (kein Reset),
+ * mouseleave läuft ab da weiter. Klick auf einen INAKTIVEN Kopf öffnet diesen
+ * Schritt und setzt seinen Balken auf 0 (Autoplay bleibt aktiv — bei Hover wartet
+ * er bei 0). Klick auf den AKTIVEN Kopf ist ein No-op. Balken sind ab Init
+ * sichtbar. reduced-motion: Accordion (Klick schaltet hart), KEIN Autoplay/Balken.
+ * < lg: Basis-Stapel (dezenter Reveal nur bei Bewegung); alle Bodies offen.
  */
 function initFeatureAccordion(section: HTMLElement) {
   const steps = section.querySelector<HTMLElement>('[data-ft-steps]');
@@ -1502,9 +1464,8 @@ function initFeatureAccordion(section: HTMLElement) {
   const STEP_MS = 8000; // Autoplay-Takt (zentral, leicht tunebar)
 
   let cur = 0;
-  let manual = false;
-  let started = false;
   let visible = false;
+  let hovering = false;
   let focusInside = false;
   let accum = 0;
   let last = 0;
@@ -1529,14 +1490,37 @@ function initFeatureAccordion(section: HTMLElement) {
     setFill(n, 0);
   };
 
+  // Init: Schritt 01 offen, 02/03 zu.
+  openStep(0);
+
+  // Klick: inaktiver Kopf öffnet (Balken-Reset via openStep); aktiver Kopf = No-op.
+  heads.forEach((head, i) => {
+    head?.addEventListener('click', () => {
+      if (i === cur) return; // aktiver Kopf: nichts tun
+      openStep(i);
+    });
+  });
+
+  // reduced-motion: Accordion statisch (Klick schaltet hart) — kein Autoplay/Balken.
+  if (prefersReducedMotion) return;
+
+  // Balken ab jetzt sichtbar (Enhancement + Bewegung aktiv).
+  steps.classList.add('is-autoplaying');
+
   const stopRaf = () => {
     if (rafId) {
       cancelAnimationFrame(rafId);
       rafId = 0;
     }
   };
-  const canTick = () => started && !manual && !focusInside && visible;
-  const frame = (now: number) => {
+  const startRaf = () => {
+    if (rafId) return;
+    last = 0;
+    rafId = requestAnimationFrame(frame);
+  };
+  // Timer tickt nur, wenn sichtbar, nicht gehovert und ohne Fokus im Accordion.
+  const canTick = () => visible && !hovering && !focusInside;
+  function frame(now: number) {
     if (!last) last = now;
     let dt = now - last;
     last = now;
@@ -1551,31 +1535,16 @@ function initFeatureAccordion(section: HTMLElement) {
       }
     }
     rafId = requestAnimationFrame(frame);
-  };
-  const startRaf = () => {
-    if (rafId || manual) return;
-    last = 0;
-    rafId = requestAnimationFrame(frame);
-  };
+  }
 
-  // Init: Schritt 01 offen, 02/03 zu.
-  openStep(0);
-
-  // Manueller Klick → Autoplay endgültig aus; geklickter Schritt öffnet (Klick auf
-  // das offene Item lässt es offen).
-  heads.forEach((head, i) => {
-    head?.addEventListener('click', () => {
-      if (!manual) {
-        manual = true;
-        steps.classList.add('is-manual');
-        stopRaf();
-      }
-      openStep(i);
-    });
+  // Hover über dem Tier-1-Container (Phone + Accordion) → Pause (Füllstand friert
+  // ein). mouseleave → Weiterlauf ab dem eingefrorenen Stand (kein Reset).
+  steps.addEventListener('mouseenter', () => {
+    hovering = true;
   });
-
-  // reduced-motion: Accordion statisch (Klick schaltet hart) — kein Autoplay.
-  if (prefersReducedMotion) return;
+  steps.addEventListener('mouseleave', () => {
+    hovering = false;
+  });
 
   // Tastatur-Fokus im Accordion → pausieren; Fokusverlust → fortsetzen.
   if (list) {
@@ -1587,21 +1556,13 @@ function initFeatureAccordion(section: HTMLElement) {
     });
   }
 
-  // START + Viewport-Pause: Timer beginnt beim ERSTEN Eintritt; verlässt die
-  // Sektion den Viewport, pausiert er (rAF gestoppt) und setzt bei Wiedereintritt
-  // nahtlos fort (accum bleibt erhalten).
+  // Viewport-Pause: rAF läuft nur, solange die Sektion sichtbar ist; bei Re-Entry
+  // nahtloser Weiterlauf (accum bleibt erhalten).
   const io = new IntersectionObserver(
     (entries) => {
       visible = entries[0]?.isIntersecting ?? false;
-      if (visible) {
-        if (!started && !manual) {
-          started = true;
-          steps.classList.add('is-autoplaying'); // Balken einblenden
-        }
-        if (!manual) startRaf();
-      } else {
-        stopRaf();
-      }
+      if (visible) startRaf();
+      else stopRaf();
     },
     { threshold: 0.35 },
   );
@@ -1613,8 +1574,8 @@ function initFeatureAccordion(section: HTMLElement) {
  *
  * IMMER (auch reduced-motion / mobil):
  *  - Easter-Egg B: Dark-Mode-Kachel toggelt hart per Klick (aria-pressed).
- *  - Easter-Egg A: Listenansichten S/M/L als Hover-Zyklus (nur Hover+Bewegung).
  *  - Sprach-Globus-Lottie (nur Hover+Bewegung; sonst statisches Fallback).
+ *  (Listenansichten-Kachel: reine CSS-Hover-Choreografie, kein JS.)
  *  - TIER 1: Autoplay-Accordion (≥lg+JS) bzw. Basis-Stapel; Accordion greift auch
  *    bei reduced-motion (statisch), Autoplay nur bei erlaubter Bewegung.
  *
@@ -1633,9 +1594,6 @@ function initFeatures() {
       chain.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
   }
-
-  // ---- Easter-Egg A: Listenansichten S/M/L (Hover-Zyklus) ----
-  initFeatureListViews(section);
 
   // ---- Sprach-Kachel: Globus-Lottie (Hover) ----
   initFeatureLangLottie(section);

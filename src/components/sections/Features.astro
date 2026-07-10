@@ -231,33 +231,33 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
           <p class="ft-tile-body">{F.telegram.body}</p>
         </article>
 
-        {/* Listenansichten (span 4) — Easter-Egg A: S/M/L-Zyklus + wandernder Marker.
-            Default (No-JS / reduced-motion / Touch): Ansicht M aktiv, „M" markiert. */}
-        <article class="ft-tile ft-tile--views" data-ft-views>
-          <span class="ft-views-icon" aria-hidden="true">
+        {/* Listenansichten (span 4) — Reihe aus DREI Icon-Chips (S/M/L). Desktop-
+            Hover baut M (0ms) und L (+130ms) gestaffelt auf; Touch/reduced-motion:
+            alle drei dauerhaft sichtbar. Platz immer reserviert (kein Layout-Shift). */}
+        <article class="ft-tile ft-tile--views">
+          <div class="ft-views-row" aria-hidden="true">
             {/* S = 4 dünne Zeilen */}
-            <span class="ft-layout" data-ft-layout={0}>
-              <span class="ft-lrow"></span><span class="ft-lrow"></span>
-              <span class="ft-lrow"></span><span class="ft-lrow"></span>
+            <span class="ft-view-chip ft-view-chip--s">
+              <span class="ft-glyph ft-glyph--s">
+                <span class="ft-lrow"></span><span class="ft-lrow"></span>
+                <span class="ft-lrow"></span><span class="ft-lrow"></span>
+              </span>
             </span>
-            {/* M = 2 Zeilen mit kleinem Thumbnail-Quadrat (default aktiv) */}
-            <span class="ft-layout is-active" data-ft-layout={1}>
-              <span class="ft-lline"><span class="ft-lthumb"></span><span class="ft-ltext"></span></span>
-              <span class="ft-lline"><span class="ft-lthumb"></span><span class="ft-ltext"></span></span>
+            {/* M = 2 Zeilen mit kleinem Thumbnail-Quadrat */}
+            <span class="ft-view-chip ft-view-chip--m">
+              <span class="ft-glyph ft-glyph--m">
+                <span class="ft-lline"><span class="ft-lthumb"></span><span class="ft-ltext"></span></span>
+                <span class="ft-lline"><span class="ft-lthumb"></span><span class="ft-ltext"></span></span>
+              </span>
             </span>
             {/* L = großer Bildblock + 1 Zeile */}
-            <span class="ft-layout" data-ft-layout={2}>
-              <span class="ft-lbig"></span><span class="ft-lrow ft-lrow--wide"></span>
+            <span class="ft-view-chip ft-view-chip--l">
+              <span class="ft-glyph ft-glyph--l">
+                <span class="ft-lbig"></span><span class="ft-lrow ft-lrow--wide"></span>
+              </span>
             </span>
-          </span>
-          <h4 class="ft-tile-h4">
-            {F.listviews.h4Label}{' '}
-            <span class="ft-views-letters">
-              <span class="ft-vletter" data-ft-vletter={0}>S</span
-              ><span class="ft-vsep">/</span><span class="ft-vletter is-active" data-ft-vletter={1}>M</span
-              ><span class="ft-vsep">/</span><span class="ft-vletter" data-ft-vletter={2}>L</span>
-            </span>
-          </h4>
+          </div>
+          <h4 class="ft-tile-h4">{F.listviews.h4Label} S / M / L</h4>
           <p class="ft-tile-body">{F.listviews.body}</p>
         </article>
 
@@ -672,15 +672,10 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     align-items: flex-start;
   }
 
-  /* Fortschrittsbalken: erst sichtbar, wenn Autoplay aktiv wird (JS-Klasse). */
+  /* Fortschrittsbalken: sichtbar, sobald der Accordion-Modus aktiv ist (JS setzt
+     .is-autoplaying beim Init) — je offenem Item einer. Server-HTML: versteckt. */
   .ft-steps.is-autoplaying .ft-block.is-open .ft-progress {
     display: block;
-  }
-  /* Manueller Klick → Autoplay endgültig aus, Balken ausblenden (Fade → hidden). */
-  .ft-steps.is-manual .ft-progress {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
   }
 
   /* Glow-Atmen (nur bei erlaubter Bewegung). */
@@ -780,21 +775,30 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 
   /* ---- Icon-Chip: einheitlich für ALLE Kacheln (40×40, r10, #eaebeb, #3b3b3a) ---- */
   .ft-tile-icon,
-  .ft-views-icon {
+  .ft-view-chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 2.5rem;
     height: 2.5rem;
-    margin-bottom: 1rem;
     border-radius: 10px;
     background-color: var(--color-grey);
     color: var(--color-black);
+  }
+  .ft-tile-icon {
+    margin-bottom: 1rem;
   }
   .ft-tile-icon :global(svg) {
     width: 1.5rem;
     height: 1.5rem;
     display: block;
+  }
+  /* Sprach-Kachel: Lottie-/Fallback-Glyphe optisch normieren (~20px im 40er-Chip),
+     damit Weltkugel, Telegram-Flieger und Listen-Icons gleich schwer wirken.
+     Container skalieren (gilt für Ruhe-Frame UND Wiedergabe), nicht einzelne Frames. */
+  .ft-tile--lang .ft-tile-icon :global(svg) {
+    width: 20px;
+    height: 20px;
   }
   .ft-tile-h4 {
     font-weight: 900;
@@ -830,38 +834,37 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   }
 
   /* =====================================================================
-     Easter-Egg A — Listenansichten S / M / L
+     Listenansichten S / M / L — Reihe aus drei Icon-Chips. Ruhe (Desktop):
+     nur Chip S; Hover baut M (0ms) + L (+130ms) gestaffelt auf (unten im
+     Hover-Media-Query). Touch / reduced-motion: alle drei statisch sichtbar.
+     Glyphen exakt #3b3b3a. Platz immer reserviert (kein Layout-Shift).
      ===================================================================== */
-  .ft-views-icon {
-    position: relative;
+  .ft-views-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
   }
-  .ft-layout {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+  .ft-glyph {
     display: flex;
     flex-direction: column;
     gap: 2px;
     width: 30px;
     height: 24px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
   }
-  .ft-layout.is-active {
-    opacity: 1;
-  }
-  /* S: 4 dünne Zeilen */
-  .ft-lrow {
-    height: 3px;
-    border-radius: 1px;
-    background-color: #a9a9a7;
-  }
-  .ft-layout[data-ft-layout='0'] {
+  /* S: 4 dünne Zeilen (zentriert) */
+  .ft-glyph--s {
     justify-content: center;
     gap: 3px;
   }
+  .ft-lrow {
+    height: 3px;
+    border-radius: 1px;
+    background-color: var(--color-black);
+  }
   /* M: 2 Zeilen mit Thumbnail */
+  .ft-glyph--m {
+    gap: 3px;
+  }
   .ft-lline {
     display: flex;
     align-items: center;
@@ -872,44 +875,23 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     width: 9px;
     height: 100%;
     border-radius: 2px;
-    background-color: #8f8f8d;
+    background-color: var(--color-black);
     flex: none;
   }
   .ft-ltext {
     height: 3px;
     border-radius: 1px;
-    background-color: #a9a9a7;
+    background-color: var(--color-black);
     flex: 1;
-  }
-  .ft-layout[data-ft-layout='1'] {
-    gap: 3px;
   }
   /* L: großer Bildblock + 1 Zeile */
   .ft-lbig {
     flex: 1;
     border-radius: 3px;
-    background-color: #8f8f8d;
+    background-color: var(--color-black);
   }
   .ft-lrow--wide {
     height: 4px;
-  }
-
-  .ft-views-letters {
-    white-space: nowrap;
-  }
-  .ft-vletter {
-    display: inline-block;
-    padding: 0 0.14em;
-    border-radius: 0.14em;
-    transition: background-color 0.28s ease, color 0.28s ease;
-  }
-  .ft-vletter.is-active {
-    background-color: var(--color-yellow);
-    color: var(--color-black);
-  }
-  .ft-vsep {
-    color: rgb(59 59 58 / 0.35);
-    padding: 0 0.1em;
   }
 
   /* =====================================================================
@@ -1107,6 +1089,30 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     .ft-pill:hover {
       background-color: var(--color-yellow);
       transform: translateY(-2px);
+    }
+
+    /* D) Listenansichten: Ruhe = nur Chip S. Hover baut M (0ms) + L (+130ms)
+       gestaffelt auf (260ms Überschwung — gleiche Kurve wie Sonne/Mond);
+       mouseleave beide gleichzeitig raus (200ms ease). */
+    .ft-view-chip--m,
+    .ft-view-chip--l {
+      opacity: 0;
+      transform: translateX(-6px) scale(0.6);
+      transform-origin: left center;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .ft-tile--views:hover .ft-view-chip--m {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      transition: opacity 260ms cubic-bezier(0.34, 1.4, 0.64, 1),
+        transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+    .ft-tile--views:hover .ft-view-chip--l {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      transition: opacity 260ms cubic-bezier(0.34, 1.4, 0.64, 1),
+        transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+      transition-delay: 130ms;
     }
   }
 
