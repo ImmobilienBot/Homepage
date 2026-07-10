@@ -1362,7 +1362,13 @@ function initAblauf() {
     tl.to(markHls, { scaleX: 1, duration: 0.4, ease: 'power2.out' }, 0.35);
   if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.4);
   if (tickets.length)
-    tl.to(tickets, { autoAlpha: 1, y: 0, duration: 0.55, ease: 'power3.out', stagger: 0.1 }, 0.45);
+    // clearProps:'transform' entfernt den Inline-Transform nach Abschluss → der
+    // CSS-:hover-Lift (translateY(-6px)) kann greifen. opacity/visibility bleiben.
+    tl.to(
+      tickets,
+      { autoAlpha: 1, y: 0, duration: 0.55, ease: 'power3.out', stagger: 0.1, clearProps: 'transform' },
+      0.45,
+    );
 }
 
 /**
