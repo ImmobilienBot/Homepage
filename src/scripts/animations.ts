@@ -1334,21 +1334,291 @@ function initReveals() {
 }
 
 /**
- * Features-Sektion.
+ * Easter-Egg A: Listenansichten S/M/L als HOVER-Zyklus (kein Autoloop mehr).
+ * Ruhezustand = Ansicht M (Markup-Default). mouseenter → sofort S, dann zyklisch
+ * S→M→L→S… alle 1200ms; mouseleave → Intervall stoppen, zurück auf M. Marker
+ * (Buchstaben) wandert synchron. Nur bei echtem Hover-Pointer + erlaubter
+ * Bewegung — Touch / reduced-motion bleiben statisch auf „M".
+ */
+function initFeatureListViews(section: HTMLElement) {
+  const layouts = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-layout]'));
+  const letters = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-vletter]'));
+  const tile = section.querySelector<HTMLElement>('[data-ft-views]');
+  if (!tile || layouts.length !== 3) return;
+  const hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (prefersReducedMotion || !hoverCapable) return; // statisch auf „M"
+
+  const setView = (n: number) => {
+    layouts.forEach((el, i) => el.classList.toggle('is-active', i === n));
+    letters.forEach((el, i) => el.classList.toggle('is-active', i === n));
+  };
+  let timer = 0;
+  let idx = 1;
+  tile.addEventListener('mouseenter', () => {
+    if (timer) return;
+    idx = 0;
+    setView(0); // sofort Ansicht S
+    timer = window.setInterval(() => {
+      idx = (idx + 1) % 3;
+      setView(idx);
+    }, 1200);
+  });
+  tile.addEventListener('mouseleave', () => {
+    if (timer) {
+      window.clearInterval(timer);
+      timer = 0;
+    }
+    idx = 1;
+    setView(1); // zurück auf M
+  });
+}
+
+/**
+ * Sprach-Kachel: Globus als Lottie (dieselbe Player-Lösung wie die Problem-
+ * Sektion → gemeinsamer lottie_light-Chunk, kein zweites Runtime-Bundle). Instanz
+ * erst laden, wenn die Kachel den Viewport betritt (IntersectionObserver),
+ * autoplay:false, Ruhezustand = Frame 0. mouseenter (ganze Kachel) → ab Frame 0
+ * einmal abspielen; mouseleave → laufende Wiedergabe zu Ende, dann Frame 0 (kein
+ * abruptes Zurückspringen); erneutes Hover startet neu. Die JSON-Farben sind
+ * bereits CD-Schwarz #3b3b3a → keine Umfärbung nötig. reduced-motion / Touch:
+ * gar nicht initialisieren → statisches Fallback-SVG (Frame 0), spielt nie.
+ */
+function initFeatureLangLottie(section: HTMLElement) {
+  if (prefersReducedMotion) return;
+  const holder = section.querySelector<HTMLElement>('[data-ft-lang-lottie]');
+  const tile = holder?.closest<HTMLElement>('.ft-tile');
+  const src = holder?.getAttribute('data-lottie-src');
+  if (!holder || !tile || !src) return;
+
+  type LottieAnim = {
+    goToAndPlay: (v: number, isFrame?: boolean) => void;
+    goToAndStop: (v: number, isFrame?: boolean) => void;
+    addEventListener: (ev: string, cb: () => void) => void;
+  };
+  let anim: LottieAnim | null = null;
+  let loaded = false;
+  let pendingPlay = false;
+
+  const load = async () => {
+    if (loaded) return;
+    loaded = true;
+    let lottie: { loadAnimation: (cfg: Record<string, unknown>) => LottieAnim };
+    try {
+      const mod = (await import('lottie-web/build/player/lottie_light')) as unknown as {
+        default: typeof lottie;
+      };
+      lottie = mod.default;
+    } catch {
+      return; // Lib nicht ladbar → Fallback-SVG bleibt (Frame 0)
+    }
+    let data: unknown;
+    try {
+      data = await (await fetch(src)).json();
+    } catch {
+      return; // Fetch fehlgeschlagen → Fallback-SVG bleibt
+    }
+    holder.innerHTML = ''; // Fallback-SVG entfernen, Lottie übernimmt
+    anim = lottie.loadAnimation({
+      container: holder,
+      renderer: 'svg',
+      loop: false,
+      autoplay: false,
+      animationData: data,
+    });
+    anim.goToAndStop(0, true);
+    // loop:false → nach Durchlauf zurück auf Frame 0 (Ruhezustand).
+    anim.addEventListener('complete', () => anim?.goToAndStop(0, true));
+    if (pendingPlay) {
+      pendingPlay = false;
+      anim.goToAndPlay(0, true);
+    }
+  };
+
+  // Instanz erst bei Viewport-Eintritt initialisieren.
+  const io = new IntersectionObserver((entries) => {
+    if (entries[0]?.isIntersecting) {
+      load();
+      io.disconnect();
+    }
+  });
+  io.observe(tile);
+
+  tile.addEventListener('mouseenter', () => {
+    if (anim) anim.goToAndPlay(0, true);
+    else {
+      pendingPlay = true;
+      load();
+    }
+  });
+  // mouseleave: laufende Wiedergabe zu Ende spielen lassen; der complete-Handler
+  // stoppt danach auf Frame 0. Ist bereits nichts am Laufen, steht sie schon auf 0.
+  tile.addEventListener('mouseleave', () => {
+    pendingPlay = false;
+  });
+}
+
+/**
+ * TIER 1 — Autoplay-Accordion (≥lg + JS) bzw. Basis-Stapel sonst.
+ *
+ * ≥lg: zweispaltig [gemeinsames Phone | Accordion]. Ein Item offen; ein
+ * 8s-Autoplay (rAF mit dt-Akkumulation, kein setInterval) klappt weiter und
+ * treibt den Fortschrittsbalken (scaleX). Pausen NUR bei: Section außerhalb des
+ * Viewports (IO, threshold 0.35) und Tastatur-Fokus im Accordion (focusin/out).
+ * KEIN Hover-Pause. Manueller Klick → Autoplay ENDGÜLTIG aus, Balken ausblenden.
+ * reduced-motion: Accordion erlaubt (Klick schaltet hart), aber KEIN Autoplay,
+ * keine Balken, kein Crossfade. < lg: Basis-Stapel (dezenter Reveal nur bei
+ * Bewegung); ohne Enhancement bleiben alle Bodies offen + eigene Phones sichtbar.
+ */
+function initFeatureAccordion(section: HTMLElement) {
+  const steps = section.querySelector<HTMLElement>('[data-ft-steps]');
+  const blocks = gsap.utils.toArray<HTMLElement>('#features [data-ft-block]');
+  if (!steps || blocks.length !== 3) return;
+
+  const canEnhance = window.matchMedia('(min-width: 1024px)').matches;
+  if (!canEnhance) {
+    // Basis-Stapel: dezenter einmaliger Reveal je Block (nur bei Bewegung).
+    if (!prefersReducedMotion) {
+      blocks.forEach((block) => {
+        gsap.from(block, {
+          autoAlpha: 0,
+          y: 24,
+          duration: 0.6,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: block, start: 'top 85%', once: true },
+        });
+      });
+    }
+    return;
+  }
+
+  // ---- Enhancement aktiv ----
+  steps.classList.add('is-enhanced');
+
+  const shots = gsap.utils.toArray<HTMLElement>('#features [data-ft-shared] [data-ft-shot]');
+  const fills = blocks.map((b) => b.querySelector<HTMLElement>('[data-ft-progress-fill]'));
+  const heads = blocks.map((b) => b.querySelector<HTMLButtonElement>('[data-ft-acc-head]'));
+  const list = section.querySelector<HTMLElement>('.ft-blocks');
+
+  const STEP_MS = 8000; // Autoplay-Takt (zentral, leicht tunebar)
+
+  let cur = 0;
+  let manual = false;
+  let started = false;
+  let visible = false;
+  let focusInside = false;
+  let accum = 0;
+  let last = 0;
+  let rafId = 0;
+
+  const setFill = (i: number, p: number) => {
+    const f = fills[i];
+    if (f) f.style.transform = `scaleX(${p})`;
+  };
+
+  const openStep = (n: number) => {
+    cur = n;
+    blocks.forEach((b, i) => {
+      const open = i === n;
+      b.classList.toggle('is-open', open);
+      b.classList.toggle('is-collapsed', !open);
+      heads[i]?.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (!open) setFill(i, 0);
+    });
+    shots.forEach((s, i) => s.classList.toggle('is-active', i === n));
+    accum = 0;
+    setFill(n, 0);
+  };
+
+  const stopRaf = () => {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  };
+  const canTick = () => started && !manual && !focusInside && visible;
+  const frame = (now: number) => {
+    if (!last) last = now;
+    let dt = now - last;
+    last = now;
+    if (dt > 250) dt = 250; // Sprung nach Hintergrund-Tab / Resume abfedern
+    if (canTick()) {
+      accum += dt;
+      const p = Math.min(1, accum / STEP_MS);
+      setFill(cur, p);
+      if (p >= 1) {
+        accum = 0;
+        openStep((cur + 1) % 3);
+      }
+    }
+    rafId = requestAnimationFrame(frame);
+  };
+  const startRaf = () => {
+    if (rafId || manual) return;
+    last = 0;
+    rafId = requestAnimationFrame(frame);
+  };
+
+  // Init: Schritt 01 offen, 02/03 zu.
+  openStep(0);
+
+  // Manueller Klick → Autoplay endgültig aus; geklickter Schritt öffnet (Klick auf
+  // das offene Item lässt es offen).
+  heads.forEach((head, i) => {
+    head?.addEventListener('click', () => {
+      if (!manual) {
+        manual = true;
+        steps.classList.add('is-manual');
+        stopRaf();
+      }
+      openStep(i);
+    });
+  });
+
+  // reduced-motion: Accordion statisch (Klick schaltet hart) — kein Autoplay.
+  if (prefersReducedMotion) return;
+
+  // Tastatur-Fokus im Accordion → pausieren; Fokusverlust → fortsetzen.
+  if (list) {
+    list.addEventListener('focusin', () => {
+      focusInside = true;
+    });
+    list.addEventListener('focusout', (e) => {
+      if (!list.contains(e.relatedTarget as Node | null)) focusInside = false;
+    });
+  }
+
+  // START + Viewport-Pause: Timer beginnt beim ERSTEN Eintritt; verlässt die
+  // Sektion den Viewport, pausiert er (rAF gestoppt) und setzt bei Wiedereintritt
+  // nahtlos fort (accum bleibt erhalten).
+  const io = new IntersectionObserver(
+    (entries) => {
+      visible = entries[0]?.isIntersecting ?? false;
+      if (visible) {
+        if (!started && !manual) {
+          started = true;
+          steps.classList.add('is-autoplaying'); // Balken einblenden
+        }
+        if (!manual) startRaf();
+      } else {
+        stopRaf();
+      }
+    },
+    { threshold: 0.35 },
+  );
+  io.observe(steps);
+}
+
+/**
+ * Features-Sektion (Orchestrierung).
  *
  * IMMER (auch reduced-motion / mobil):
  *  - Easter-Egg B: Dark-Mode-Kachel toggelt hart per Klick (aria-pressed).
- *  - Easter-Egg A: S/M/L-Zyklus NUR bei erlaubter Bewegung + im Viewport;
- *    reduced-motion bleibt statisch auf „M" (Markup-Default).
+ *  - Easter-Egg A: Listenansichten S/M/L als Hover-Zyklus (nur Hover+Bewegung).
+ *  - Sprach-Globus-Lottie (nur Hover+Bewegung; sonst statisches Fallback).
+ *  - TIER 1: Autoplay-Accordion (≥lg+JS) bzw. Basis-Stapel; Accordion greift auch
+ *    bei reduced-motion (statisch), Autoplay nur bei erlaubter Bewegung.
  *
- * NUR bei erlaubter Bewegung (prefersReducedMotion === false):
- *  - Header-Mask-Reveal (H2-Zeile + Marker-Wipe) + Subline.
- *  - Enhancement (≥lg + pointer:fine): zweispaltiges Sticky-Scrollytelling —
- *    das gemeinsame Phone wird gepinnt, die Screens crossfaden je aktivem Block
- *    (ScrollTrigger als reiner Trigger, kein Scrub); Progress-Balken folgen.
- *    Sonst: dezenter einmaliger Block-Reveal (Basis-Stapel).
- *  - Bento-Reveal (Titel-Marker + Kacheln gestaffelt).
- * Additiv (gsap.from): ohne JS steht alles im Endzustand.
+ * NUR bei erlaubter Bewegung: Header-Mask-Reveal + Bento-Reveal (additiv).
  */
 function initFeatures() {
   const section = document.querySelector<HTMLElement>('#features');
@@ -1364,32 +1634,14 @@ function initFeatures() {
     });
   }
 
-  // ---- Easter-Egg A: Listenansichten S/M/L (Zyklus nur bei Bewegung) ----
-  const layouts = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-layout]'));
-  const letters = Array.from(section.querySelectorAll<HTMLElement>('[data-ft-vletter]'));
-  const viewsTile = section.querySelector<HTMLElement>('[data-ft-views]');
-  if (viewsTile && layouts.length === 3 && !prefersReducedMotion) {
-    let idx = 1; // Start bei M (Default-Zustand)
-    const setView = (n: number) => {
-      layouts.forEach((el, i) => el.classList.toggle('is-active', i === n));
-      letters.forEach((el, i) => el.classList.toggle('is-active', i === n));
-    };
-    let timer = 0;
-    // Intervall NUR laufen lassen, wenn die Kachel im Viewport ist.
-    const io = new IntersectionObserver((entries) => {
-      const vis = entries[0]?.isIntersecting ?? false;
-      if (vis && !timer) {
-        timer = window.setInterval(() => {
-          idx = (idx + 1) % 3;
-          setView(idx);
-        }, 1600);
-      } else if (!vis && timer) {
-        window.clearInterval(timer);
-        timer = 0;
-      }
-    });
-    io.observe(viewsTile);
-  }
+  // ---- Easter-Egg A: Listenansichten S/M/L (Hover-Zyklus) ----
+  initFeatureListViews(section);
+
+  // ---- Sprach-Kachel: Globus-Lottie (Hover) ----
+  initFeatureLangLottie(section);
+
+  // ---- TIER 1: Autoplay-Accordion (≥lg + JS) / Basis-Stapel sonst ----
+  initFeatureAccordion(section);
 
   if (prefersReducedMotion) return;
 
@@ -1405,60 +1657,6 @@ function initFeatures() {
   if (headHls.length)
     headTl.from(headHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
   if (sub) headTl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
-
-  // ---- TIER 1 ----
-  const steps = section.querySelector<HTMLElement>('[data-ft-steps]');
-  const blocks = gsap.utils.toArray<HTMLElement>('#features [data-ft-block]');
-  const canEnhance =
-    window.matchMedia('(min-width: 1024px)').matches &&
-    window.matchMedia('(pointer: fine)').matches;
-
-  if (canEnhance && steps) {
-    steps.classList.add('is-enhanced');
-    const shots = gsap.utils.toArray<HTMLElement>('#features [data-ft-sticky] [data-ft-shot]');
-    const bars = gsap.utils.toArray<HTMLElement>('#features [data-ft-bar]');
-    let active = 0;
-    const setActive = (n: number) => {
-      if (n === active) return;
-      active = n;
-      shots.forEach((el, i) => el.classList.toggle('is-active', i === n));
-      bars.forEach((el, i) => el.classList.toggle('is-active', i === n));
-      blocks.forEach((el, i) => el.classList.toggle('is-active', i === n));
-    };
-    // ScrollTrigger nur als Trigger (kein Scrub): erreicht ein Block die Mitte,
-    // wird er aktiv → Crossfade des zugehörigen Screens.
-    blocks.forEach((block, i) => {
-      ScrollTrigger.create({
-        trigger: block,
-        start: 'top center',
-        end: 'bottom center',
-        onToggle: (self) => {
-          if (self.isActive) setActive(i);
-        },
-      });
-    });
-    const sticky = section.querySelector<HTMLElement>('[data-ft-sticky]');
-    if (sticky) {
-      gsap.from(sticky, {
-        autoAlpha: 0,
-        y: 20,
-        duration: 0.7,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: steps, start: 'top 78%', once: true },
-      });
-    }
-  } else {
-    // Basis-Stapel: dezenter einmaliger Reveal je Block.
-    blocks.forEach((block) => {
-      gsap.from(block, {
-        autoAlpha: 0,
-        y: 24,
-        duration: 0.6,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: block, start: 'top 85%', once: true },
-      });
-    });
-  }
 
   // ---- TIER 2: Bento-Reveal (Titel-Marker + Kacheln) ----
   const bentoIns = gsap.utils.toArray<HTMLElement>('#features .ft-bento-title .ft-mask-in');

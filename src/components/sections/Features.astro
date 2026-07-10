@@ -5,16 +5,19 @@
  *
  * TIER 1 (content-first, progressive enhancement): drei Schritte als gestapelte
  * Blöcke (Nummer-Chip · H3 · Body · Checkmark-Liste · zugehöriges Phone). Der
- * Basis-Stapel gilt IMMER (ohne JS, reduced-motion, mobil). Nur ≥lg + pointer:fine
- * + erlaubte Bewegung + JS schaltet auf ein zweispaltiges Scrollytelling: links ein
- * per position:sticky gepinntes gemeinsames Phone (Crossfade der drei Screens),
- * rechts scrollende Textblöcke. Das Sticky-Phone ist Deko (aria-hidden, leere Alts);
- * die inhaltlichen Bilder mit Alt-Texten sind die in den Blöcken. Die Block-Phones
- * werden AUSSCHLIESSLICH per JS-Klasse (.is-enhanced) versteckt — nie per CSS-Default.
+ * Basis-Stapel gilt IMMER (ohne JS, reduced-motion, mobil): alle drei Bodies
+ * offen, jedes Phone sichtbar. Nur ≥lg + JS schaltet auf ein zweispaltiges
+ * Autoplay-Accordion: links EIN gemeinsames Phone (voller Rahmen, Crossfade der
+ * drei Screens), rechts die drei Schritte als Accordion (Disclosure-Buttons in
+ * den H3, ein Item offen, 8s-Autoplay mit Fortschrittsbalken). Das gemeinsame
+ * Phone ist Deko (aria-hidden, leere Alts); die inhaltlichen Bilder mit Alt-Texten
+ * bleiben die in den Blöcken. Beide Phone-Ebenen werden AUSSCHLIESSLICH per
+ * JS-Klasse (.is-enhanced) umgeschaltet — nie per CSS-Default.
  *
- * TIER 2: Bento „Und das steckt noch drin." — 5 Kacheln (Elevation, weiche Schatten).
- * Zwei Easter-Eggs: Listenansichten S/M/L (Zyklus + wandernder Marker) und eine
- * Dark-Mode-Kachel mit Lichtschalter-Kette (harter Toggle).
+ * TIER 2: Bento „Und das steckt noch drin." — 5 Kacheln (Elevation, weiche
+ * Schatten). Easter-Eggs: Listenansichten S/M/L (Hover-Zyklus + wandernder
+ * Marker), Sprach-Globus (Lottie auf Hover) und eine Dark-Mode-Kachel mit
+ * Lichtschalter-Kette (harter Farb-Toggle, choreografierter Icon-Wechsel).
  *
  * Fakten/Texte aus i18n. Genau EINE H1 bleibt im Hero → hier H2/H3/H4.
  */
@@ -25,6 +28,11 @@ import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
 import screenMap from '../../assets/images/immobilien-bot-suchbereich-karte-zeichnen.png';
 import screenList from '../../assets/images/immobilien-bot-app-angebotsliste.png';
 import screenLetter from '../../assets/images/immobilien-bot-bewerbungsschreiben.png';
+
+// Sprach-Kachel: Globus als Lottie (lazy via animations.ts). ?url → bleibt aus
+// dem Main-Bundle; JS fetcht + spielt die Instanz. Die JSON-Farben sind bereits
+// CD-Schwarz #3b3b3a → passt direkt auf den hellen Chip (keine Umfärbung nötig).
+import globeUrl from '../../assets/icons/system-regular-73-world-globe-wikis-hover-world.json?url';
 
 const t = useTranslations(getLangFromUrl(Astro.url));
 const F = t.sections.features;
@@ -43,6 +51,9 @@ const bento = markParts(F.bentoTitle, F.bentoMark);
 
 // Inline-Häkchen (currentColor) für die Check-Listen.
 const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+
+// Fallback-Globus (No-JS / reduced-motion / Lottie-Fehler) — CD-Schwarz.
+const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M2.8 12h18.4"/><path d="M12 2.8c2.6 2.6 4 5.9 4 9.2s-1.4 6.6-4 9.2c-2.6-2.6-4-5.9-4-9.2s1.4-6.6 4-9.2Z"/></svg>`;
 ---
 
 <section id="features" class="ft-section">
@@ -66,52 +77,71 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 
     {/* ================= TIER 1 — drei Schritte ================= */}
     <div class="ft-steps" data-ft-steps>
-      {/* Gemeinsames Sticky-Phone (nur Desktop-Enhancement, per JS eingeblendet).
-          Deko-Duplikat: aria-hidden + leere Alts. Default per CSS versteckt. */}
-      <div class="ft-sticky" data-ft-sticky aria-hidden="true">
-        <div class="ft-sticky-inner">
-          <div class="ft-phone-stage">
-            <div class="ft-glow" aria-hidden="true"></div>
-            <div class="ft-phone">
-              {
-                shots.map((src, i) => (
-                  <div class:list={['ft-shot', i === 0 && 'is-active']} data-ft-shot={i}>
-                    <Image src={src} alt="" class="ft-shot-img" loading="lazy" />
-                  </div>
-                ))
-              }
-              <PhoneFrame class="ft-frame" />
-            </div>
-          </div>
-          {/* Progress-Indikator: drei Balken, aktiver gelb. */}
-          <div class="ft-progress" aria-hidden="true">
+      {/* Gemeinsames Phone (nur Desktop-Enhancement, per JS eingeblendet). Voller
+          Rahmen, alle drei Screens absolut übereinander (Opacity-Crossfade).
+          Deko-Duplikat: aria-hidden + leere Alts + lazy. Default per CSS versteckt. */}
+      <div class="ft-shared-phone" data-ft-shared aria-hidden="true">
+        <div class="ft-phone-stage">
+          <div class="ft-glow" aria-hidden="true"></div>
+          <div class="ft-phone">
             {
-              shots.map((_, i) => (
-                <span class:list={['ft-bar', i === 0 && 'is-active']} data-ft-bar={i} />
+              shots.map((src, i) => (
+                <div class:list={['ft-shot', i === 0 && 'is-active']} data-ft-shot={i}>
+                  <Image src={src} alt="" class="ft-shot-img" loading="lazy" />
+                </div>
               ))
             }
+            <PhoneFrame class="ft-frame" />
           </div>
         </div>
       </div>
 
-      {/* Basis-Blöcke: Copy + eigenes Phone. Immer sichtbar; die Phones werden nur
-          per JS-Klasse (.is-enhanced) versteckt. */}
+      {/* Basis-Blöcke = Accordion-Items. SERVER-HTML: alle Bodies offen, jedes
+          Phone sichtbar. Phones werden NUR per JS-Klasse (.is-enhanced) versteckt.
+          H3 trägt den Disclosure-Button (Nummer-Chip + Titel). */}
       <ol class="ft-blocks">
         {
           F.steps.map((s, i) => (
-            <li class:list={['ft-block', i === 0 && 'is-active']} data-ft-block data-index={i}>
+            <li class:list={['ft-block', i === 0 && 'is-open']} data-ft-block data-index={i}>
               <div class="ft-block-copy">
-                <span class="ft-chip">{s.num}</span>
-                <h3 class="ft-h3">{s.h3}</h3>
-                <p class="ft-body">{s.body}</p>
-                <ul class="ft-checks">
-                  {s.checks.map((c) => (
-                    <li class="ft-check">
-                      <span class="ft-check-ic" set:html={CHECK_SVG} />
-                      <span>{c}</span>
-                    </li>
-                  ))}
-                </ul>
+                <h3 class="ft-h3">
+                  <button
+                    type="button"
+                    class="ft-acc-head"
+                    data-ft-acc-head
+                    id={`ft-head-${i}`}
+                    aria-expanded="true"
+                    aria-controls={`ft-body-${i}`}
+                  >
+                    <span class="ft-chip">{s.num}</span>
+                    <span class="ft-h3-title">{s.h3}</span>
+                  </button>
+                </h3>
+
+                <div
+                  class="ft-acc-body"
+                  id={`ft-body-${i}`}
+                  role="region"
+                  aria-labelledby={`ft-head-${i}`}
+                  data-ft-acc-body
+                >
+                  <div class="ft-acc-body-inner">
+                    <p class="ft-body">{s.body}</p>
+                    <ul class="ft-checks">
+                      {s.checks.map((c) => (
+                        <li class="ft-check">
+                          <span class="ft-check-ic" set:html={CHECK_SVG} />
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {/* Autoplay-Fortschritt (dekorativ). Server: versteckt; JS zeigt
+                        ihn erst, wenn Autoplay aktiv wird. Füllung per transform:scaleX. */}
+                    <div class="ft-progress" data-ft-progress aria-hidden="true">
+                      <span class="ft-progress-fill" data-ft-progress-fill></span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div class="ft-block-phone" data-ft-base-phone>
@@ -180,8 +210,10 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
             </svg>
           </button>
           <span class="ft-tile-icon" data-ft-dark-icon aria-hidden="true">
-            {/* Das Icon zeigt den AKTUELLEN Zustand: Light → Sonne, Dark → Mond.
-                Exklusivität per display:none (kein opacity). Default (No-JS): Sonne. */}
+            {/* Beide Icons liegen in derselben Grid-Zelle (1/1) übereinander und
+                crossfaden choreografiert (rotate/scale/opacity). Zustand steuert
+                die Klasse .is-dark. Default (No-JS): Sonne sichtbar, Mond versteckt
+                — über Zustandsklassen, NICHT display:none. */}
             <svg class="ft-ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
             <svg class="ft-ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8Z"/></svg>
           </span>
@@ -200,7 +232,7 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
         </article>
 
         {/* Listenansichten (span 4) — Easter-Egg A: S/M/L-Zyklus + wandernder Marker.
-            Default (No-JS / reduced-motion): Ansicht M aktiv, „M" markiert. */}
+            Default (No-JS / reduced-motion / Touch): Ansicht M aktiv, „M" markiert. */}
         <article class="ft-tile ft-tile--views" data-ft-views>
           <span class="ft-views-icon" aria-hidden="true">
             {/* S = 4 dünne Zeilen */}
@@ -229,16 +261,19 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
           <p class="ft-tile-body">{F.listviews.body}</p>
         </article>
 
-        {/* Deutsch & Englisch (span 4) */}
+        {/* Deutsch & Englisch (span 4) — Sprach-Globus als Lottie (Hover). */}
         <article class="ft-tile ft-tile--lang">
-          <span class="ft-tile-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M2.8 12h18.4"/><path d="M12 2.8c2.6 2.6 4 5.9 4 9.2s-1.4 6.6-4 9.2c-2.6-2.6-4-5.9-4-9.2s1.4-6.6 4-9.2Z"/></svg>
+          <span
+            class="ft-tile-icon"
+            data-ft-lang-lottie
+            data-lottie-src={globeUrl}
+            aria-hidden="true"
+          >
+            {/* Fallback-SVG: No-JS / reduced-motion / Lottie-Fehler = statischer
+                Globus (entspricht Frame 0). JS ersetzt es durch die Lottie-Instanz. */}
+            <span class="ft-ic-fallback" set:html={GLOBE_SVG} />
           </span>
-          {/* Beide Titel in derselben Grid-Zelle (1/1) → Crossfade ohne Layout-Shift. */}
-          <h4 class="ft-tile-h4 ft-lang-h4">
-            <span class="ft-lang-title ft-lang-title--base">{F.language.h4}</span>
-            <span class="ft-lang-title ft-lang-title--hover" aria-hidden="true">{F.language.hoverTitle}</span>
-          </h4>
+          <h4 class="ft-tile-h4">{F.language.h4}</h4>
           <p class="ft-tile-body">{F.language.body}</p>
         </article>
       </div>
@@ -255,10 +290,8 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     background-color: var(--color-grey);
     padding-block: var(--spacing-section);
     padding-inline: var(--spacing-inset);
-    /* WICHTIG: overflow: clip statt hidden. `hidden` macht die Sektion zum
-       Scroll-Container → bricht position:sticky des Tier-1-Phones (Phone scrollt
-       mit Block 01 weg). `clip` klippt weiterhin Glow/Reveal-Überstände, erzeugt
-       aber KEINEN Scroll-Container → sticky bleibt intakt. */
+    /* overflow: clip klippt Glow-/Reveal-Überstände, ohne einen Scroll-Container
+       zu erzeugen (im Gegensatz zu hidden). */
     overflow: clip;
   }
   .ft-inner {
@@ -329,7 +362,9 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   }
 
   /* =====================================================================
-     TIER 1 — Basis-Stapel (gilt IMMER). Blöcke untereinander, je mit Phone.
+     TIER 1 — Basis-Stapel (gilt IMMER). Blöcke untereinander, je mit Phone,
+     alle Bodies offen. Der Disclosure-Button rendert hier als zentrierte
+     Chip-über-Titel-Einheit (wie zuvor).
      ===================================================================== */
   .ft-blocks {
     list-style: none;
@@ -348,6 +383,29 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   .ft-block-copy {
     max-width: 34rem;
   }
+
+  /* Disclosure-Kopf. Basis: Chip über Titel (Flex-Spalte, zentriert), Button
+     optisch neutral (kein eigener Rahmen/BG). */
+  .ft-acc-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: default;
+  }
+  .ft-acc-head:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
   .ft-chip {
     display: inline-flex;
     align-items: center;
@@ -362,14 +420,18 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     font-size: 1rem;
     letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
+    flex: none;
   }
   .ft-h3 {
-    margin-top: 1rem;
+    margin: 0;
     font-weight: 900;
     font-size: clamp(1.5rem, 3.4vw, 2.1rem);
     line-height: 1.05;
     letter-spacing: -0.015em;
     color: var(--color-black);
+  }
+  .ft-h3-title {
+    display: inline-block;
   }
   .ft-body {
     margin-top: 0.85rem;
@@ -411,7 +473,27 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     display: block;
   }
 
-  /* ---- Phone-Bühne (Basis-Block-Phone + Sticky-Phone teilen dieselbe Optik) ---- */
+  /* Fortschrittsbalken: im Basis-Stapel nie sichtbar (nur Autoplay-Enhancement). */
+  .ft-progress {
+    display: none;
+    width: 100%;
+    height: 3px;
+    margin-top: 1.4rem;
+    border-radius: 999px;
+    overflow: hidden;
+    background-color: var(--color-darkgrey);
+  }
+  .ft-progress-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--color-yellow);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  /* ---- Phone-Bühne (Basis-Block-Phone + gemeinsames Phone teilen dieselbe Optik) ---- */
   .ft-phone-stage {
     position: relative;
     width: clamp(240px, 30vw, 320px);
@@ -474,95 +556,131 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     width: 100%;
   }
   .ft-phone-stage--inline {
-    /* Angeschnitten: der untere Teil des Phones wird geклippt. */
+    /* Angeschnitten: der untere Teil des Phones wird geklippt. */
     width: clamp(220px, 62vw, 300px);
     max-height: 340px;
     overflow: hidden;
     padding-top: 6px; /* Notch/Glow-Luft oben */
   }
 
-  /* Progress-Balken (nur im Enhancement sichtbar). */
-  .ft-progress {
-    display: none;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-  }
-  .ft-bar {
-    width: 34px;
-    height: 4px;
-    border-radius: 999px;
-    background-color: rgb(59 59 58 / 0.18);
-    transition: background-color 0.3s ease;
-  }
-  .ft-bar.is-active {
-    background-color: var(--color-yellow);
-  }
-
-  /* Sticky-Phone-Spalte: Default versteckt (Deko-Duplikat). */
-  .ft-sticky {
+  /* Gemeinsames Phone: Default versteckt (Deko-Duplikat, nur Enhancement). */
+  .ft-shared-phone {
     display: none;
   }
 
   /* =====================================================================
-     DESKTOP-ENHANCEMENT — nur wenn JS die Klasse .is-enhanced setzt
-     (≥lg + pointer:fine + erlaubte Bewegung). Zweispaltig: links Sticky-Phone,
-     rechts scrollende Blöcke. Ohne die Klasse bleibt der Basis-Stapel (oben).
+     DESKTOP-ENHANCEMENT — nur wenn JS die Klasse .is-enhanced setzt (≥lg + JS).
+     Zweispaltig [gemeinsames Phone | Accordion], ~eine Viewport-Höhe, zentriert.
+     Ohne die Klasse bleibt der Basis-Stapel (oben).
      ===================================================================== */
   .ft-steps.is-enhanced {
     display: grid;
-    grid-template-columns: minmax(280px, 0.9fr) 1.1fr;
-    gap: clamp(3rem, 6vw, 6rem);
-    /* stretch (NICHT start/center): die Phone-SPALTE nimmt die volle Höhe der
-       Textspalte ein → das Sticky-KIND darin hat Reiseweg über alle drei Blöcke. */
-    align-items: stretch;
-  }
-  /* Die Phone-SPALTE (Grid-Item) füllt die volle Höhe — ist selbst NICHT sticky,
-     hat KEINE eigene height/max-height-Begrenzung. */
-  .ft-steps.is-enhanced .ft-sticky {
-    display: block;
-    align-self: stretch;
-  }
-  /* Das Sticky-Element ist das KIND der Spalte: definiertes top (Header-Höhe +
-     Abstand) + Eigenhöhe deutlich unter dem Viewport (Phone skaliert proportional). */
-  .ft-steps.is-enhanced .ft-sticky-inner {
-    position: sticky;
-    top: calc(var(--header-h) + 1.75rem);
-    max-height: calc(100svh - var(--header-h) - 3.5rem);
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: minmax(260px, 0.82fr) 1fr;
+    gap: clamp(48px, 5vw, 64px);
     align-items: center;
+    min-height: min(100svh, 760px);
   }
-  .ft-steps.is-enhanced .ft-sticky .ft-phone-stage {
-    width: clamp(230px, 24vw, 280px);
-  }
-  .ft-steps.is-enhanced .ft-progress {
+
+  /* Gemeinsames Phone: voller Rahmen (alle vier Ecken), Höhe = min(72vh, 640px). */
+  .ft-steps.is-enhanced .ft-shared-phone {
     display: flex;
-  }
-  .ft-steps.is-enhanced .ft-blocks {
-    gap: 0;
-  }
-  .ft-steps.is-enhanced .ft-block {
-    /* Jeder Textblock nimmt Viewport-Höhe ein → tritt beim Scrollen einzeln „aktiv". */
-    min-height: 82vh;
+    align-items: center;
     justify-content: center;
-    align-items: flex-start;
-    text-align: left;
-    opacity: 0.35;
-    transition: opacity 0.4s ease;
   }
-  .ft-steps.is-enhanced .ft-block.is-active {
-    opacity: 1;
+  .ft-steps.is-enhanced .ft-shared-phone .ft-phone-stage {
+    width: auto;
   }
-  .ft-steps.is-enhanced .ft-block-copy {
-    max-width: 38rem;
+  .ft-steps.is-enhanced .ft-shared-phone .ft-phone {
+    width: auto;
+    height: min(72vh, 640px);
   }
-  .ft-steps.is-enhanced .ft-checks {
-    align-items: flex-start;
+  .ft-steps.is-enhanced .ft-shared-phone .ft-frame {
+    width: auto;
+    height: 100%;
   }
   /* Basis-Block-Phones NUR im Enhancement ausblenden (nie per CSS-Default). */
   .ft-steps.is-enhanced .ft-block-phone {
     display: none;
+  }
+
+  /* Accordion-Spalte: Items durch 1px-Linien getrennt. */
+  .ft-steps.is-enhanced .ft-blocks {
+    gap: 0;
+  }
+  .ft-steps.is-enhanced .ft-block {
+    display: block;
+    text-align: left;
+    padding-block: clamp(0.9rem, 1.5vw, 1.4rem);
+    border-top: 1px solid var(--color-darkgrey);
+  }
+  .ft-steps.is-enhanced .ft-block:first-child {
+    border-top: 0;
+  }
+  .ft-steps.is-enhanced .ft-block-copy {
+    max-width: none;
+    width: 100%;
+  }
+  /* Kopf: Chip + Titel in einer Reihe (Disclosure). */
+  .ft-steps.is-enhanced .ft-acc-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .ft-steps.is-enhanced .ft-h3 {
+    font-size: clamp(1.35rem, 2vw, 1.75rem);
+    line-height: 1.1;
+  }
+  /* Chip inaktiv: transparent + Rand; aktiv: gelb gefüllt. */
+  .ft-steps.is-enhanced .ft-chip {
+    background-color: transparent;
+    border: 1.5px solid var(--color-grey-yellow);
+    color: rgb(59 59 58 / 0.6);
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+  .ft-steps.is-enhanced .ft-block.is-open .ft-chip {
+    background-color: var(--color-yellow);
+    border-color: transparent;
+    color: var(--color-black);
+  }
+  /* Titel inaktiv gedimmt. */
+  .ft-steps.is-enhanced .ft-h3-title {
+    opacity: 0.5;
+    transition: opacity 0.25s ease;
+  }
+  .ft-steps.is-enhanced .ft-block.is-open .ft-h3-title {
+    opacity: 1;
+  }
+
+  /* Klapp-Mechanik: grid-template-rows 1fr↔0fr (dokumentierte Ausnahme der
+     transform/opacity-Regel — feuert nur bei Schrittwechsel, nie scroll-gebunden). */
+  .ft-steps.is-enhanced .ft-acc-body {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 350ms ease;
+  }
+  .ft-steps.is-enhanced .ft-block.is-collapsed .ft-acc-body {
+    grid-template-rows: 0fr;
+  }
+  .ft-steps.is-enhanced .ft-acc-body-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .ft-steps.is-enhanced .ft-checks {
+    align-items: flex-start;
+  }
+
+  /* Fortschrittsbalken: erst sichtbar, wenn Autoplay aktiv wird (JS-Klasse). */
+  .ft-steps.is-autoplaying .ft-block.is-open .ft-progress {
+    display: block;
+  }
+  /* Manueller Klick → Autoplay endgültig aus, Balken ausblenden (Fade → hidden). */
+  .ft-steps.is-manual .ft-progress {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
   }
 
   /* Glow-Atmen (nur bei erlaubter Bewegung). */
@@ -580,6 +698,17 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     50% {
       transform: translate(-50%, -52%) scale(1.06);
       opacity: 0.58;
+    }
+  }
+
+  /* reduced-motion (auch ≥lg): Accordion-Layout erlaubt, aber KEINE Klapp-/
+     Crossfade-Transition (harter Wechsel bei Klick). */
+  @media (prefers-reduced-motion: reduce) {
+    .ft-steps.is-enhanced .ft-acc-body {
+      transition-duration: 0ms;
+    }
+    .ft-shot {
+      transition-duration: 0ms;
     }
   }
 
@@ -648,14 +777,17 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     box-shadow: 0 24px 50px -28px rgb(59 59 58 / 0.4);
     border: 1px solid rgb(59 59 58 / 0.04);
   }
-  .ft-tile-icon {
+
+  /* ---- Icon-Chip: einheitlich für ALLE Kacheln (40×40, r10, #eaebeb, #3b3b3a) ---- */
+  .ft-tile-icon,
+  .ft-views-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     margin-bottom: 1rem;
-    border-radius: 12px;
+    border-radius: 10px;
     background-color: var(--color-grey);
     color: var(--color-black);
   }
@@ -702,14 +834,6 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
      ===================================================================== */
   .ft-views-icon {
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    margin-bottom: 1rem;
-    border-radius: 12px;
-    background-color: var(--color-grey);
   }
   .ft-layout {
     position: absolute;
@@ -797,16 +921,49 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   .ft-tile--dark .ft-tile-icon {
     color: var(--color-black); /* Sonne = #3b3b3a im Light-Zustand */
   }
-  /* Icon-Exklusivität: das Icon zeigt den AKTUELLEN Zustand.
-     Light → Sonne sichtbar, Mond aus · Dark → Mond sichtbar, Sonne aus.
-     Höhere Spezifität (svg.Klasse) schlägt das generische .ft-tile-icon svg
-     { display:block }; Umschalten rein über display (KEIN opacity). */
-  .ft-tile-icon svg.ft-ic-moon {
-    display: none;
+
+  /* Icon-Choreografie: beide Icons in derselben Grid-Zelle (1/1) übereinander;
+     Wechsel dreht immer in dieselbe Richtung (Sonne+90°, Mond−90°). Der harte
+     130ms-Farbcut der Kachel bleibt davon unberührt. */
+  .ft-tile--dark .ft-tile-icon {
+    display: grid;
   }
-  .ft-tile-icon svg.ft-ic-sun {
-    display: block;
+  .ft-tile--dark .ft-ic-sun,
+  .ft-tile--dark .ft-ic-moon {
+    grid-area: 1 / 1;
+    pointer-events: none;
+    transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 200ms ease,
+      visibility 0s;
   }
+  /* Light (Default, auch No-JS): Sonne sichtbar, Mond versteckt. */
+  .ft-tile--dark .ft-ic-sun {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+    visibility: visible;
+  }
+  .ft-tile--dark .ft-ic-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.6);
+    visibility: hidden;
+    transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 200ms ease,
+      visibility 0s linear 320ms;
+  }
+  /* Dark: Mond sichtbar, Sonne versteckt. */
+  .ft-tile--dark.is-dark .ft-ic-sun {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.6);
+    visibility: hidden;
+    transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 200ms ease,
+      visibility 0s linear 320ms;
+  }
+  .ft-tile--dark.is-dark .ft-ic-moon {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+    visibility: visible;
+    transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 200ms ease,
+      visibility 0s;
+  }
+
   /* Dark-Zustand (Toggle) — harter Cut ~130ms linear. */
   .ft-tile--dark.is-dark {
     background-color: var(--color-black);
@@ -821,19 +978,23 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     background-color: rgb(246 246 246 / 0.1);
     color: var(--color-yellow); /* Mond = #fff03c im Dark-Zustand */
   }
-  .ft-tile--dark.is-dark .ft-tile-icon svg.ft-ic-sun {
-    display: none;
-  }
-  .ft-tile--dark.is-dark .ft-tile-icon svg.ft-ic-moon {
-    display: block;
-  }
   .ft-tile--dark .ft-tile-h4,
   .ft-tile--dark .ft-tile-body {
     transition: color 0.13s linear;
   }
 
+  /* reduced-motion: Icon-Wechsel hart (0ms), Farbcut wie gehabt. */
+  @media (prefers-reduced-motion: reduce) {
+    .ft-tile--dark .ft-ic-sun,
+    .ft-tile--dark .ft-ic-moon {
+      transition-duration: 0ms;
+      transition-delay: 0ms;
+    }
+  }
+
   /* Kette: hängt rechts von der Kachel-Oberkante, ABSOLUT (nie im Text-Flow).
-     Unsichtbare Klickfläche ≥44×44px, Griff + dünne Linie sichtbar. */
+     Unsichtbare Klickfläche ≥44×44px, Griff + dünne Linie sichtbar. FLACH
+     (kein Schatten/Filter). */
   .ft-chain {
     position: absolute;
     top: 0;
@@ -844,11 +1005,16 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     padding: 0;
     border: 0;
     background: transparent;
+    box-shadow: none;
+    filter: none;
     cursor: pointer;
     z-index: 3;
     transform-origin: top center;
     color: var(--color-black); /* Kugelkette #3b3b3a (currentColor) */
     transition: color 0.13s linear;
+  }
+  .ft-chain::after {
+    content: none;
   }
   .ft-chain-svg {
     position: absolute;
@@ -858,7 +1024,8 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     width: 10px;
     height: 69px;
     display: block;
-    filter: drop-shadow(0 2px 3px rgb(59 59 58 / 0.35));
+    box-shadow: none;
+    filter: none;
   }
   /* Dark-Zustand: Kugelkette gelb (harter 130ms-Cut über die color-Transition). */
   .ft-tile--dark.is-dark .ft-chain {
@@ -886,21 +1053,6 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   }
   .ft-tile--dark.is-dark .ft-chain:focus-visible {
     outline-color: var(--color-yellow);
-  }
-
-  /* =====================================================================
-     Sprach-Kachel: beide Titel in derselben Grid-Zelle (1/1) übereinander →
-     Crossfade ohne Layout-Shift (gilt immer; Hover-Swap nur unten im Media-Query).
-     ===================================================================== */
-  .ft-lang-h4 {
-    display: grid;
-  }
-  .ft-lang-title {
-    grid-area: 1 / 1;
-    transition: opacity 200ms ease;
-  }
-  .ft-lang-title--hover {
-    opacity: 0;
   }
 
   /* =====================================================================
@@ -947,12 +1099,14 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
       transform: rotate(-12deg) translate(2px, -2px);
     }
 
-    /* C) Sprach-Titel crossfadet zur anderen Sprache (nur opacity, Body bleibt). */
-    .ft-tile--lang:hover .ft-lang-title--base {
-      opacity: 0;
+    /* C) Filter-Pills: Hover zitiert den „ausgewählt"-Zustand der App-Filter
+       (Grau → Gelb + leichter Lift). Textfarbe bleibt #3b3b3a. */
+    .ft-pill {
+      transition: background-color 150ms ease-out, transform 150ms ease-out;
     }
-    .ft-tile--lang:hover .ft-lang-title--hover {
-      opacity: 1;
+    .ft-pill:hover {
+      background-color: var(--color-yellow);
+      transform: translateY(-2px);
     }
   }
 

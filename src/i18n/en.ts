@@ -149,8 +149,6 @@ export const en: Dict = {
       },
       language: {
         h4: 'German & English',
-        // Hover title (crossfade to the other language).
-        hoverTitle: 'Deutsch & Englisch',
         body: 'The entire app in both languages.',
       },
     },
