@@ -217,10 +217,16 @@ export const de = {
         {
           label: 'Schritt 3',
           pill: 'ab Tag 1',
-          title: 'Wohnung finden',
-          desc: 'Über {rate} % schaffen es im ersten Monat.',
+          title: 'Wohnung suchen',
+          desc: 'Der Bot scannt rund um die Uhr — 7 Tage kostenlos, jederzeit kündbar.',
         },
-        { label: 'Schritt 4', pill: 'Tag 8', title: 'Abo startet', desc: 'Nur wenn du bleibst — jederzeit kündbar.' },
+        {
+          label: 'Schritt 4',
+          pill: 'Tag 8',
+          title: 'Abo startet',
+          // Wortlaut absichtlich identisch zur In-App-Paywall. {rate} aus site.ts.
+          desc: 'Über {rate} % finden ihre Wohnung im ersten Monat.',
+        },
       ],
     },
     pricing: {
@@ -282,9 +288,13 @@ export const de = {
     contact: 'Kontakt',
     langSwitch: 'English',
     signature: 'Das Original. Schneller als die anderen.',
-    // Fußnote zur Berlin-Statistik (Sternchen in der Problem-Story).
-    // TODO: echten Quell-Link (Berliner Zeitung) ergänzen, sobald vorhanden.
-    sourceNote: '* Statistik: Berliner Zeitung',
+    // Fortlaufend nummerierte Quellenangaben (Footer, id="quellen"):
+    // ¹ Berlin-Statistik der Problem-Story · ² 70-%-Zahl der Ablauf-Sektion.
+    // TODO: „Berliner Zeitung" später mit dem echten Quell-Link versehen.
+    sources: [
+      'Statistik: Berliner Zeitung.',
+      'Eigene Nutzerdaten Immobilien Bot. Zum Vergleich: 54 % der Wohnungssuchenden suchen länger als ein Jahr (ImmobilienScout24, 2024).',
+    ],
   },
 
   legal: {

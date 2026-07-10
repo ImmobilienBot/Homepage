@@ -52,9 +52,17 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
 
     <p class="text-body opacity-60">© {site.name} · {t.footer.signature}</p>
 
-    {/* Fußnote zur Berlin-Statistik (Sternchen in der Problem-Story).
-        TODO: „Berliner Zeitung" später mit dem echten Quell-Link versehen. */}
-    <p class="footer-source" id="quelle-statistik">{t.footer.sourceNote}</p>
+    {/* Fortlaufend nummerierte Quellenangaben. Anker: #quellen (Ablauf-Ticket 4)
+        und #quelle-statistik (Problem-Story ¹) zeigen beide hierher. */}
+    <div class="footer-sources" id="quellen">
+      {
+        t.footer.sources.map((s, i) => (
+          <p class="footer-source" id={i === 0 ? 'quelle-statistik' : undefined}>
+            <sup class="footer-source-num">{i + 1}</sup> {s}
+          </p>
+        ))
+      }
+    </div>
   </div>
 </footer>
 
@@ -71,10 +79,22 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
     filter: brightness(0) invert(1);
     opacity: 0.92;
   }
-  /* Kleine Quellen-Fußnote (Statistik-Sternchen). */
+  /* Kleine, nummerierte Quellen-Fußnoten. */
+  .footer-sources {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
   .footer-source {
+    margin: 0;
     font-size: 0.75rem;
     opacity: 0.5;
     letter-spacing: 0.01em;
+  }
+  .footer-source-num {
+    font-size: 0.85em;
+    vertical-align: super;
+    line-height: 0;
+    margin-right: 0.15em;
   }
 </style>

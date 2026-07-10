@@ -209,10 +209,16 @@ export const en: Dict = {
         {
           label: 'Step 3',
           pill: 'from day 1',
-          title: 'Find your home',
-          desc: 'Over {rate}% make it in the first month.',
+          title: 'Search for your home',
+          desc: 'The bot scans around the clock — 7 days free, cancel anytime.',
         },
-        { label: 'Step 4', pill: 'Day 8', title: 'Your plan starts', desc: 'Only if you stay — cancel anytime.' },
+        {
+          label: 'Step 4',
+          pill: 'Day 8',
+          title: 'Your plan starts',
+          // Wording intentionally identical to the in-app paywall. {rate} from site.ts.
+          desc: 'Over {rate}% find their home in the first month.',
+        },
       ],
     },
     pricing: {
@@ -271,9 +277,13 @@ export const en: Dict = {
     contact: 'Contact',
     langSwitch: 'Deutsch',
     signature: 'The original. Faster than the rest.',
-    // Footnote for the Berlin statistic (asterisk in the problem story).
+    // Consecutively numbered source notes (footer, id="quellen"):
+    // ¹ Berlin statistic of the problem story · ² 70% figure of the Ablauf section.
     // TODO: add the real source link (Berliner Zeitung) once available.
-    sourceNote: '* Statistics: Berliner Zeitung',
+    sources: [
+      'Statistics: Berliner Zeitung.',
+      'Immobilien Bot user data. For comparison: 54% of home seekers search for more than a year (ImmobilienScout24, 2024).',
+    ],
   },
 
   legal: {
