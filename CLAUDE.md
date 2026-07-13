@@ -174,6 +174,29 @@ Bleibt strikt **Gelb / Schwarz / Grau** (die CD-Tokens). Der „Awwwards-Look" k
 - **Lighthouse ~100** (mobil) bleibt Pflicht. Nur `transform`/`opacity` animieren, kein Layout-
   Thrash; Performance-Budget je Sektion. Im Zweifel: weniger Effekt.
 
+### Verzögerte Init-Bündel (`requestIdleCallback`) — verbindliche Muster
+Below-fold-Reveals werden aus Performance-Gründen erst nach dem First Paint in einem
+`requestIdleCallback`-Bündel initialisiert (`src/scripts/animations.ts`). Das ist gefährlich:
+der Callback kann feuern, während der Nutzer schon **mitten auf der Seite** steht (Scroll-
+Restoration nach Reload, schnelles Scrollen im Idle-Fenster). Ein einmaliger ScrollTrigger
+(`once`/`toggleActions:play`) feuert dann **nicht nachträglich** → der versteckte Startzustand
+bliebe kleben = **leere Sektion**. Vier Regeln, nicht verhandelbar:
+- **R1 — Fehler-Isolation:** Jeder Init im Bündel einzeln kapseln (`safeInit(name, fn)`,
+  try/catch + `console.error`). Ein Wurf darf **nie** die nachfolgenden Inits mitreißen.
+- **R2 — kein statisches Verstecken:** Reveal-Grundzustände **nur per JS** (`gsap.set`/`gsap.from`)
+  unmittelbar vor dem Trigger setzen — **nie** per Stylesheet (`visibility:hidden`/`opacity:0` auf
+  Reveal-Elementen). Ohne JS / reduced-motion muss alles im sichtbaren Endzustand stehen.
+- **R3 — Late-Setup-Garde (Kern):** Vor dem Erstellen jedes Reveals prüfen, ob das Element beim
+  (verzögerten) Setup schon an/über seiner Trigger-Startlinie liegt (`isPastRevealStart(el, startVh)`,
+  `startVh` = Bruchteil aus dem `start`, z. B. `'top 85%'` → `0.85`). Wenn ja: **keine Auftritts-
+  Animation, sofort Endzustand** (Trigger überspringen). Scroll-Restoration/Fast-Scroll dürfen nie
+  leere Sektionen erzeugen — egal wann der Callback feuert.
+- **R4 — Refresh:** Nach dem gebündelten Setup **einmal** `ScrollTrigger.refresh()` (die Triggers
+  entstehen nach dem `load`-Auto-Refresh → sonst veraltete Start-/End-Marken).
+- **Pflicht-Sichtprüfung:** Nach **jeder** Änderung an Init-Timing/-Reihenfolge (v. a. am Idle-
+  Bündel) visuell prüfen — inklusive **Scroll-Restoration-Repro**: zu einer tiefen Sektion scrollen,
+  **Hard Reload**, prüfen dass keine Sektion leer bleibt (DE **und** EN).
+
 ---
 
 ## Seitenstruktur

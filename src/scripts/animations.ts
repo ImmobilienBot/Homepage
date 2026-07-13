@@ -19,6 +19,20 @@ const prefersReducedMotion = window.matchMedia(
 // Auf Mobile: nur EIN Phone (kein hinterer Fächer) und nur EINE Notification.
 const isDesktopHero = window.matchMedia('(min-width: 768px)').matches;
 
+// Late-Setup-Garde (siehe CLAUDE.md → „Verzögerte Init-Bündel"). Below-fold-Reveals
+// werden im requestIdleCallback u. U. erst erstellt, während der Nutzer schon mitten
+// auf der Seite steht (Scroll-Restoration nach Reload, schnelles Scrollen im Idle-
+// Fenster). Ein einmaliger ScrollTrigger (`once`/`toggleActions:play`) feuert dann
+// NICHT nachträglich für bereits ein-/durchgescrollte Elemente → der versteckte
+// Startzustand (opacity/clip) bliebe kleben = leere Sektion. Diese Garde meldet, ob
+// das Element beim Setup bereits an oder über seiner Trigger-Startlinie liegt; wenn
+// ja, überspringt der Aufrufer die Auftritts-Animation und lässt das Element sofort
+// im (sichtbaren) Endzustand. `startVh` = der Bruchteil der Viewport-Höhe aus dem
+// jeweiligen ScrollTrigger-`start` (z. B. 'top 85%' → 0.85).
+function isPastRevealStart(el: HTMLElement, startVh: number): boolean {
+  return el.getBoundingClientRect().top < window.innerHeight * startVh;
+}
+
 function initSmoothScroll() {
   const lenis = new Lenis({
     lerp: 0.1,
@@ -596,6 +610,11 @@ async function initProblem3c() {
   if (!section || !stage || !canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+  // Late-Setup-Garde (Formungs-Trigger 'top 65%'): liegt die Sektion beim Setup schon
+  // an/über der Startlinie, feuert der Trigger nicht mehr → Headline/Statistik blieben
+  // per gsap.set(autoAlpha:0) versteckt. Dann gar nicht erst verstecken/formen: das
+  // statische Fallback (sichtbare DOM-„43.000" + Headline) steht wie bei reduced-motion.
+  if (isPastRevealStart(section, 0.65)) return;
 
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
@@ -990,19 +1009,24 @@ function initPortale() {
   const pills = gsap.utils.toArray<HTMLElement>('#portale [data-pf-pill]');
   const phoneStage = section.querySelector<HTMLElement>('[data-pf-phone-stage]');
 
-  const tl = gsap.timeline({
-    scrollTrigger: { trigger: section, start: 'top 78%', once: true },
-    defaults: { ease: 'power3.out' },
-  });
-  if (lineInners.length) tl.from(lineInners, { yPercent: 110, duration: 0.9, stagger: 0.12 }, 0);
-  if (markHls.length)
-    tl.from(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
-  if (sub) tl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
-  if (pills.length) tl.from(pills, { autoAlpha: 0, y: 16, duration: 0.5, stagger: 0.035 }, 0.55);
-  if (phoneStage)
-    tl.from(phoneStage, { autoAlpha: 0, xPercent: isDesktop ? 10 : 0, y: isDesktop ? 0 : 20, duration: 0.85 }, 0.45);
+  // Late-Setup-Garde (Trigger 'top 78%'): nur das Entry-Reveal überspringen, wenn die
+  // Sektion beim Setup schon an/über der Startlinie liegt (sonst blieben Headline/Pills/
+  // Phone auf autoAlpha:0 kleben). Die Flug-Choreografie unten läuft davon unabhängig.
+  if (!isPastRevealStart(section, 0.78)) {
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: section, start: 'top 78%', once: true },
+      defaults: { ease: 'power3.out' },
+    });
+    if (lineInners.length) tl.from(lineInners, { yPercent: 110, duration: 0.9, stagger: 0.12 }, 0);
+    if (markHls.length)
+      tl.from(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
+    if (sub) tl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
+    if (pills.length) tl.from(pills, { autoAlpha: 0, y: 16, duration: 0.5, stagger: 0.035 }, 0.55);
+    if (phoneStage)
+      tl.from(phoneStage, { autoAlpha: 0, xPercent: isDesktop ? 10 : 0, y: isDesktop ? 0 : 20, duration: 0.85 }, 0.45);
+  }
 
-  // Flug-Choreografie nur am Desktop-Breakpoint.
+  // Flug-Choreografie nur am Desktop-Breakpoint (unabhängig vom Entry-Reveal).
   if (isDesktop) setupPortaleFlight(section, pills, fine);
 }
 
@@ -1302,6 +1326,10 @@ function initReveals() {
   // Convention: Elemente mit [data-reveal] gleiten dezent herein.
   const targets = gsap.utils.toArray<HTMLElement>('[data-reveal]');
   targets.forEach((el) => {
+    // Late-Setup-Garde: liegt das Element beim (verzögerten) Setup schon an/über der
+    // Startlinie ('top 85%'), würde der einmalige Trigger nicht mehr feuern → nicht
+    // verstecken, sichtbaren Grundzustand belassen (kein gsap.from).
+    if (isPastRevealStart(el, 0.85)) return;
     gsap.from(el, {
       opacity: 0,
       y: 24,
@@ -1324,6 +1352,10 @@ function initReveals() {
 function initAblauf() {
   const section = document.querySelector<HTMLElement>('#ablauf');
   if (!section) return;
+  // Late-Setup-Garde (Trigger 'top 80%'): schon an/über der Startlinie → keine
+  // Startzustände setzen, kein Trigger; Sektion bleibt im natürlichen (sichtbaren)
+  // Endzustand — identisch zur reduced-motion-Behandlung.
+  if (isPastRevealStart(section, 0.8)) return;
 
   const maskIns = gsap.utils.toArray<HTMLElement>('#ablauf .ab-mask-in');
   const markHls = gsap.utils.toArray<HTMLElement>('#ablauf .marker__bg');
@@ -1364,6 +1396,10 @@ function initAblauf() {
 function initPreise() {
   const section = document.querySelector<HTMLElement>('#preise');
   if (!section) return;
+  // Late-Setup-Garde (Trigger 'top 75%'): schon an/über der Startlinie → keine
+  // Startzustände (u. a. clip-path der Riesen-Kachel!) setzen, kein Trigger; Sektion
+  // bleibt im natürlichen (sichtbaren) Endzustand.
+  if (isPastRevealStart(section, 0.75)) return;
 
   const tile = section.querySelector<HTMLElement>('[data-pr-tile]');
   const lineIns = gsap.utils.toArray<HTMLElement>('#preise .pr-line-in');
@@ -1855,16 +1891,37 @@ const runIdle = (fn: () => void): void => {
   }
 };
 
+// R1 (Fehler-Isolation): Jeder Init im Idle-Bündel einzeln gekapselt. Ein Wurf in
+// einem Init darf NIE die nachfolgenden Inits im selben Callback mitreißen (sonst
+// bleiben ganze Sektionen im versteckten Startzustand = leer). Fehler werden
+// geloggt, nicht verschluckt.
+const safeInit = (name: string, fn: () => void): void => {
+  try {
+    fn();
+  } catch (err) {
+    console.error(`[init] „${name}" fehlgeschlagen (andere Sektionen laufen weiter):`, err);
+  }
+};
+
 runIdle(() => {
   if (!prefersReducedMotion) {
-    const lenis = initSmoothScroll();
-    initAnchorScroll(lenis);
-    initProblem3c();
-    initBenefitLottie();
-    initPortale();
-    initAblauf();
-    initPreise();
-    initReveals();
+    let lenis: ReturnType<typeof initSmoothScroll> | null = null;
+    safeInit('SmoothScroll', () => {
+      lenis = initSmoothScroll();
+    });
+    if (lenis) safeInit('AnchorScroll', () => initAnchorScroll(lenis!));
+    safeInit('Problem3c', () => initProblem3c());
+    safeInit('BenefitLottie', () => initBenefitLottie());
+    safeInit('Portale', () => initPortale());
+    safeInit('Ablauf', () => initAblauf());
+    safeInit('Preise', () => initPreise());
+    safeInit('Reveals', () => initReveals());
   }
-  initFeatures();
+  safeInit('Features', () => initFeatures());
+
+  // R4: Nach dem gebündelten (verzögerten) Setup EINMAL die Trigger-Positionen neu
+  // berechnen. Nötig, weil die Triggers erst nach dem window-'load'-Auto-Refresh von
+  // ScrollTrigger erstellt werden — ohne dieses Refresh können ihre Start-/End-Marken
+  // veraltet sein und beim Scrollen nicht sauber feuern.
+  safeInit('ScrollTrigger.refresh', () => ScrollTrigger.refresh());
 });
