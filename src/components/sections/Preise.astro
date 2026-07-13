@@ -1,28 +1,29 @@
 ---
 /**
- * Preise — die einzige gelbe Sektion (#fff03c). Trial-Karte (schwarz) mit
- * Timeline + QR (Desktop) + Store-Badges, daneben die Plan-Spalte (Woche/Monat),
- * darunter die Benefits-Leiste. Alle Texte aus i18n, alle Preise aus site.ts
- * (Intl-formatiert). Genau EINE H1 bleibt im Hero → hier H2.
+ * Preise — „Der Schalter". Gelbe Vollflächen-Sektion (#fff03c): links Argumente
+ * (Eyebrow, H2 mit invertiertem Marker, Copy, vier Checks, 70-%-Stat, QR nur
+ * Desktop), rechts eine weiße Karte mit Woche/Monat-Schalter, Preisblock, CTA und
+ * Microcopy.
  *
- * Guardrails: Animations-Startzustände NUR per gsap.set (initPreise) — ohne JS /
- * reduced-motion steht alles im Endzustand. Hover-Flip der Plan-Karten nur
- * (pointer: fine), reine CSS-Transition (background/color), keine Transform.
+ * Guardrails: Genau EINE H1 bleibt im Hero → hier H2. ALLE Zahlen (Preise, Tages-
+ * preise, Spar-%) zur Buildzeit aus site.ts abgeleitet — nichts hart, kein Zahl-JS.
+ * Beide Preise stehen immer im DOM (No-JS + Facts-Sync). Reveal-Startzustände nur
+ * per gsap.set (initPreise) — ohne JS / reduced-motion alles im Endzustand. Store-
+ * Routing via bestehende /go/app-Weiche (OS-Erkennung + UTM), wie beim QR.
  */
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { pricing } from '../../data/site';
-import StoreBadges from '../StoreBadges.astro';
+import { pricing, firstMonthSuccessRate } from '../../data/site';
+import PillButton from '../ui/PillButton.astro';
 import QrCode from '../QrCode.astro';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const P = t.sections.pricing;
 
-// Preise ausschließlich aus site.ts, locale-abhängig via Intl formatiert.
-const trialPlan = pricing.find((p) => p.id === 'free')!;
 const weekPlan = pricing.find((p) => p.id === 'week')!;
 const monthPlan = pricing.find((p) => p.id === 'month')!;
 
+// Preise ausschließlich aus site.ts, locale-abhängig via Intl formatiert.
 const nf = (value: number, frac: number) =>
   new Intl.NumberFormat(lang === 'en' ? 'en-IE' : 'de-DE', {
     style: 'currency',
@@ -30,512 +31,484 @@ const nf = (value: number, frac: number) =>
     minimumFractionDigits: frac,
     maximumFractionDigits: frac,
   }).format(value);
-
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-const trialPrice = nf(trialPlan.priceValue, 0); // „0 €" / „€0"
-const weekPrice = nf(weekPlan.priceValue, 2);
-const monthPrice = nf(monthPlan.priceValue, 2);
-const weekPerDay = P.plans.perDay.replace('{price}', nf(round2(weekPlan.priceValue / 7), 2));
-const monthPerDay = P.plans.perDay.replace('{price}', nf(round2(monthPlan.priceValue / 30), 2));
+const weekPrice = nf(weekPlan.priceValue, 2); // „2,99 €" / „€2.99"
+const monthPrice = nf(monthPlan.priceValue, 2); // „7,99 €" / „€7.99"
+// Tagespreis: Wochenpreis/7 bzw. Monatspreis/30, auf 2 Nachkommastellen (Intl → &nbsp; vor €).
+const weekDay = P.day.replace('{price}', nf(round2(weekPlan.priceValue / 7), 2));
+const monthDay = P.day.replace('{price}', nf(round2(monthPlan.priceValue / 30), 2));
+// Spar-% = 1 − Monatspreis / (4 × Wochenpreis), gerundet (aktuell 33).
+const savePct = Math.round((1 - monthPlan.priceValue / (4 * weekPlan.priceValue)) * 100);
+const badge = P.badge.replace('{x}', String(savePct));
+// 70-%-Stat aus site.ts; Quelle ² (Footer) wie in der Ablauf-Sektion.
+const stat = P.stat.replace('{rate}', String(firstMonthSuccessRate));
+const fnLabel = lang === 'en' ? 'Go to source' : 'Zur Quellenangabe';
 
-// Marker-Split (Prefix + markiertes Keyword + Suffix) für die Headline-Zeile 1.
-function markParts(text: string, mark: string) {
-  const i = text.indexOf(mark);
-  if (i < 0) return { pre: text, mark: '', post: '' };
-  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
-}
-const h = markParts(P.headline.line1, P.headline.mark);
+// Buildzeit-Strings für den Schalter (JS erzeugt KEINE Zahlen, liest nur dieses JSON).
+const toggleConfig = {
+  week: { price: weekPrice, baseline: P.per.week, day: weekDay, desc: P.desc.week },
+  month: { price: monthPrice, baseline: P.per.month, day: monthDay, desc: P.desc.month },
+};
 
-// Benefits-Linienicons (26×26, stroke=currentColor 2, fill none, runde Caps):
-// Glocke · gestapelte Ebenen · Stern · Kreis mit X.
-const BENEFIT_ICONS = [
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>`,
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 12l10 5 10-5"/><path d="M2 17l10 5 10-5"/></svg>`,
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.6.9-4.8 4.6 1.2 6.5-5.9-3.1-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9Z"/></svg>`,
-  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M15 9l-6 6M9 9l6 6"/></svg>`,
-];
+const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg>`;
 ---
 
-<section id="preise" aria-labelledby="preise-heading" class="pr-section" data-pr-section>
-  {/* Schwebende Riesen-Kachel (das einzige Gelb) — breiter als der Content-Container;
-      der Inhalt fluchtet über .pr-inner exakt mit dem Content-Container (Features). */}
-  <div class="pr-tile" data-pr-tile>
-    <div class="pr-inner">
-      {/* ---- Header: H2 (zwei Zeilen, invertierter Marker) + Subline ---- */}
-    <header class="pr-head">
-      <h2 id="preise-heading" class="pr-h2">
-        <span class="pr-line"
-          ><span class="pr-line-in"
-            >{h.pre}<span class="marker marker--dark"
-              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
-                >{h.mark}</span
+<section id="preise" aria-labelledby="preise-h" class="pr2-section" data-pr2-section>
+  <div class="pr2-inner">
+    <div class="pr2-grid">
+      {/* ================= LINKS: Argumente ================= */}
+      <div class="pr2-left">
+        <p class="pr2-eyebrow" data-pr2-reveal>{P.eyebrow}</p>
+
+        <h2 id="preise-h" class="pr2-h2">
+          <span class="pr2-mask"><span class="pr2-line-in">{P.h2.line1}</span></span>
+          <span class="pr2-mask"
+            ><span class="pr2-line-in"
+              ><span class="marker marker--dark"
+                ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
+                  >{P.h2.line2}</span
+                ></span
               ></span
-            >{h.post}</span
-          ></span
-        >
-        <span class="pr-line"><span class="pr-line-in">{P.headline.line2}</span></span>
-      </h2>
-      <p class="pr-sub" data-pr-sub>{P.subline}</p>
-    </header>
+            ></span
+          >
+          <span class="pr2-mask"><span class="pr2-line-in">{P.h2.line3}</span></span>
+        </h2>
 
-    {/* ---- Grid: Trial-Karte | Plan-Spalte ---- */}
-    <div class="pr-grid">
-      {/* ===== Trial-Karte (schwarz) ===== */}
-      <article class="pr-trial" data-pr-card>
-        <div class="pr-trial-head">
-          <div class="pr-trial-lead">
-            <p class="pr-label pr-label--light">{P.trial.label}</p>
-            <p class="pr-price">
-              <span class="pr-price-val">{trialPrice}</span>
-              <span class="pr-price-suffix">{P.trial.priceSuffix}</span>
-            </p>
-            <p class="pr-trial-desc">{P.trial.desc}</p>
-          </div>
-          {/* QR nur Desktop (hidden lg:block via CSS). */}
-          <div class="pr-qr">
-            <QrCode
-              campaign="preise_qr"
-              caption={P.trial.qrCaption}
-              ariaLabel={
-                lang === 'en'
-                  ? 'QR code: get the app — takes you to the right app store'
-                  : 'QR-Code: App laden — führt zum passenden App-Store'
-              }
-            />
-          </div>
-        </div>
+        <p class="pr2-copy" data-pr2-reveal>{P.copy}</p>
 
-        <ol class="pr-timeline">
+        <ul class="pr2-checks">
           {
-            P.trial.timeline.map((item) => (
-              <li class="pr-tl-item">
-                <span class="pr-tl-lead">{item.lead}</span> — {item.text}
+            P.checks.map((c) => (
+              <li class="pr2-check" data-pr2-reveal>
+                <span class="pr2-check-ic" aria-hidden="true" set:html={CHECK_ICON} />
+                <span class="pr2-check-tx">{c}</span>
               </li>
             ))
           }
-        </ol>
+        </ul>
 
-        <StoreBadges position="preise" class="pr-badges" />
-        <p class="pr-store-note">{P.trial.storeNote}</p>
-      </article>
+        <p class="pr2-stat" data-pr2-reveal>
+          {stat}
+          <sup class="pr2-fn"><a href="#quellen" aria-label={fnLabel}>2</a></sup>
+        </p>
 
-      {/* ===== Plan-Spalte ===== */}
-      <div class="pr-plans">
-        <p class="pr-label pr-label--dark pr-plans-label">{P.plans.label}</p>
+        {/* QR nur Desktop (bestehende Desktop-only-Logik). */}
+        <div class="pr2-qr" data-pr2-reveal>
+          <QrCode
+            campaign="preise_cta"
+            caption={P.qrCaption}
+            size={88}
+            surface="white"
+            ariaLabel={
+              lang === 'en'
+                ? 'QR code: get the app — takes you to the right app store'
+                : 'QR-Code: App laden — führt zum passenden App-Store'
+            }
+          />
+        </div>
+      </div>
 
-        <div class="pr-plan" data-pr-card>
-          <div class="pr-plan-row">
-            <span class="pr-plan-name">{P.plans.week.name}</span>
-            <span class="pr-plan-price"
-              >{weekPrice}<span class="pr-plan-suffix">{P.plans.week.suffix}</span></span
-            >
-          </div>
-          <p class="pr-plan-sub">{weekPerDay} · {P.plans.week.desc}</p>
+      {/* ================= RECHTS: die Karte ================= */}
+      <div class="pr2-card" data-pr2-card data-pr2 data-plan="month">
+        {/* Schalter — Default MONAT (ohne JS vollständig korrekt). */}
+        <div class="pr2-toggle" role="group" aria-label={P.toggleAria}>
+          <span class="pr2-knob" data-pr2-knob aria-hidden="true"></span>
+          <button type="button" class="pr2-tbtn" data-pr2-week aria-pressed="false">
+            <span class="pr2-tbtn-label">{P.toggle.week}</span>
+            <span class="pr2-tbtn-price">{weekPrice}</span>
+          </button>
+          <button type="button" class="pr2-tbtn" data-pr2-month aria-pressed="true">
+            <span class="pr2-tbtn-label">{P.toggle.month}</span>
+            <span class="pr2-tbtn-price">{monthPrice}</span>
+          </button>
         </div>
 
-        <div class="pr-plan pr-plan--month" data-pr-card>
-          <span class="pr-plan-chip">{P.plans.chip}</span>
-          <div class="pr-plan-row">
-            <span class="pr-plan-name">{P.plans.month.name}</span>
-            <span class="pr-plan-price"
-              >{monthPrice}<span class="pr-plan-suffix">{P.plans.month.suffix}</span></span
-            >
-          </div>
-          <p class="pr-plan-sub">{monthPerDay} · {P.plans.month.desc}</p>
+        {/* Preisblock (aria-live: Zustandswechsel ansagen). */}
+        <div class="pr2-live" aria-live="polite">
+          <p class="pr2-priceblock">
+            <span class="pr2-price" data-pr2-price>{monthPrice}</span>
+            <span class="pr2-baseline" data-pr2-baseline>{P.per.month}</span>
+          </p>
+          <p class="pr2-day" data-pr2-day>{monthDay}</p>
+          <p class="pr2-desc" data-pr2-desc>{P.desc.month}</p>
+          <span class="pr2-badge" data-pr2-badge>{badge}</span>
         </div>
 
-        <p class="pr-plan-note">{P.plans.note}</p>
+        <PillButton
+          href="/go/app?c=preise_cta"
+          surface="invert"
+          size="md"
+          block
+          pulse
+          class="pr2-cta"
+          data-pr2-cta
+          data-cursor-label={P.cta}
+        >
+          {P.cta}
+        </PillButton>
+
+        <p class="pr2-micro">{P.micro}</p>
+
+        {/* Buildzeit-Strings für den Schalter (kein Zahl-JS). */}
+        <script type="application/json" data-pr2-config is:inline set:html={JSON.stringify(toggleConfig)} />
       </div>
     </div>
-
-    {/* ===== Benefits-Leiste ===== */}
-    <div class="pr-benefits">
-      <p class="pr-label pr-label--dark">{P.benefits.label}</p>
-      <ul class="pr-benefits-list">
-        {
-          P.benefits.items.map((item, i) => (
-            <li class="pr-benefit" data-pr-benefit>
-              <span class="pr-benefit-ic" set:html={BENEFIT_ICONS[i]} />
-              <span class="pr-benefit-tx">{item}</span>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-    </div>
   </div>
+
+  <script>
+    // Schalter-Island: liest nur die Buildzeit-Strings (data-pr2-config), tauscht Text
+    // + Zustand. CSS treibt Knopf/Badge/Farben über [data-plan]. Ohne JS bleibt MONAT.
+    const card = document.querySelector<HTMLElement>('[data-pr2]');
+    if (card) {
+      const cfgEl = card.querySelector('[data-pr2-config]');
+      const cfg = cfgEl ? JSON.parse(cfgEl.textContent || '{}') : {};
+      const week = card.querySelector<HTMLButtonElement>('[data-pr2-week]');
+      const month = card.querySelector<HTMLButtonElement>('[data-pr2-month]');
+      const priceEl = card.querySelector<HTMLElement>('[data-pr2-price]');
+      const baseEl = card.querySelector<HTMLElement>('[data-pr2-baseline]');
+      const dayEl = card.querySelector<HTMLElement>('[data-pr2-day]');
+      const descEl = card.querySelector<HTMLElement>('[data-pr2-desc]');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const apply = (plan: 'week' | 'month') => {
+        const d = cfg[plan];
+        if (!d || !priceEl || !baseEl || !dayEl || !descEl) return;
+        priceEl.textContent = d.price;
+        baseEl.textContent = d.baseline;
+        dayEl.textContent = d.day;
+        descEl.textContent = d.desc;
+        week?.setAttribute('aria-pressed', String(plan === 'week'));
+        month?.setAttribute('aria-pressed', String(plan === 'month'));
+        card.dataset.plan = plan;
+        // Preis-Pop (nur transform; reduced-motion: kein Pop).
+        if (!reduce && priceEl.animate) {
+          priceEl.animate(
+            [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }],
+            { duration: 160, easing: 'ease-out' },
+          );
+        }
+      };
+      week?.addEventListener('click', () => apply('week'));
+      month?.addEventListener('click', () => apply('month'));
+    }
+  </script>
 </section>
 
 <style>
   /* =====================================================================
-     Preise — grauer Seitenhintergrund, das Gelb liegt in einer schwebenden
-     Riesen-Kachel (breiter als der Content-Container). Der Kachel-Inhalt fluchtet
-     über .pr-inner exakt mit dem globalen Content-Container (wie Features).
+     Basis — gelbe Vollflächen-Sektion, Standard-Rhythmus + Content-Einschub.
      ===================================================================== */
-  .pr-section {
+  .pr2-section {
     position: relative;
-    background-color: var(--color-grey);
-    padding-block: var(--spacing-section);
-  }
-  /* Riesen-Kachel: breiter als der Content, gelb, weiche große Elevation. */
-  .pr-tile {
-    --pr-radius: clamp(24px, 3vw, 40px);
-    margin-inline: clamp(12px, 3vw, 40px);
-    padding-block: clamp(48px, 7vw, 88px);
-    /* Content-Inset INNERHALB der Kachel = derselbe Inset wie in Features; zusammen
-       mit .pr-inner (72rem, zentriert) fluchtet der Text auf breiten Screens exakt
-       mit dem globalen Content-Container. */
-    padding-inline: var(--spacing-inset);
-    border-radius: var(--pr-radius);
     background-color: var(--color-yellow);
-    box-shadow: 0 24px 80px -24px rgb(59 59 58 / 0.25);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
   }
-  .pr-inner {
+  .pr2-inner {
     max-width: 72rem;
     margin-inline: auto;
   }
-  /* Mobile: schmalerer Seitenrand, kleinerer Radius, reduziertes Innen-Padding. */
-  @media (max-width: 1023.98px) {
-    .pr-tile {
-      --pr-radius: 24px;
-      margin-inline: 12px;
-      padding-block: 48px;
+  .pr2-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  /* Desktop: zwei Spalten (Argumente | Karte ~440px), vertikal zentriert. */
+  @media (min-width: 960px) {
+    .pr2-grid {
+      grid-template-columns: 1fr minmax(0, 440px);
+      gap: 72px;
     }
   }
 
-  /* ---- Header ---- */
-  .pr-head {
-    margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+  /* =====================================================================
+     Links — Argument-Stack.
+     ===================================================================== */
+  .pr2-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
   }
-  .pr-h2 {
+  /* Eyebrow: opacity zugunsten AA angehoben (auf reinem Gelb bleibt .55 unter 4.5:1). */
+  .pr2-eyebrow {
+    margin: 0;
+    font-weight: 900;
+    font-size: 13px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-black);
+    opacity: 0.78;
+  }
+  .pr2-h2 {
+    margin: 0;
     font-weight: 900;
     font-size: clamp(2.1rem, 5.4vw, 3.75rem);
-    line-height: 1.0;
+    line-height: 1;
     letter-spacing: -0.02em;
     color: var(--color-black);
   }
-  /* Zeilen-Mask-Wrapper (Reveal klippt nur die einfahrende Zeile). Heading-Text
-     bleibt im h2; Animation nur auf .pr-line-in. */
-  .pr-line {
+  /* Zeilen-Mask (Reveal klippt nur die einfahrende Zeile). */
+  .pr2-mask {
     display: block;
     overflow: hidden;
     padding-block: 0.08em;
     margin-block: -0.08em;
   }
-  .pr-line-in {
+  .pr2-line-in {
     display: inline-block;
     will-change: transform;
   }
-  /* Invertierter Keyword-Marker (schwarzer Grund, gelber Text) auf der gelben
-     Kachel → globale Klassen .marker.marker--dark (siehe global.css). Der Wipe
-     fährt .marker__bg per gsap.set/.to herein (scaleX 0→1, skewX:-8 mitgeführt). */
-  .pr-sub {
-    margin-top: clamp(1rem, 2vw, 1.4rem);
-    max-width: 34rem;
-    font-size: clamp(1.05rem, 1.5vw, 1.25rem);
-    line-height: 1.5;
-    color: var(--color-black);
-  }
-
-  /* ---- Grid ---- */
-  .pr-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-  @media (min-width: 1024px) {
-    .pr-grid {
-      grid-template-columns: 1.45fr 1fr;
-    }
-  }
-
-  /* ---- Label-Stil (überall wiederverwendet) ---- */
-  .pr-label {
-    font-size: clamp(0.7rem, 1vw, 0.75rem);
-    font-weight: 900;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+  .pr2-copy {
     margin: 0;
-  }
-  .pr-label--light {
-    color: rgb(246 246 246 / 0.6);
-  }
-  .pr-label--dark {
+    max-width: 420px;
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    line-height: 1.55;
     color: var(--color-black);
   }
-
-  /* =====================================================================
-     Trial-Karte (schwarz)
-     ===================================================================== */
-  .pr-trial {
-    background-color: var(--color-black);
-    border-radius: 24px;
-    padding: 32px;
-    color: var(--color-offwhite);
-  }
-  .pr-trial-head {
+  .pr2-checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1.5rem;
+    flex-direction: column;
+    gap: 12px;
   }
-  .pr-trial-lead {
-    min-width: 0;
-  }
-  .pr-price {
-    margin: 0.5rem 0 0;
+  .pr2-check {
     display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-black);
   }
-  .pr-price-val {
-    font-weight: 900;
-    font-size: clamp(3.5rem, 6vw, 4rem);
-    line-height: 1;
-    color: var(--color-yellow);
-    letter-spacing: -0.02em;
-  }
-  .pr-price-suffix {
-    font-size: 1.125rem;
-    font-weight: 500;
-    color: rgb(246 246 246 / 0.85);
-  }
-  .pr-trial-desc {
-    margin: 0.75rem 0 0;
-    max-width: 340px;
-    font-size: 0.9375rem;
-    line-height: 1.5;
-    color: rgb(246 246 246 / 0.8);
-  }
-
-  /* QR nur Desktop. */
-  .pr-qr {
-    display: none;
+  .pr2-check-ic {
     flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--color-black);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  @media (min-width: 1024px) {
-    .pr-qr {
+  .pr2-check-ic :global(svg) {
+    width: 12px;
+    height: 12px;
+    display: block;
+  }
+  .pr2-stat {
+    margin: 0;
+    max-width: 420px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--color-black);
+  }
+  .pr2-fn {
+    font-size: 0.6em;
+    vertical-align: super;
+    line-height: 0;
+    margin-left: 0.1em;
+  }
+  .pr2-fn a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .pr2-fn a:hover,
+  .pr2-fn a:focus-visible {
+    text-decoration: underline;
+  }
+  .pr2-qr {
+    display: none;
+    margin-top: 4px;
+  }
+  @media (min-width: 960px) {
+    .pr2-qr {
       display: block;
     }
   }
 
-  /* Timeline als semantische Liste mit Verbindungslinie + Punkten. */
-  .pr-timeline {
-    list-style: none;
-    margin: 24px 0 0;
-    padding: 0 0 0 22px;
-    position: relative;
-  }
-  .pr-timeline::before {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 6px;
-    bottom: 6px;
-    width: 2px;
-    background-color: rgb(246 246 246 / 0.22);
-  }
-  .pr-tl-item {
-    position: relative;
-    font-size: 0.875rem;
-    line-height: 1.45;
-    color: rgb(246 246 246 / 0.75);
-    padding-bottom: 0.85rem;
-  }
-  .pr-tl-item:last-child {
-    padding-bottom: 0;
-  }
-  .pr-tl-item::before {
-    content: '';
-    position: absolute;
-    left: -22px;
-    top: 0.35em;
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background-color: var(--color-yellow);
-    transform: translateX(-1px);
-  }
-  /* Dritter Punkt nur umrandet (transparent, 9px). */
-  .pr-tl-item:last-child::before {
-    width: 9px;
-    height: 9px;
-    background-color: transparent;
-    border: 2px solid var(--color-yellow);
-  }
-  .pr-tl-lead {
-    font-weight: 900;
-    color: var(--color-offwhite);
-  }
-
-  .pr-badges {
-    margin-top: 32px;
-    --badge-h: 48px;
-  }
-  .pr-store-note {
-    margin: 16px 0 0;
-    font-size: 0.75rem;
-    line-height: 1.55;
-    color: rgb(246 246 246 / 0.55);
-  }
-
   /* =====================================================================
-     Plan-Spalte
+     Rechts — die Karte (weiß auf Gelb).
      ===================================================================== */
-  .pr-plans {
+  .pr2-card {
+    width: 100%;
+    max-width: 440px;
+    margin-inline: auto;
+    background: var(--color-offwhite);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 24px 60px rgb(59 59 58 / 0.18);
+  }
+  @media (min-width: 960px) {
+    .pr2-card {
+      margin-inline: 0;
+      justify-self: end;
+    }
+  }
+
+  /* ---- Schalter ---- */
+  .pr2-toggle {
+    position: relative;
+    display: flex;
+    background: var(--color-black);
+    border-radius: 999px;
+    padding: 5px;
+  }
+  .pr2-knob {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    width: calc(50% - 5px);
+    border-radius: 999px;
+    background: var(--color-yellow);
+    z-index: 0;
+    transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+  }
+  [data-plan='month'] .pr2-knob {
+    transform: translateX(100%);
+  }
+  [data-plan='week'] .pr2-knob {
+    transform: translateX(0);
+  }
+  .pr2-tbtn {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 44px;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 6px 8px;
+    border: 0;
+    background: transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    color: var(--color-offwhite);
+    transition: color 0.25s ease;
   }
-  /* Label → erste Karte 16px; zwischen den Karten 24px (überstehender Chip
-     top −11px braucht Freiraum); Karten → Notiz 16px. */
-  .pr-plans-label {
-    margin: 0 0 16px;
+  .pr2-tbtn-label {
+    font-size: 15px;
+    font-weight: 900;
   }
-  .pr-plan + .pr-plan {
+  .pr2-tbtn-price {
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  /* Aktiver Button (auf gelbem Knopf) dunkel, inaktiver hell (Preiszeile gedämpft). */
+  [data-plan='month'] [data-pr2-month],
+  [data-plan='week'] [data-pr2-week] {
+    color: var(--color-black);
+  }
+  .pr2-tbtn[aria-pressed='false'] .pr2-tbtn-price {
+    opacity: 0.7;
+  }
+  .pr2-tbtn:focus-visible {
+    outline: 2px solid var(--color-offwhite);
+    outline-offset: 2px;
+  }
+
+  /* ---- Preisblock ---- */
+  .pr2-live {
+    text-align: center;
     margin-top: 24px;
   }
-  .pr-plan {
-    position: relative;
-    border: 2px solid var(--color-black);
-    border-radius: 20px;
-    padding: 20px 24px;
-    background-color: transparent;
-    color: var(--color-black);
-  }
-  .pr-plan-row {
+  .pr2-priceblock {
+    margin: 0;
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
-    gap: 1rem;
+    justify-content: center;
+    gap: 8px;
   }
-  .pr-plan-name {
-    font-size: 1.25rem;
+  .pr2-price {
     font-weight: 900;
+    font-size: clamp(48px, 10vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+    font-variant-numeric: tabular-nums;
+    transform-origin: center;
+    display: inline-block;
   }
-  .pr-plan-price {
-    font-size: 1.25rem;
+  .pr2-baseline {
+    font-size: 17px;
+    font-weight: 700;
+    /* AA: gedämpftes, geprüftes Grau statt 60 %-Opacity auf Weiß. */
+    color: var(--color-grey-text);
+  }
+  .pr2-day {
+    margin: 8px 0 0;
+    font-size: 15px;
     font-weight: 900;
-    white-space: nowrap;
+    color: var(--color-black);
   }
-  .pr-plan-suffix {
-    font-size: 0.75rem;
-    font-weight: 400;
-    margin-left: 0.3rem;
+  .pr2-desc {
+    margin: 8px 0 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: var(--color-grey-text);
   }
-  .pr-plan-sub {
-    margin: 0.5rem 0 0;
-    font-size: 0.8125rem;
-    line-height: 1.45;
-    color: rgb(59 59 58 / 0.72);
-  }
-  /* Monats-Chip absolut oben rechts. */
-  .pr-plan--month {
-    overflow: visible;
-  }
-  .pr-plan-chip {
-    position: absolute;
-    top: -11px;
-    right: 16px;
-    padding: 0.25rem 0.6rem;
-    border-radius: var(--radius-pill);
-    background-color: var(--color-black);
+  .pr2-badge {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--color-black);
     color: var(--color-yellow);
-    font-size: 0.6875rem;
+    font-size: 12px;
     font-weight: 900;
-    letter-spacing: 0.08em;
-    white-space: nowrap;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transform-origin: center;
+    transition:
+      transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1),
+      opacity 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
   }
-  .pr-plan-note {
-    margin: 16px 0 0;
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    color: rgb(59 59 58 / 0.75);
+  /* Badge nur bei Monat sichtbar. */
+  [data-plan='week'] .pr2-badge {
+    transform: scale(0);
+    opacity: 0;
   }
 
-  /* Hover-Flip NUR (pointer: fine), reine Farb-Transition (keine Transform). */
-  @media (hover: hover) and (pointer: fine) {
-    .pr-plan {
-      transition: background-color 150ms ease-out, color 150ms ease-out;
-    }
-    .pr-plan-sub {
-      transition: color 150ms ease-out;
-    }
-    .pr-plan-chip {
-      transition: background-color 150ms ease-out, color 150ms ease-out;
-    }
-    .pr-plan:hover {
-      background-color: var(--color-black);
-      color: var(--color-offwhite);
-    }
-    .pr-plan:hover .pr-plan-sub {
-      color: rgb(246 246 246 / 0.7);
-    }
-    .pr-plan--month:hover .pr-plan-chip {
-      background-color: var(--color-yellow);
-      color: var(--color-black);
-    }
+  /* ---- CTA + Microcopy ---- */
+  .pr2-cta {
+    margin-top: 24px;
+  }
+  .pr2-micro {
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.45;
+    /* AA: geprüftes Grau statt 65 %-Opacity. */
+    color: var(--color-grey-text);
   }
 
   /* =====================================================================
-     Benefits-Leiste
+     Mobile — einspaltig, kompaktere Karte.
      ===================================================================== */
-  .pr-benefits {
-    margin-top: clamp(2rem, 4vw, 2.75rem);
-    border-top: 2px solid rgb(59 59 58 / 0.3);
-    padding-top: 20px;
-  }
-  .pr-benefits-list {
-    list-style: none;
-    margin: 1rem 0 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  @media (min-width: 768px) {
-    .pr-benefits-list {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-    }
-  }
-  .pr-benefit {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    line-height: 1.35;
-    color: var(--color-black);
-  }
-  .pr-benefit-ic {
-    flex: none;
-    display: inline-flex;
-    color: var(--color-black);
-  }
-  .pr-benefit-ic :global(svg) {
-    width: 26px;
-    height: 26px;
-    display: block;
-  }
-  .pr-benefit-tx {
-    padding-top: 0.15rem;
-  }
-
-  /* =====================================================================
-     Mobile (< lg): kompakteres Karten-Padding, Badges volle Breite.
-     ===================================================================== */
-  @media (max-width: 1023.98px) {
-    .pr-trial {
+  @media (max-width: 767.98px) {
+    .pr2-card {
       padding: 24px;
     }
-    .pr-plan {
-      padding: 16px 18px;
-    }
-    .pr-badges {
-      --badge-h: 44px;
+  }
+
+  /* =====================================================================
+     prefers-reduced-motion — Zustandswechsel instant (kein Knopf-Slide, kein Badge-
+     Pop). Der Puls-Dot + Preis-Pop sind separat gegated (PillButton bzw. JS).
+     ===================================================================== */
+  @media (prefers-reduced-motion: reduce) {
+    .pr2-knob,
+    .pr2-badge,
+    .pr2-tbtn,
+    .pr2-line-in {
+      transition: none;
     }
   }
 </style>

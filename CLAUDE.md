@@ -83,10 +83,13 @@ Ordnung/Ruhe.
 - **CTA-Buttons: ausschließlich `PillButton`** (`src/components/ui/PillButton.astro`). Gelbe Pille
   ohne Kontur, dunkler Dot links; Hover (nur Desktop) lässt einen Füll-Kreis **aus dem Dot** wachsen
   (`#3b3b3a`, auf dunklen Sektionen `#f6f6f6`), invertiert den Text und **slidet das Icon** von links
-  ein. Größen `sm`/`md`, Surfaces `light`/`dark`/`yellow`, Icons `bolt`/`arrow-down`/`arrow-right`/
-  `check`. Label kommt als Slot. Rein CSS, nur `transform`/`opacity`; Touch = kein Hover, `:active`-
-  Feedback; `prefers-reduced-motion` = harter Zustandswechsel ohne Bewegung. **Einzige Ausnahme:**
-  offizielle Store-Badges (`StoreBadges.astro`). Keine eigenen Button-Styles mehr bauen.
+  ein. Größen `sm`/`md`, Surfaces `light`/`dark`/`yellow`/`invert` (invert = dunkle Pille + gelber
+  Text/Dot, flutet auf Hover GELB → für gelbe Flächen), Icons `bolt`/`arrow-down`/`arrow-right`/
+  `check`. Optionen `block` (volle Breite, Dot links, Label zentriert) und `pulse` (ruhiger Dot-
+  Opacity-Puls, pausiert bei Hover/reduced-motion). Label kommt als Slot. Rein CSS, nur
+  `transform`/`opacity`; Touch = kein Hover, `:active`-Feedback; `prefers-reduced-motion` = harter
+  Zustandswechsel ohne Bewegung. **Einzige Ausnahme:** offizielle Store-Badges
+  (`StoreBadges.astro`). Keine eigenen Button-Styles mehr bauen.
 - **Keyword-Marker: ausschließlich `.marker`** (global in `src/styles/global.css`), auf **gelben
   Flächen** die Variante `.marker--dark`. Feste Geometrie — **nie neu erfinden, nie abweichen:**
   `skewX(-8deg)`, `border-radius: .13em`, `padding: 0 .14em` (alle Maße in `em` → skaliert mit der
@@ -213,8 +216,13 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
    Bento-Grid. Ersetzt eine geklickte Demo.
 6. **Portale** — die überwachten Portale als **Text-Liste** (keine Logos, rechtliche Gründe).
    Anzahl wird aus `site.ts` abgeleitet (`portalCount`) und als **exakte Zahl** gezeigt (kein „über 10").
-7. **Preise** — 3 Karten (siehe unten) + 4-Vorteile-Streifen. CTA-Fokus auf
-   „7 Tage kostenlos testen – kein Risiko".
+7. **Preise** („Der Schalter", steht NACH Bewertungen) — gelbe Vollflächen-Sektion: links
+   Argumente (Eyebrow, H2 mit invertiertem Marker, Copy, 4 Checks, 70-%-Stat mit Quelle ²,
+   QR nur Desktop), rechts weiße Karte mit **Woche/Monat-Schalter** (beide Preise immer im DOM →
+   No-JS + Facts-Sync), Preisblock (großer Preis, Tagespreis, Spar-Badge nur bei Monat), invertiertem
+   Vollbreiten-CTA „Kostenlos testen" (→ `/go/app`-Weiche) und Microcopy. **Alle Zahlen (Preise,
+   Tagespreise = Preis/30 bzw. /7, Spar-% = `round((1 − Monat/(4×Woche))×100)`) zur Buildzeit aus
+   `site.ts`** — nichts hart, kein Zahl-JS. Default MONAT vorselektiert.
 8. **Bewertungen** — Proof-Header (H2 mit Keyword-Marker + abgeleitete Zahlen: `totalReviewCount`)
    + 3 Rating-Kacheln (App Store · Google Play · Google Maps, StarRating-Komponente, keine Logos)
    + zwei gegenläufige, **rein CSS-animierte** Marquee-Reihen mit Zitat-Sprechblasen (CD-Störer,

@@ -18,10 +18,21 @@ interface Props {
   caption?: string;
   /** aria-label des umschließenden Links (SVG bleibt aria-hidden). */
   ariaLabel: string;
+  /** Kachel-Breite in px (Standard 136). */
+  size?: number;
+  /** Kachelfarbe: gelb (Standard) oder weiß (z. B. auf gelber Sektion). */
+  surface?: 'yellow' | 'white';
   class?: string;
 }
 
-const { campaign = 'preise_qr', caption, ariaLabel, class: cls = '' } = Astro.props;
+const {
+  campaign = 'preise_qr',
+  caption,
+  ariaLabel,
+  size = 136,
+  surface = 'yellow',
+  class: cls = '',
+} = Astro.props;
 
 const target = `/go/app?c=${campaign}`;
 // Absolute URL für den QR-Inhalt (Handy-Scan braucht die volle Domain). Bewusst
@@ -38,7 +49,7 @@ const qrSvg = await QRCode.toString(encodeUrl, {
 });
 ---
 
-<a href={target} class:list={['qr', cls]} aria-label={ariaLabel}>
+<a href={target} class:list={['qr', `qr--${surface}`, cls]} aria-label={ariaLabel} style={`--qr-size:${size}px`}>
   <span class="qr-tile">
     <span class="qr-svg" set:html={qrSvg}></span>
     {/* Bot-Icon mittig auf gelbem Knockout-Quadrat (deckt die Module in der
@@ -69,12 +80,19 @@ const qrSvg = await QRCode.toString(encodeUrl, {
   .qr-tile {
     position: relative;
     display: block;
-    width: 136px;
-    padding: 12px; /* Quiet-Zone */
+    width: var(--qr-size, 136px);
+    padding: clamp(8px, 11%, 12px); /* Quiet-Zone, skaliert mit der Kachelgröße */
     border-radius: 14px;
     background-color: var(--color-yellow);
     transform: rotate(-3deg);
     transition: transform 200ms ease-out;
+  }
+  /* Weiße Variante (z. B. auf gelber Sektion): Kachel + Bot-Knockout in Off-White. */
+  .qr--white .qr-tile {
+    background-color: var(--color-offwhite);
+  }
+  .qr--white .qr-bot {
+    background-color: var(--color-offwhite);
   }
   .qr-svg {
     display: block;

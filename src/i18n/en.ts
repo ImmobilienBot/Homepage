@@ -223,40 +223,33 @@ export const en: Dict = {
     },
     pricing: {
       title: 'Pricing',
-      // Two-line headline; „Try it" carries the inverted marker.
-      headline: { line1: 'Try it first.', line2: 'Then decide.', mark: 'Try it' },
-      subline:
-        "7 days of full access to everything — for €0. You pick week or month at the start, and you're only charged from day 8. Cancel anytime.",
-      trial: {
-        label: 'Try it free',
-        priceSuffix: '· 7 days',
-        desc: 'The full feature set from second one: all portals, real-time push, favorites, application letters.',
-        timeline: [
-          { lead: 'Today', text: 'get the app, pick week or month, start for free' },
-          { lead: 'Days 1–7', text: 'test everything, cancel anytime' },
-          { lead: 'Day 8', text: 'only now does your chosen plan start' },
-        ],
-        storeNote:
-          "You start your trial by picking week or month in the store — Apple and Google call this 'subscribing', but you're only charged from day 8. Cancel before then and you pay nothing.",
-        qrCaption: "Scan with your phone — you'll land in the right store automatically.",
+      eyebrow: 'Pricing',
+      h2: {
+        line1: 'One price.',
+        line2: 'Everything included.',
+        line3: 'You just set the pace.',
+        mark: 'Everything included.',
       },
-      plans: {
-        label: 'From day 8',
-        week: { name: 'Week', suffix: '/ week', desc: 'short and intense for the final sprint' },
-        month: { name: 'Month', suffix: '/ month', desc: 'the standard for a serious search' },
-        chip: 'Save 33%',
-        perDay: '≈ {price} a day',
-        note: 'No fine print: both plans always include every feature, renew automatically, and can be cancelled in the store at any time.',
+      copy: 'No basic tier, no premium tier, no asterisks. Both plans do everything — you only decide whether you think in weeks or months. And the first 7 days are free either way.',
+      checks: [
+        'All portals in one app',
+        'Real-time push, also via Telegram',
+        'Favorites, application letter & more',
+        'Cancel anytime in the store',
+      ],
+      stat: 'Over {rate}% find their home in the first month.',
+      qrCaption: "Scan with your phone — you'll land in the right store automatically.",
+      toggle: { week: 'Week', month: 'Month' },
+      per: { week: '/ week', month: '/ month' },
+      day: '≈ {price} a day',
+      desc: {
+        week: 'Short & focused — for the final sprint.',
+        month: 'The standard for a serious search.',
       },
-      benefits: {
-        label: 'Everything included — in every plan',
-        items: [
-          'Real-time push, also via Telegram',
-          'All portals in one app',
-          'All features: favorites, application letter & more',
-          'No risk: cancel anytime',
-        ],
-      },
+      badge: 'Save {x}%',
+      cta: 'Try for free',
+      micro: '€0 today · 7 days of full access · you only pay from day 8',
+      toggleAria: 'Billing period',
     },
     bewertungen: {
       headline: 'Found — before the others did.',

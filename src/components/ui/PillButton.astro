@@ -16,8 +16,12 @@
 interface Props {
   href: string;
   size?: 'sm' | 'md';
-  surface?: 'light' | 'dark' | 'yellow';
+  surface?: 'light' | 'dark' | 'yellow' | 'invert';
   icon?: 'bolt' | 'arrow-down' | 'arrow-right' | 'check';
+  /** Volle Breite des Containers (zentriertes Label, Dot links fixiert). */
+  block?: boolean;
+  /** Ruhiger Opacity-Puls auf dem Dot (pausiert bei Hover / reduced-motion). */
+  pulse?: boolean;
   class?: string;
   [key: string]: unknown;
 }
@@ -27,13 +31,22 @@ const {
   size = 'md',
   surface = 'light',
   icon,
+  block = false,
+  pulse = false,
   class: className = '',
   ...rest
 } = Astro.props;
 ---
 
 <a
-  class:list={['pill-btn', `pill-btn--${size}`, `pill-btn--${surface}`, className]}
+  class:list={[
+    'pill-btn',
+    `pill-btn--${size}`,
+    `pill-btn--${surface}`,
+    block && 'pill-btn--block',
+    pulse && 'pill-btn--pulse',
+    className,
+  ]}
   href={href}
   {...rest}
 >
@@ -219,6 +232,48 @@ const {
     box-shadow: inset 0 0 0 1.5px #3b3b3a;
     transition: box-shadow 250ms ease;
   }
+  /* Invertiert: dunkle Pille, gelber Text/Dot; Hover flutet GELB, Text → #3b3b3a
+     (für gelbe Flächen — der gelbe Standard-Button wäre dort unsichtbar). */
+  .pill-btn--invert {
+    background: #3b3b3a;
+    color: #fff03c;
+    --fill: #fff03c;
+    --htx: #3b3b3a;
+  }
+  .pill-btn--invert .pill-btn__dot {
+    background: #fff03c;
+  }
+
+  /* Block: volle Breite, Label zentriert, Dot links fixiert (Füll-Kreis startet am
+     Dot → --dx bleibt korrekt). Größeres vertikales Padding. */
+  .pill-btn--block {
+    display: flex;
+    width: 100%;
+    height: auto;
+    padding-block: 17px;
+    justify-content: center;
+    --dx: 24px;
+  }
+  .pill-btn--block .pill-btn__dot {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Puls-Dot (Ruhezustand). Pausiert bei Hover (Dot-Fill übernimmt) und reduced-motion. */
+  @keyframes pill-dot-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+  .pill-btn--pulse .pill-btn__dot {
+    animation: pill-dot-pulse 1.4s ease-in-out infinite;
+  }
 
   /* ---- Hover — AUSSCHLIESSLICH Desktop (echter Zeiger) ---- */
   @media (hover: hover) and (pointer: fine) {
@@ -237,6 +292,10 @@ const {
     }
     .pill-btn--yellow:hover {
       box-shadow: inset 0 0 0 1.5px transparent;
+    }
+    /* Hover: Puls stoppt, damit der Dot sauber zur Füll-Interaktion ausblendet. */
+    .pill-btn--pulse:hover .pill-btn__dot {
+      animation: none;
     }
   }
 
@@ -261,6 +320,9 @@ const {
     .pill-btn__label,
     .pill-btn__icon {
       transition: none;
+    }
+    .pill-btn--pulse .pill-btn__dot {
+      animation: none;
     }
     .pill-btn::before {
       display: none;

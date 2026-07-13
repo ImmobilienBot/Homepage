@@ -1423,69 +1423,69 @@ function initAblauf() {
 }
 
 /**
- * Preise-Sektion: eine Timeline (once:true). Startzustände AUSSCHLIESSLICH per
- * gsap.set (ohne JS steht alles im Endzustand; reduced-motion überspringt die
- * Funktion komplett — inkl. der sets). Sektions-Wipe per clip-path (bewusste
- * Ausnahme wie Problem-Sektion, hier vertikal invertiert), Rest nur transform/
- * opacity. Store-Badges kommen mit dem Karten-Stagger (kein separates Verzögern).
+ * Preise-Sektion („Der Schalter"): eine Timeline (once:true). Startzustände NUR per
+ * gsap.set (ohne JS / reduced-motion alles im Endzustand — die weiße Karte inkl.
+ * Schalter bleibt bedienbar). Desktop: H2-Zeilen Mask-Reveal → Marker-Wipe →
+ * Copy/Checks/Stat/QR gestaffelt; Karte fadet + steigt. Mobile: reduziert (nur
+ * Fade + leichtes Y). Nur transform/opacity. clearProps:'transform' auf Karte + CTA
+ * nach dem Reveal (Inline-Transform vs. CSS-Hover/:active). Late-Setup-Garde wie die
+ * übrigen Below-fold-Reveals.
  */
 function initPreise() {
   const section = document.querySelector<HTMLElement>('#preise');
   if (!section) return;
   // Late-Setup-Garde (Trigger 'top 75%'): schon an/über der Startlinie → keine
-  // Startzustände (u. a. clip-path der Riesen-Kachel!) setzen, kein Trigger; Sektion
-  // bleibt im natürlichen (sichtbaren) Endzustand.
+  // Startzustände, kein Trigger; Sektion bleibt im natürlichen (sichtbaren) Endzustand.
   if (isPastRevealStart(section, 0.75)) return;
 
-  const tile = section.querySelector<HTMLElement>('[data-pr-tile]');
-  const lineIns = gsap.utils.toArray<HTMLElement>('#preise .pr-line-in');
+  const lines = gsap.utils.toArray<HTMLElement>('#preise .pr2-line-in');
   const markHls = gsap.utils.toArray<HTMLElement>('#preise .marker__bg');
-  const sub = section.querySelector<HTMLElement>('[data-pr-sub]');
-  const cards = gsap.utils.toArray<HTMLElement>('#preise [data-pr-card]');
-  const benefits = gsap.utils.toArray<HTMLElement>('#preise [data-pr-benefit]');
-  const isMobile = !window.matchMedia('(min-width: 1024px)').matches;
-  // round-Wert an den tatsächlichen Kachel-Radius koppeln (clamp → aufgelöste px).
-  const radius = tile ? getComputedStyle(tile).borderTopLeftRadius || '40px' : '40px';
+  const reveals = gsap.utils.toArray<HTMLElement>('#preise [data-pr2-reveal]');
+  const card = section.querySelector<HTMLElement>('[data-pr2-card]');
+  const cta = section.querySelector<HTMLElement>('[data-pr2-cta]');
+  const clearTargets = [card, cta].filter((el): el is HTMLElement => !!el);
+  const isMobile = !window.matchMedia('(min-width: 960px)').matches;
 
-  // Startzustände NUR per gsap.set (ohne JS / reduced-motion: Kachel sofort da).
-  if (tile) gsap.set(tile, { clipPath: `inset(0 0 100% 0 round ${radius})` });
-  if (lineIns.length) gsap.set(lineIns, { yPercent: 110 });
+  // ---- Mobile: reduziert (nur Fade + leichtes Y, kein Mask-Slide) ----
+  // WICHTIG: die H2-Zeilen NUR per opacity (nicht autoAlpha) verstecken — autoAlpha
+  // setzt visibility:hidden und nähme dem h2 den Accessible Name, wodurch das
+  // aria-labelledby der Sektion ungültig würde (axe: aria-prohibited-attr).
+  if (isMobile) {
+    const fadeItems = [...reveals, ...(card ? [card] : [])];
+    if (lines.length) gsap.set(lines, { opacity: 0, y: 14 });
+    if (fadeItems.length) gsap.set(fadeItems, { autoAlpha: 0, y: 14 });
+    if (markHls.length) gsap.set(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center' });
+    const tlm = gsap.timeline({
+      scrollTrigger: { trigger: section, start: 'top 80%', once: true },
+      defaults: { ease: 'power2.out' },
+    });
+    if (lines.length) tlm.to(lines, { opacity: 1, y: 0, duration: 0.5, stagger: 0.05 }, 0);
+    if (fadeItems.length) tlm.to(fadeItems, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.05 }, 0.05);
+    if (markHls.length) tlm.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4 }, 0.2);
+    if (clearTargets.length) tlm.set(clearTargets, { clearProps: 'transform' });
+    return;
+  }
+
+  // ---- Desktop: volle Choreografie ----
+  if (lines.length) gsap.set(lines, { yPercent: 110 });
   if (markHls.length) gsap.set(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center' });
-  if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
-  if (cards.length) gsap.set(cards, { autoAlpha: 0, y: 24 });
-  if (benefits.length) gsap.set(benefits, { autoAlpha: 0, y: 16 });
+  if (reveals.length) gsap.set(reveals, { autoAlpha: 0, y: 18 });
+  if (card) gsap.set(card, { autoAlpha: 0, y: 24 });
 
   const tl = gsap.timeline({
     scrollTrigger: { trigger: section, start: 'top 75%', once: true },
     defaults: { ease: 'power3.out' },
   });
-
-  // Kachel-Wipe (Echo der Problem-Sektion, vertikal invertiert) — clip-path nimmt
-  // den Radius mit. onComplete: clip-path lösen, sonst würde inset(0 0 0 0) den
-  // weichen Schatten der Kachel wegklippen.
-  if (tile)
-    tl.to(
-      tile,
-      {
-        clipPath: `inset(0% 0 0% 0 round ${radius})`,
-        duration: isMobile ? 0.7 : 0.9,
-        ease: 'power3.inOut',
-        onComplete: () => {
-          tile.style.clipPath = 'none';
-        },
-      },
-      0,
-    );
-  // Headline zeilenweise aus der Maske, +0.45s nach Wipe-Beginn.
-  if (lineIns.length) tl.to(lineIns, { yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.09 }, 0.45);
-  // Marker ~0.35s nach seiner Zeile.
-  if (markHls.length) tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4, ease: 'power2.out' }, 0.8);
-  // Subline.
-  if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.5);
-  // Karten (Trial, Plan 1, Plan 2) gestaffelt — Store-Badges kommen mit.
-  if (cards.length) tl.to(cards, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.12 }, 0.5);
-  // Benefits-Items.
-  if (benefits.length) tl.to(benefits, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.06 }, 0.7);
+  // H2-Zeilen aus der Maske.
+  if (lines.length) tl.to(lines, { yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.09 }, 0);
+  // Marker-Wipe (Textfarbe wird durch den einfahrenden Block sichtbar).
+  if (markHls.length) tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4, ease: 'power2.out' }, 0.5);
+  // Copy/Checks/Stat/QR gestaffelt.
+  if (reveals.length) tl.to(reveals, { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.06 }, 0.35);
+  // Karte kurz nach der ersten Zeile.
+  if (card) tl.to(card, { autoAlpha: 1, y: 0, duration: 0.7 }, 0.15);
+  // clearProps NACH dem Reveal → CSS-Hover/:active auf Karte + CTA frei.
+  if (clearTargets.length) tl.set(clearTargets, { clearProps: 'transform' });
 }
 
 /**

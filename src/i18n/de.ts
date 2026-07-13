@@ -231,43 +231,39 @@ export const de = {
     },
     pricing: {
       title: 'Preise',
-      // Headline zweizeilig; „testen" trägt den invertierten Marker.
-      headline: { line1: 'Erst testen.', line2: 'Dann entscheiden.', mark: 'testen' },
-      subline:
-        '7 Tage voller Zugriff auf alles — für 0 €. Woche oder Monat wählst du beim Start, bezahlt wird erst ab Tag 8. Jederzeit kündbar.',
-      trial: {
-        label: 'Kostenlos testen',
-        // Preis („0 €") + Plan-Preise kommen aus site.ts (Intl-formatiert).
-        priceSuffix: '· 7 Tage',
-        desc: 'Voller Funktionsumfang ab Sekunde eins: alle Portale, Echtzeit-Push, Favoriten, Bewerbungsschreiben.',
-        timeline: [
-          { lead: 'Heute', text: 'App laden, Woche oder Monat wählen, gratis starten' },
-          { lead: 'Tag 1–7', text: 'alles testen, jederzeit kündbar' },
-          { lead: 'Tag 8', text: 'erst jetzt startet dein gewähltes Abo' },
-        ],
-        storeNote:
-          'Du startest deine Testphase, indem du im Store Woche oder Monat wählst — Apple und Google nennen das „Abo abschließen", berechnet wird aber erst ab Tag 8. Kündigst du vorher, zahlst du nichts.',
-        qrCaption: 'Mit dem Handy scannen — landet automatisch im richtigen Store.',
+      eyebrow: 'Preise',
+      // H2 in drei Zeilen; „Alles drin." trägt den INVERTIERTEN Marker (Block #3b3b3a,
+      // Text #fff03c) — der normale gelbe Marker wäre auf der gelben Fläche unsichtbar.
+      h2: {
+        line1: 'Ein Preis.',
+        line2: 'Alles drin.',
+        line3: 'Du wählst nur den Takt.',
+        mark: 'Alles drin.',
       },
-      plans: {
-        label: 'Ab Tag 8',
-        // Namen + Suffixe sichtbar; Preise/Tagespreise aus site.ts abgeleitet.
-        week: { name: 'Woche', suffix: '/ Woche', desc: 'kurz & intensiv für den Endspurt' },
-        month: { name: 'Monat', suffix: '/ Monat', desc: 'der Standard für die ernsthafte Suche' },
-        chip: 'Spart 33 %',
-        // {price} wird durch den Intl-formatierten Tagespreis ersetzt.
-        perDay: '≈ {price} am Tag',
-        note: 'Kein Kleingedrucktes: Beide Abos enthalten immer alle Funktionen, verlängern sich automatisch und sind jederzeit im Store kündbar.',
+      copy: 'Kein Basic, kein Premium, kein Sternchen. Beide Abos können alles — du entscheidest nur, ob du in Wochen oder Monaten denkst. Und die ersten 7 Tage zahlst du sowieso nichts.',
+      checks: [
+        'Alle Portale in einer App',
+        'Echtzeit-Push, auch via Telegram',
+        'Favoriten, Bewerbungsschreiben & Co.',
+        'Jederzeit im Store kündbar',
+      ],
+      // 70-%-Stat (aus site.ts, {rate}); Quelle ² wie in der Ablauf-Sektion.
+      stat: 'Über {rate} % finden ihre Wohnung im ersten Monat.',
+      qrCaption: 'Mit dem Handy scannen — landet automatisch im richtigen Store.',
+      // Schalter Woche/Monat — beide Preise immer im DOM (No-JS + Facts-Sync).
+      toggle: { week: 'Woche', month: 'Monat' },
+      per: { week: '/ Woche', month: '/ Monat' },
+      // {price} = Tagespreis (Buildzeit: Wochenpreis/7 bzw. Monatspreis/30).
+      day: '≈ {price} am Tag',
+      desc: {
+        week: 'Kurz & intensiv — für den Endspurt.',
+        month: 'Der Standard für die ernsthafte Suche.',
       },
-      benefits: {
-        label: 'Alles drin — in jedem Plan',
-        items: [
-          'Echtzeit-Push, auch via Telegram',
-          'Alle Portale in einer App',
-          'Alle Features: Favoriten, Bewerbung & Co.',
-          'Kein Risiko: jederzeit kündbar',
-        ],
-      },
+      // {x} = Spar-Prozent (Buildzeit aus site.ts). CSS macht das Label uppercase.
+      badge: 'Spart {x} %',
+      cta: 'Kostenlos testen',
+      micro: 'Heute 0 € · 7 Tage alles testen · bezahlt wird erst ab Tag 8',
+      toggleAria: 'Abrechnungszeitraum',
     },
     // Bewertungen-Sektion: Proof-Header (H2 + Marker + abgeleitete Zahlen) über der
     // Zitat-Marquee. {total} = totalReviewCount, {downloads} = downloads, {count}/{n}
