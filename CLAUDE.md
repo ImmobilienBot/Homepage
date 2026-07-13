@@ -93,6 +93,12 @@ Ordnung/Ruhe.
   Schrift). Markup: `.marker` › `.marker__bg` (aria-hidden) + `.marker__label`, sitzt IM `h1`/`h2`/`p`.
   Animierte Wipes fahren `.marker__bg` per GSAP herein (`scaleX 0→1`) und **führen `skewX:-8` in
   jedem `set`/`tween` mit**. Ohne JS / `prefers-reduced-motion` sofort voll sichtbar.
+- **Nav-Links = „Marker-Nav"** (Header, `Header.astro`; CD S. 29 — der aktive Punkt trägt den
+  Marker). Button-Typo: Roboto Black, `uppercase`, `.8rem`, Tracking `.05em`. Inaktiv `#666665`
+  (≥ 4,5:1 auf `#f6f6f6` **und** `#eaebeb` — keine Opazität). Hover: dezenter grauer Marker-Wipe
+  (`#d9dada`); aktiver Punkt (Scroll-Spy `.is-active`): **gelber Marker** (`#fff03c`) in
+  Marker-Geometrie (`skewX(-8deg)`, `scaleX 0→1`). Rein CSS — kein GSAP für die Nav; Aktiv schlägt
+  Hover (bleibt beim Hover gelb). Fokus: `:focus-visible`-Outline. `prefers-reduced-motion`: hart.
 
 ### Bot / Maskottchen
 Bewusst **zurückhaltend**. Der Bot lebt im Logo; maximal eine kleine Signatur am Schluss

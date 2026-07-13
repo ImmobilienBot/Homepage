@@ -18,7 +18,7 @@ export const en: Dict = {
     faq: 'FAQ',
     cta: 'Get the app',
     // Header CTA: full variant (desktop) + short variant (mobile <640px).
-    ctaFree: 'Try 7 days free',
+    ctaFree: 'Try for free',
     ctaShort: '7 days free',
     skipToContent: 'Skip to content',
   },

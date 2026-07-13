@@ -32,9 +32,12 @@ const navItems = [
       <Logo class="nav-logo" aria-hidden="true" />
     </a>
 
-    <nav class="hidden items-center gap-6 text-body font-medium md:flex" aria-label="Hauptnavigation">
+    <nav class="hidden items-center gap-2.5 md:flex" aria-label="Hauptnavigation">
       {navItems.map((item) => (
-        <a href={item.href} class="nav-link" data-nav-link>{item.label}</a>
+        <a href={item.href} class="nav-link" data-nav-link>
+          <span class="nav-link__bg" aria-hidden="true"></span>
+          <span class="nav-link__label">{item.label}</span>
+        </a>
       ))}
     </nav>
 
@@ -149,7 +152,9 @@ const navItems = [
   }
   .site-header[data-scrolled] .nav-inner {
     max-width: 46rem;
-    padding: 0.55rem 0.7rem 0.55rem 1.25rem;
+    /* Feinschliff: etwas mehr horizontales Innen-Padding → Logo (links) und CTA
+       (rechts) lösen sich vom Pillen-Rand (je ~0.25rem mehr). */
+    padding: 0.55rem 0.95rem 0.55rem 1.5rem;
     border-radius: 9999px;
     background-color: color-mix(in srgb, var(--color-offwhite) 95%, transparent);
     border-color: rgb(59 59 58 / 0.06);
@@ -169,44 +174,71 @@ const navItems = [
     width: auto;
   }
 
-  /* ---- Menüpunkte — Variante B „Unterstrich" ----
-     Roboto Medium, dunkel. Hover: dünne dunkle Linie zieht von links herein
-     (scaleX 0→1). Aktiv (Scroll-Spy): Linie dauerhaft in Gelb. Kein Layout-Shift
-     (Unterstrich absolut positioniert). */
+  /* ---- Menüpunkte — „Marker-Nav" (CD S. 29) ----
+     Button-Typo (Roboto Black, uppercase, .8rem, Tracking .05em). Inaktiv #666665
+     (≥4.5:1 auf #f6f6f6 UND #eaebeb — keine Opazität). Hover: dezenter grauer
+     Marker-Wipe (#d9dada) in Marker-Geometrie. Aktiv (Scroll-Spy): gelber Marker.
+     Rein CSS, nur transform/opacity; kein Layout-Shift (Marker absolut, skewX). */
   .nav-link {
     position: relative;
-    color: var(--color-black);
-    padding-bottom: 3px;
+    display: inline-block;
+    padding: 0.4em 0.55em;
+    font-weight: 900;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #666665;
+    text-decoration: none;
     /* Immer einzeilig — sonst bricht „Der Bot" in der geschrumpften Pille um. */
     white-space: nowrap;
+    transition: color 0.2s ease;
   }
-  .nav-link::after {
-    content: '';
+  .nav-link__bg {
     position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 2px;
-    background-color: var(--color-black);
-    transform: scaleX(0);
+    inset: 0;
+    background: var(--color-darkgrey); /* #d9dada */
+    border-radius: 0.35em;
+    transform: skewX(-8deg) scaleX(0);
     transform-origin: left center;
-    transition: transform 0.3s ease;
+    transition:
+      transform 0.28s cubic-bezier(0.65, 0, 0.35, 1),
+      background-color 0.2s ease;
   }
-  .nav-link:hover::after,
-  .nav-link:focus-visible::after {
-    transform: scaleX(1);
+  .nav-link__label {
+    position: relative;
   }
-  /* Aktiv-Zustand nach den Hover-Regeln → gewinnt bei gleicher Spezifität:
-     dauerhaft sichtbar UND gelb (auch beim Hover). */
-  .nav-link.is-active::after {
-    transform: scaleX(1);
-    background-color: var(--color-yellow);
+
+  /* Hover NUR auf echten Zeigergeräten (kein Sticky-Hover auf Touch). */
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      color: var(--color-black);
+    }
+    .nav-link:hover .nav-link__bg {
+      transform: skewX(-8deg) scaleX(1);
+    }
+  }
+
+  /* Fokus-Indikator — Pflicht, da der Unterstrich als Indikator wegfällt. */
+  .nav-link:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  /* Aktiv (Scroll-Spy) NACH den Hover-Regeln → schlägt Hover: der aktive Punkt
+     bleibt beim Hover GELB. Marker-Geometrie (skewX −8°) in jedem Zustand mitführen. */
+  .nav-link.is-active {
+    color: var(--color-black);
+  }
+  .nav-link.is-active .nav-link__bg {
+    transform: skewX(-8deg) scaleX(1);
+    background: var(--color-yellow);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .site-header,
     .nav-inner,
-    .nav-link::after {
+    .nav-link,
+    .nav-link__bg {
       transition: none;
     }
   }

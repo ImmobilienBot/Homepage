@@ -18,7 +18,7 @@ export const de = {
     faq: 'FAQ',
     cta: 'App laden',
     // Header-CTA: volle Variante (Desktop) + kurze Variante (Mobile <640px).
-    ctaFree: '7 Tage kostenlos testen',
+    ctaFree: 'Kostenlos testen',
     ctaShort: '7 Tage gratis',
     skipToContent: 'Zum Inhalt springen',
   },
