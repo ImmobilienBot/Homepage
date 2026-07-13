@@ -88,7 +88,8 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
   .footer-source {
     margin: 0;
     font-size: 0.75rem;
-    opacity: 0.5;
+    /* 0.6 statt 0.5 → Off-White auf #3b3b3a erreicht ~4,9:1 (WCAG); Optik bleibt gedämpft */
+    opacity: 0.6;
     letter-spacing: 0.01em;
   }
   .footer-source-num {

@@ -10,7 +10,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "audit:seo": "tsx scripts/audit-seo.ts",
-    "audit": "npm run build && lhci autorun && npm run audit:seo"
+    "audit:lh": "tsx scripts/audit-lh.ts",
+    "audit": "npm run build && npm run audit:seo && npm run audit:lh"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

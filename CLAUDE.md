@@ -61,6 +61,7 @@ Ordnung/Ruhe.
 | white | `#f6f6f6` | Off-White |
 | darkgrey | `#d9dada` | Trennflächen |
 | grey-yellow | `#c0c0c1` | Sekundärakzent auf Gelb |
+| grey-text | `#686868` | **funktionale Web-Erweiterung (barrierefreies Text-Grau), kein CD-Originalton** — kleine Sekundärtexte (Eyebrows/Labels) auf hellen Flächen; hellstes Grau mit Kontrast ≥ 4,6:1 auf `#f6f6f6` **und** `#eaebeb`. Nicht auf `black` ausweichen (Hierarchie erhalten). |
 
 ### Typografie
 - **Roboto** (Google Font). Headlines: **Roboto Black**. Fließtext: **Roboto Regular**.
@@ -325,12 +326,21 @@ Automatisches Qualitäts-Audit: **Lighthouse CI** (Performance/A11y/Best-Practic
 **eigenes SEO/GEO-Skript** (`scripts/audit-seo.ts`, prüft das gebaute `dist/` statisch gegen die
 Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei jedem Push/PR**.
 
-- **`npm run audit`** = `build` → `lhci autorun` → `audit:seo`. **Pflicht**, wenn eine Sektion
+- **`npm run audit`** (lokal) = `build` → `audit:seo` → `audit:lh`. **Pflicht**, wenn eine Sektion
   fertig gemeldet wird ODER etwas Performance-/SEO-Relevantes geändert wurde (Bilder, Fonts, neue
   Animationen, neue Seiten, Meta/JSON-LD/i18n-Fakten). **Nicht** bei jeder Mikro-Iteration.
   `npm run audit:seo` allein prüft nur das (bereits gebaute) `dist/` schnell.
 - **Schwellen (nicht verhandelbar):** Performance **≥ 95**, Accessibility / Best Practices / SEO
-  **= 100** (mobil, Lighthouse-Default-Emulation, Median aus 3 Läufen; `lighthouserc.cjs`).
+  **= 100** (mobil, Lighthouse-Default-Emulation).
+- **Lokal vs. CI — Rollenverteilung:**
+  - **Lokal** läuft `audit:lh` (`scripts/audit-lh.ts`, Einzellauf je Seite): die **deterministischen
+    Gates A11y/Best-Practices/SEO = 100 sind hart** (Exit 1). **Performance ist advisory** — nur eine
+    WARN-Zeile bei < 95 (Einzellauf ist maschinenabhängig). Grund für das eigene Skript: `lhci autorun`
+    scheitert auf dem Windows-Setup am chrome-launcher-EPERM (Temp-Cleanup) — `audit:lh` liest das von
+    Lighthouse trotzdem geschriebene JSON und bleibt so lauffähig.
+  - **CI** ist für **Performance maßgeblich:** die GitHub Action fährt weiter `lhci autorun`
+    (Median aus 3 Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). Der CI-Workflow bleibt
+    bewusst unverändert.
 - **`audit:seo`-Errors werden wie Build-Fehler behandelt:** sofort fixen, nie ignorieren.
   **Warnings** (z. B. das bekannte `og:image`-TODO) gesammelt an Artem melden.
 - Das SEO-Skript auditiert nur **indexierbare** Seiten (`noindex`-Rechts-/Redirect-Seiten und

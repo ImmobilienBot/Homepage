@@ -5,6 +5,7 @@ dist/
 
 # audit / lighthouse artifacts
 .lighthouseci/
+.tmp-lh/
 lh-*.json
 
 # dependencies

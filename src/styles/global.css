@@ -13,6 +13,11 @@
   --color-offwhite: #f6f6f6;    /* Off-White */
   --color-darkgrey: #d9dada;    /* Trennflächen */
   --color-grey-yellow: #c0c0c1; /* Sekundärakzent auf Gelb */
+  /* Barrierefreies Text-Grau für kleine Sekundärtexte (Eyebrows/Labels) auf den
+     hellen Flächen #f6f6f6/#eaebeb. Funktionale Web-Erweiterung (WCAG-Kontrast),
+     KEIN CD-Originalton. Hellstes Grau mit Ratio ≥4,6:1 auf beiden BGs
+     (#eaebeb ≈4,67:1 · #f6f6f6 ≈5,16:1). Nicht auf #3b3b3a ausweichen. */
+  --color-grey-text: #686868;
 
   /* ---- Typografie ---- */
   /* Roboto: Headlines = Black (900), Fließtext = Regular (400) */
