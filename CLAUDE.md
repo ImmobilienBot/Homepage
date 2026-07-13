@@ -319,6 +319,32 @@ Entdeckungs- und Empfehlungsschicht.
 
 ---
 
+## Audit-System
+
+Automatisches Qualitäts-Audit: **Lighthouse CI** (Performance/A11y/Best-Practices/SEO) +
+**eigenes SEO/GEO-Skript** (`scripts/audit-seo.ts`, prüft das gebaute `dist/` statisch gegen die
+Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei jedem Push/PR**.
+
+- **`npm run audit`** = `build` → `lhci autorun` → `audit:seo`. **Pflicht**, wenn eine Sektion
+  fertig gemeldet wird ODER etwas Performance-/SEO-Relevantes geändert wurde (Bilder, Fonts, neue
+  Animationen, neue Seiten, Meta/JSON-LD/i18n-Fakten). **Nicht** bei jeder Mikro-Iteration.
+  `npm run audit:seo` allein prüft nur das (bereits gebaute) `dist/` schnell.
+- **Schwellen (nicht verhandelbar):** Performance **≥ 95**, Accessibility / Best Practices / SEO
+  **= 100** (mobil, Lighthouse-Default-Emulation, Median aus 3 Läufen; `lighthouserc.cjs`).
+- **`audit:seo`-Errors werden wie Build-Fehler behandelt:** sofort fixen, nie ignorieren.
+  **Warnings** (z. B. das bekannte `og:image`-TODO) gesammelt an Artem melden.
+- Das SEO-Skript auditiert nur **indexierbare** Seiten (`noindex`-Rechts-/Redirect-Seiten und
+  `dist/bot/**` werden übersprungen) und deckt u. a. ab: genau ein `h1`, Heading-Hierarchie,
+  Title/Description, Canonical, hreflang (de/en/x-default, reziprok), OG/Twitter, `img alt`,
+  JSON-LD-Validität + Pflichttypen, **Fakten-Sync** (Preise/Portale/Rating aus `site.ts` müssen
+  im HTML + JSON-LD stehen), interne Links/Anker, GEO-Klartext ohne JS, sowie global
+  `llms.txt` / `robots.txt` (AI-Crawler offen) / Sitemap.
+- Die **GitHub Action** (`.github/workflows/audit.yml`) prüft dasselbe bei jedem Push — ein
+  **Wächter**, der den Cloudflare-Deploy **nicht** blockiert (separate Pipeline), aber
+  Performance-/SEO-/GEO-Regressionen sichtbar macht. `concurrency` bricht ältere Läufe ab.
+
+---
+
 ## Recht (in DE Pflicht)
 
 - **Impressum**, **Datenschutzerklärung**, **AGB** als eigene Seiten.

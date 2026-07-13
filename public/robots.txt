@@ -1,5 +1,10 @@
+# Immobilien Bot — robots.txt
+# Diese Seite ist bewusst OFFEN für Suchmaschinen UND KI-/Antwort-Crawler
+# (GEO/AEO): GPTBot, ClaudeBot, Claude-Web, PerplexityBot, Google-Extended,
+# CCBot u. a. sind ausdrücklich willkommen. Keine Disallow-Regeln.
+
 User-agent: *
 Allow: /
 
-# Sitemap wird von @astrojs/sitemap generiert
+# Sitemap wird von @astrojs/sitemap generiert.
 Sitemap: https://immobilien-bot.de/sitemap-index.xml

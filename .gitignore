@@ -3,6 +3,10 @@ dist/
 # generated types
 .astro/
 
+# audit / lighthouse artifacts
+.lighthouseci/
+lh-*.json
+
 # dependencies
 node_modules/
 
