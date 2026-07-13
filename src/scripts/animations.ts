@@ -131,33 +131,14 @@ const FAN_REST = {
 const HERO_START_DELAY = 0.5;
 
 function initPhoneCluster() {
-  const front = document.querySelector<HTMLElement>('#hero [data-phone-front]');
   const backs = gsap.utils.toArray<HTMLElement>('#hero [data-phone-back]');
 
-  // a) Haupt-Phone zuerst: Auftritt von leicht transparent auf voll.
-  //    (Start um HERO_START_DELAY verzögert — kurze Ruhe am Anfang.)
-  //    Desktop: Fade + Scale (unverändert). Mobile: dezenter Rise von +24px
-  //    (ohne Scale) — Teil der komponierten Mobile-Auftritts-Sequenz
-  //    (Headline → Marker → Phone-Rise → Notification).
-  if (front) {
-    if (isDesktopHero) {
-      gsap.from(front, {
-        autoAlpha: 0,
-        scale: 0.9,
-        duration: 0.7,
-        ease: 'power3.out',
-        delay: HERO_START_DELAY,
-      });
-    } else {
-      gsap.from(front, {
-        autoAlpha: 0,
-        y: 24,
-        duration: 0.6,
-        ease: 'power3.out',
-        delay: HERO_START_DELAY,
-      });
-    }
-  }
+  // a) Front-Phone = LCP-Element (größtes Bild, loading=eager + fetchpriority=high).
+  //    Es wird BEWUSST NICHT mehr per gsap.from(autoAlpha:0) versteckt: das hielt
+  //    den Contentful Paint bis zum JS-Lauf zurück und schob den LCP ~1 s über den
+  //    FCP (Lighthouse: LCP-Render-Delay). Es bleibt ab dem First Paint sichtbar;
+  //    die Auftritts-Choreografie spielt UM den Anker herum (Notifications, Glow,
+  //    hintere Phones) — der Look bleibt erhalten.
 
   // NUR Desktop: mobil sind die hinteren Phones ausgeblendet (hidden md:block).
   if (!isDesktopHero) return;
@@ -1842,9 +1823,10 @@ function initBenefitLottie() {
 // Lockscreen-Uhr, keine Bewegung. Ohne JS bleibt der Fallback „09:41".
 initPortaleClock();
 
+// Above-the-fold SOFORT nach dem Parsen: Cursor + der komplette Hero-Auftritt.
+// Nichts hiervon versteckt das LCP-Element (Front-Phone bleibt sichtbar) → kein
+// LCP-Einfluss.
 if (!prefersReducedMotion) {
-  const lenis = initSmoothScroll();
-  initAnchorScroll(lenis);
   initCursor();
   initHeroReveal();
   initPhoneCluster();
@@ -1852,15 +1834,37 @@ if (!prefersReducedMotion) {
   initHeroChoreography();
   initHeroCanvas();
   initHeroScrollCue();
-  initProblem3c();
-  initBenefitLottie();
-  initPortale();
-  initAblauf();
-  initPreise();
-  initReveals();
 }
 
-// Features: Interaktion (Dark-Toggle) läuft IMMER; die Bewegungs-Teile sind in
-// initFeatures selbst per prefersReducedMotion gegated. Nach dem Motion-Block, damit
-// Lenis (falls aktiv) bereits initialisiert ist, bevor ScrollTrigger greifen.
-initFeatures();
+// Alles Below-the-fold ERST nach dem First Paint (requestIdleCallback, Fallback
+// setTimeout). Grund: Lenis + die Below-fold-ScrollTrigger messen beim Setup
+// synchron Layout; liefen sie im LCP-Fenster mit, verlängerten sie über Style-&-
+// Layout-Thrash den LCP-Render-Delay und die Total Blocking Time. initFeatures läuft
+// IMMER (Dark-Toggle-Interaktion; Bewegungsteile intern per prefersReducedMotion
+// gegated) und NACH initSmoothScroll, damit Lenis steht, bevor dessen ScrollTrigger
+// greifen.
+const runIdle = (fn: () => void): void => {
+  if ('requestIdleCallback' in window) {
+    (
+      window as unknown as {
+        requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void;
+      }
+    ).requestIdleCallback(fn, { timeout: 2000 });
+  } else {
+    setTimeout(fn, 200);
+  }
+};
+
+runIdle(() => {
+  if (!prefersReducedMotion) {
+    const lenis = initSmoothScroll();
+    initAnchorScroll(lenis);
+    initProblem3c();
+    initBenefitLottie();
+    initPortale();
+    initAblauf();
+    initPreise();
+    initReveals();
+  }
+  initFeatures();
+});

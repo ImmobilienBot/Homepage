@@ -11,6 +11,14 @@ const SITE = 'https://immobilien-bot.de';
 export default defineConfig({
   site: SITE,
 
+  // Perf: ALLE Seiten-Stylesheets inline in den <head> statt als render-blockende
+  // <link>-Requests. Die Komponenten-CSS kamen sonst als separate Roundtrips in den
+  // kritischen Pfad (Lighthouse: render-blocking ~430–450 ms, größter Einzelposten).
+  // Das Gesamt-CSS ist nach Tailwind-Purge klein → Inlining lohnt sich klar.
+  build: {
+    inlineStylesheets: 'always',
+  },
+
   // DE (Standard) auf /, EN auf /en/ — mit reziprokem hreflang (in SEO.astro).
   i18n: {
     defaultLocale: 'de',
