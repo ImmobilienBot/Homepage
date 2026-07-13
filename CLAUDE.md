@@ -215,7 +215,12 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
    Anzahl wird aus `site.ts` abgeleitet (`portalCount`) und als **exakte Zahl** gezeigt (kein „über 10").
 7. **Preise** — 3 Karten (siehe unten) + 4-Vorteile-Streifen. CTA-Fokus auf
    „7 Tage kostenlos testen – kein Risiko".
-8. **Social Proof** — Bewertungszahlen + Testimonials. [TODO: Testimonials]
+8. **Bewertungen** — Proof-Header (H2 mit Keyword-Marker + abgeleitete Zahlen: `totalReviewCount`)
+   + 3 Rating-Kacheln (App Store · Google Play · Google Maps, StarRating-Komponente, keine Logos)
+   + zwei gegenläufige, **rein CSS-animierte** Marquee-Reihen mit Zitat-Sprechblasen (CD-Störer,
+   je Reihe ein gelber `featured`). **Sitzt zwischen Ablauf und Preise** (Proof vor Pricing). Alle
+   Zahlen/Zitate aus `site.ts` (`testimonials`); Marquee läuft ohne JS identisch, pausiert bei
+   Hover/Fokus, `prefers-reduced-motion` → nativ scrollbar.
 9. **FAQ** — Welche Portale? Kosten? Wie schnell? Seriös/legal? Kündbar? DE/EN? Dark Mode?
    Telegram? (Conversion + SEO)
 10. **Kontakt** — kompakte Sektion unten.
@@ -262,7 +267,9 @@ Nicht als flache Liste — als **Ablauf einer Wohnungssuche** gruppieren:
 - iOS: `https://apps.apple.com/de/app/apple-store/id6741714480?pt=127566053&ct=Homepage_Top&mt=8`
 - Android: `https://play.google.com/store/apps/details?id=immobilien.bot&hl=de&referrer=utm_source%3Dwebsite%26utm_medium%3Dbutton%26utm_campaign%3Dhomepage%26utm_content%3Dhome_top`
 
-**Bewertungen:** App Store 4,6★ (85) · Play Store 4,2★ (48) · Google Maps 5,0★ (33) · 5.000+ Downloads
+**Bewertungen:** App Store 4,6★ (86) · Google Play 4,3★ (48) · Google Maps 5,0★ (33) · **Gesamt 167**
+(abgeleitet als `totalReviewCount`, nie als Literal) · 5.000+ Downloads. Einzel-Reviews (verbatim) in
+`testimonials` (mit `featured`-Flag → gelbe Störer + schema.org/Review). [TODO(Artem): `stars` je Testimonial verifizieren]
 
 **Preise:**
 - Gratis — „7 Tage kostenlos testen – kein Risiko" (0,00 €)
@@ -427,7 +434,7 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - [x] Portal-Liste (10, mit Domains) in `site.ts` gepflegt; Anzahl wird abgeleitet
 - [x] Store-Badges DE + EN (`app-store-badge-{de,en}.svg` / `google-play-badge-{de,en}.svg`), sprachabhängig via `StoreBadges.astro`
 - [ ] Berliner-Zeitung-Quelle (Link) zur 43.000 / 30-Min / 288-Statistik
-- [ ] Testimonials (Text + Name/Stadt) für Social Proof
+- [x] Testimonials in `site.ts` (`testimonials`, 6 echte Store-Zitate, 2× `featured`) → Bewertungen-Sektion. Offen: `stars` je Eintrag von Artem verifizieren
 - [ ] App-Icon (für die Hero-Notification-Karte)
 - [ ] GTM-Container-ID
 - [ ] Inhalte der Rechtsseiten (Impressum/Datenschutz/AGB)

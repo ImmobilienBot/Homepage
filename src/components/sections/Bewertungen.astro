@@ -1,0 +1,298 @@
+---
+/**
+ * Bewertungen — Proof-Header (H2 + Keyword-Marker + abgeleitete Zahlen) über drei
+ * Rating-Kacheln (App Store / Google Play / Google Maps) und zwei gegenläufigen,
+ * rein CSS-animierten Marquee-Reihen mit Zitat-Sprechblasen.
+ *
+ * Guardrails: Genau EINE H1 bleibt im Hero → hier H2. Alle Zahlen aus site.ts
+ * (Scores/Counts/totalReviewCount — nichts hart), Zitate aus site.ts (Wortlaut
+ * unangetastet), Texte aus i18n. Marquee ist CSS-only (kein JS) und läuft ohne JS
+ * identisch; nur Auftritts-Reveal per GSAP (transform/opacity). Keine Anbieter-Logos.
+ */
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import { ratings, downloads, totalReviewCount, testimonials, platformLabel } from '../../data/site';
+import StarRating from '../ui/StarRating.astro';
+import QuoteCard from '../ui/QuoteCard.astro';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const B = t.sections.bewertungen;
+
+// Keyword-Marker-Split (wie Ablauf/Features/Portale/Preise).
+function markParts(text: string, mark: string) {
+  const i = text.indexOf(mark);
+  if (i < 0) return { pre: text, mark: '', post: '' };
+  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
+}
+const h = markParts(B.headline, B.headlineMark);
+
+// Score locale-abhängig, feste 1 Nachkommastelle: DE „4,6"/„5,0" · EN „4.6"/„5.0".
+const fmtScore = (v: number) =>
+  new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(v);
+
+const subline = B.subline
+  .replace('{total}', String(totalReviewCount))
+  .replace('{downloads}', downloads);
+
+const tiles = Object.values(ratings);
+
+// Zwei Reihen à drei Testimonials (je genau ein featured). Reihe 1 = 1–3, Reihe 2 = 4–6.
+const rows = [
+  { items: testimonials.slice(0, 3), mod: 'bw-row--1' },
+  { items: testimonials.slice(3, 6), mod: 'bw-row--2' },
+];
+---
+
+<section id="bewertungen" aria-labelledby="bewertungen-heading" class="bw-section">
+  <div class="bw-inner">
+    {/* ---- Proof-Header: H2 (Mask-Reveal + Marker) + Subline ---- */}
+    <header class="bw-head">
+      <h2 id="bewertungen-heading" class="bw-h2">
+        <span class="bw-mask"
+          ><span class="bw-mask-in"
+            >{h.pre}<span class="marker"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
+                >{h.mark}</span
+              ></span
+            >{h.post}</span
+          ></span
+        >
+      </h2>
+      <p class="bw-sub" data-bw-sub>{subline}</p>
+    </header>
+
+    {/* ---- Rating-Kacheln ---- */}
+    <ul class="bw-tiles">
+      {
+        tiles.map((r) => (
+          <li class="bw-tile" data-bw-tile>
+            <span class="bw-tpill">{r.label}</span>
+            <span class="bw-score">{fmtScore(r.stars)}</span>
+            <StarRating score={r.stars} size={20} empty="#d9dada" sr={B.starsSr.replace('{n}', fmtScore(r.stars))} />
+            <span class="bw-count">{B.tileLabel.replace('{count}', String(r.count))}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  {/* ---- Zitat-Marquee (zwei gegenläufige Reihen, CSS-only) ---- */}
+  <div class="bw-marquee">
+    {
+      rows.map((row) => (
+        <div class:list={['bw-row', row.mod]} data-bw-marquee data-lenis-prevent>
+          <div class="bw-track">
+            {row.items.map((tm) => (
+              <QuoteCard
+                quote={tm.quote[lang]}
+                author={tm.author}
+                platform={platformLabel[tm.platform]}
+                stars={tm.stars}
+                featured={tm.featured}
+                srText={B.starsSr.replace('{n}', String(tm.stars))}
+              />
+            ))}
+            {/* Klone (Sets 2–4) — aus dem A11y-Baum genommen; nur der Loop braucht sie. */}
+            <div class="bw-clones" aria-hidden="true">
+              {Array.from({ length: 3 }).flatMap(() =>
+                row.items.map((tm) => (
+                  <QuoteCard
+                    quote={tm.quote[lang]}
+                    author={tm.author}
+                    platform={platformLabel[tm.platform]}
+                    stars={tm.stars}
+                    featured={tm.featured}
+                    srText={B.starsSr.replace('{n}', String(tm.stars))}
+                  />
+                )),
+              )}
+            </div>
+          </div>
+        </div>
+      ))
+    }
+
+    {B.footnote && <p class="bw-foot">{B.footnote}</p>}
+  </div>
+</section>
+
+<style>
+  /* =====================================================================
+     Basis — heller Standard-Grau-Hintergrund, einheitlicher Rhythmus. Content-
+     Einschub NUR auf Header/Kacheln (.bw-inner); die Marquee läuft full-bleed.
+     ===================================================================== */
+  .bw-section {
+    position: relative;
+    background-color: var(--color-grey);
+    padding-block: var(--spacing-section);
+    overflow: hidden; /* full-bleed Marquee darf keinen H-Scroll der Seite erzeugen */
+  }
+  .bw-inner {
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: var(--spacing-inset);
+  }
+
+  /* ---- Header ---- */
+  .bw-head {
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+  .bw-h2 {
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.4vw, 3.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  .bw-mask {
+    display: inline-block;
+    overflow: hidden;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
+    vertical-align: top;
+  }
+  .bw-mask-in {
+    display: inline-block;
+    will-change: transform;
+  }
+  .bw-sub {
+    margin-top: clamp(1rem, 2vw, 1.4rem);
+    max-width: 560px;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.78);
+  }
+
+  /* =====================================================================
+     Rating-Kacheln — weiße Karten mit weicher großer Elevation (wie Bento/Tickets).
+     ===================================================================== */
+  .bw-tiles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  }
+  .bw-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--color-offwhite);
+    box-shadow: 0 24px 50px -28px rgb(59 59 58 / 0.4);
+    border: 1px solid rgb(59 59 58 / 0.04);
+  }
+  .bw-tpill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--color-black);
+    color: var(--color-yellow);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .bw-score {
+    font-weight: 900;
+    font-size: clamp(2.25rem, 3vw, 2.75rem);
+    line-height: 1;
+    color: var(--color-black);
+  }
+  .bw-count {
+    font-size: 13px;
+    color: var(--color-grey-text); /* gedämpftes, barrierefreies Grau */
+  }
+
+  /* =====================================================================
+     Marquee — full-bleed, zwei gegenläufige Reihen. Reine CSS-Animation (transform),
+     kein JS. Kanten weich ausgeblendet; Hover/Fokus pausiert.
+     ===================================================================== */
+  .bw-marquee {
+    margin-top: clamp(2.5rem, 5vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .bw-row {
+    overflow: hidden;
+    padding-block: 10px; /* Platz für Schatten + Sprechblasen-Schwanz */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .bw-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+    animation: bw-marquee var(--dur, 55s) linear infinite;
+  }
+  /* Klon-Wrapper ohne eigene Box → seine Karten werden direkte Flex-Items des Tracks
+     (uniformer Abstand via margin-right der Karte → nahtloser -25%-Loop über 4 Sets). */
+  .bw-clones {
+    display: contents;
+  }
+  .bw-row--1 .bw-track {
+    --dur: 55s;
+  }
+  .bw-row--2 .bw-track {
+    --dur: 62s;
+    animation-direction: reverse;
+  }
+  @keyframes bw-marquee {
+    to {
+      transform: translateX(-25%);
+    }
+  }
+  /* Hover UND Tastatur-Fokus in der Reihe pausieren die Bewegung. */
+  .bw-row:hover .bw-track,
+  .bw-row:focus-within .bw-track {
+    animation-play-state: paused;
+  }
+
+  .bw-foot {
+    margin-top: 1rem;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: var(--spacing-inset);
+    font-size: 13px;
+    color: var(--color-grey-text);
+  }
+
+  /* =====================================================================
+     Mobile — Kacheln untereinander, kompakter.
+     ===================================================================== */
+  @media (max-width: 767.98px) {
+    .bw-h2 {
+      font-size: clamp(1.85rem, 8vw, 2.5rem);
+    }
+    .bw-tiles {
+      grid-template-columns: 1fr;
+    }
+    .bw-tile {
+      padding: 16px;
+    }
+  }
+
+  /* =====================================================================
+     prefers-reduced-motion — keine Bewegung: Klone raus, Reihen nativ scrollbar
+     (data-lenis-prevent verhindert Lenis-Hijack). Inhalte bleiben voll sichtbar.
+     ===================================================================== */
+  @media (prefers-reduced-motion: reduce) {
+    .bw-track {
+      animation: none;
+    }
+    .bw-clones {
+      display: none;
+    }
+    .bw-row {
+      overflow-x: auto;
+    }
+  }
+</style>

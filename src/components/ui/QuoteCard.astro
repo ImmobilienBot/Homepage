@@ -1,0 +1,112 @@
+---
+/**
+ * QuoteCard — Zitat-Sprechblase (CD-Störer-Stil, solide, KEINE Kontur).
+ * Default weiß, `featured` gelb. Sprechblasen-Schwanz per ::after. Kopfzeile:
+ * StarRating (klein) links, Plattform-Pill rechts. Rein CSS-Hover (translateY).
+ * Wird sowohl für die semantische Instanz als auch (im aria-hidden-Wrapper) für
+ * die Marquee-Klone gerendert.
+ */
+import StarRating from './StarRating.astro';
+
+interface Props {
+  quote: string;
+  author: string;
+  /** Plattform-Anzeigename (z. B. „App Store"). */
+  platform: string;
+  stars: number;
+  featured?: boolean;
+  /** Screenreader-Text der Sternreihe. */
+  srText: string;
+}
+
+const { quote, author, platform, stars, featured = false, srText } = Astro.props;
+// Leer-Sterne: auf Gelb #c0c0c1 (grey-yellow), auf Weiß #d9dada.
+const emptyColor = featured ? '#c0c0c1' : '#d9dada';
+---
+
+<figure class:list={['bw-quote', featured && 'bw-quote--featured']}>
+  <div class="bw-quote-head">
+    <StarRating score={stars} size={13} empty={emptyColor} sr={srText} />
+    <span class="bw-qpill">{platform}</span>
+  </div>
+  <blockquote class="bw-quote-text">{quote}</blockquote>
+  <figcaption class="bw-quote-author">{author}</figcaption>
+</figure>
+
+<style>
+  .bw-quote {
+    position: relative;
+    flex: none;
+    width: 330px;
+    margin-right: 16px; /* Marquee-Abstand am Element (nicht flex-gap) → nahtloser -25%-Loop */
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: var(--color-offwhite); /* #f6f6f6 */
+    box-shadow: 0 18px 40px -24px rgb(59 59 58 / 0.4);
+  }
+  .bw-quote--featured {
+    background: var(--color-yellow); /* #fff03c */
+  }
+  /* Sprechblasen-Schwanz — erbt die Kartenfarbe. */
+  .bw-quote::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 32px;
+    width: 18px;
+    height: 18px;
+    background: inherit;
+    border-radius: 3px;
+    transform: rotate(45deg);
+  }
+  .bw-quote-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 10px;
+  }
+  .bw-qpill {
+    flex: none;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--color-black);
+    color: var(--color-yellow);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .bw-quote-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+  .bw-quote-author {
+    margin-top: 12px;
+    font-weight: 500;
+    font-size: 14px;
+    color: rgb(59 59 58 / 0.75);
+  }
+  .bw-quote--featured .bw-quote-author {
+    color: rgb(59 59 58 / 0.85);
+  }
+
+  /* Hover — nur CSS, nur transform (kein GSAP → kein clearProps-Thema). */
+  @media (hover: hover) and (pointer: fine) {
+    .bw-quote {
+      transition: transform 0.25s ease;
+    }
+    .bw-quote:hover {
+      transform: translateY(-4px);
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .bw-quote {
+      width: 280px;
+    }
+  }
+</style>

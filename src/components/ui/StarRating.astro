@@ -1,0 +1,82 @@
+---
+/**
+ * StarRating — Sternreihe mit fraktionaler Füllung.
+ *
+ * Zwei identische SVG-Reihen übereinander: die untere in `empty`, die obere in
+ * `fill` — per width-geclipptem Overlay (overflow:hidden, width = score/max*100 %)
+ * auf den Score gestutzt. Reine SVG-Sterne, gefüllt, KEIN Stroke (CLAUDE.md/Design).
+ * SVGs sind aria-hidden; die Bewertung trägt der sr-only-Text daneben.
+ *
+ * Farben als Props, weil die Leer-Sterne je Untergrund variieren:
+ * auf Weiß #d9dada, auf Gelb #c0c0c1 (grey-yellow).
+ */
+interface Props {
+  score: number;
+  max?: number;
+  /** Kantenlänge je Stern in px. */
+  size?: number;
+  /** Farbe der gefüllten Sterne. */
+  fill?: string;
+  /** Farbe der leeren Sterne (Untergrund-abhängig). */
+  empty?: string;
+  /** Abstand zwischen den Sternen in px. */
+  gap?: number;
+  /** Screenreader-Text, z. B. „4,6 von 5 Sternen". */
+  sr: string;
+}
+
+const {
+  score,
+  max = 5,
+  size = 16,
+  fill = '#3b3b3a',
+  empty = '#d9dada',
+  gap = 2,
+  sr,
+} = Astro.props;
+
+const pct = Math.max(0, Math.min(100, (score / max) * 100));
+const stars = Array.from({ length: max });
+const STAR_PATH =
+  'M10 1.5l2.472 5.007 5.528.803-4 3.9.944 5.49L10 15.9l-4.944 2.6.944-5.49-4-3.9 5.528-.803z';
+---
+
+<span class="star-rating" style={`--size:${size}px;--gap:${gap}px`}>
+  <span class="sr-only">{sr}</span>
+  <span class="sr-row" style={`color:${empty}`} aria-hidden="true">
+    {stars.map(() => (
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d={STAR_PATH} /></svg>
+    ))}
+  </span>
+  <span class="sr-row sr-row--fill" style={`color:${fill};width:${pct}%`} aria-hidden="true">
+    {stars.map(() => (
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d={STAR_PATH} /></svg>
+    ))}
+  </span>
+</span>
+
+<style>
+  .star-rating {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    line-height: 0;
+  }
+  .sr-row {
+    display: inline-flex;
+    gap: var(--gap);
+  }
+  .sr-row svg {
+    width: var(--size);
+    height: var(--size);
+    flex: none;
+    display: block;
+  }
+  /* Gefüllte Reihe deckungsgleich über der leeren, per width auf den Score gestutzt. */
+  .sr-row--fill {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+</style>

@@ -82,21 +82,113 @@ export interface Rating {
 }
 
 export const ratings: Record<'appStore' | 'playStore' | 'googleMaps', Rating> = {
-  appStore: { stars: 4.6, count: 85, label: 'App Store' },
-  playStore: { stars: 4.2, count: 48, label: 'Play Store' },
+  // Stand Store-Seiten Juli 2026. `stars` = sichtbarer Score, `label` = Anzeige-Pill.
+  appStore: { stars: 4.6, count: 86, label: 'App Store' },
+  playStore: { stars: 4.3, count: 48, label: 'Google Play' },
   googleMaps: { stars: 5.0, count: 33, label: 'Google Maps' },
 };
 
 /** Nicht als Live-Zähler behandeln — statischer, belegbarer Wert. */
 export const downloads = '5.000+';
 
+/**
+ * Gesamtzahl der Bewertungen über alle Plattformen — IMMER abgeleitet (Summe der
+ * counts), NIE als Literal. Wird sichtbar in der Bewertungen-Sektion genannt und
+ * per facts-sync gegen das HTML geprüft.
+ */
+export const totalReviewCount =
+  ratings.appStore.count + ratings.playStore.count + ratings.googleMaps.count;
+
 /** Für JSON-LD aggregateRating: gewichteter Schnitt über die Store-Bewertungen. */
 export const aggregateRating = {
   ratingValue: 4.6,
-  ratingCount: ratings.appStore.count + ratings.playStore.count + ratings.googleMaps.count,
+  ratingCount: totalReviewCount,
   bestRating: 5,
   worstRating: 1,
 };
+
+/* ------------------------------------------------------------------ */
+/* Testimonials  (echte Store-Rezensionen — Wortlaut NICHT verändern)  */
+/* ------------------------------------------------------------------ */
+
+export type ReviewPlatform = 'appstore' | 'playstore' | 'gmaps';
+
+export interface Testimonial {
+  /** Zitat zweisprachig — Wortlaut verbatim aus dem Store (DE Original, EN Übersetzung). */
+  quote: { de: string; en: string };
+  /** Store-Username, verbatim. */
+  author: string;
+  platform: ReviewPlatform;
+  stars: 1 | 2 | 3 | 4 | 5;
+  /** Gelber „Störer" in der Marquee (je Reihe genau einer). */
+  featured?: boolean;
+}
+
+/** Anzeige-Label je Plattform (identisch zu den Rating-Kachel-Pills). */
+export const platformLabel: Record<ReviewPlatform, string> = {
+  appstore: ratings.appStore.label,
+  playstore: ratings.playStore.label,
+  gmaps: ratings.googleMaps.label,
+};
+
+export const testimonials: Testimonial[] = [
+  {
+    featured: true,
+    platform: 'playstore',
+    author: 'Markus Hahn',
+    stars: 4 /* TODO(Artem): stars verifizieren */,
+    quote: {
+      de: 'Die App ist super. Ich habe nach zwei Monaten Suche meine Traumwohnung gefunden, das war es wert.',
+      en: 'The app is great. After two months of searching I found my dream apartment — it was worth it.',
+    },
+  },
+  {
+    featured: true,
+    platform: 'appstore',
+    author: 'SebastianSoftware',
+    stars: 5 /* TODO(Artem): stars verifizieren */,
+    quote: {
+      de: 'Am Anfang war ich etwas skeptisch […] aber nach 3 Tagen Testen bin ich immer wieder erstaunt, wenn ich die erste Person auf der Anzeige bin.',
+      en: "I was a bit skeptical at first […] but after 3 days of testing I'm amazed again and again when I'm the first person on a listing.",
+    },
+  },
+  {
+    platform: 'playstore',
+    author: 'Jonathan Jablonski',
+    stars: 5 /* TODO(Artem): stars verifizieren */,
+    quote: {
+      de: 'Die App benachrichtigt einen immer etwas schneller als die Suchbenachrichtigungen der gängigen Immobilien-Apps. Das gibt einem oft einen Vorteil bei der Bewerbung.',
+      en: 'The app always notifies you a bit faster than the search alerts of the usual real-estate apps. That often gives you an edge when applying.',
+    },
+  },
+  {
+    platform: 'appstore',
+    author: 'NoyusTMedia',
+    stars: 5 /* TODO(Artem): stars verifizieren */,
+    quote: {
+      de: 'Ich bin begeistert, dass ich mit der App so viele Angebote bekomme — über 100 am Tag.',
+      en: "I'm thrilled at how many listings I get with the app — over 100 a day.",
+    },
+  },
+  {
+    platform: 'appstore',
+    author: 'Finndeg',
+    stars: 5 /* TODO(Artem): stars verifizieren */,
+    quote: {
+      de: 'Sehr schnell eine Wohnung gefunden. Sehr einfach und übersichtlich!',
+      en: 'Found an apartment really quickly. Very simple and clear!',
+    },
+  },
+  {
+    platform: 'appstore',
+    author: 'stolzheise',
+    stars: 5 /* TODO(Artem): stars verifizieren */,
+    quote: {
+      de: 'Übersichtlich, schnell, sehr hilfreich! Spart viel Zeit bei der Wohnungssuche in Berlin.',
+      en: 'Clear, fast, really helpful! Saves a lot of time searching for a flat in Berlin.',
+    },
+  },
+];
 
 /* ------------------------------------------------------------------ */
 /* Preise                                                             */

@@ -14,7 +14,16 @@
 import * as cheerio from 'cheerio';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, sep } from 'node:path';
-import { site, storeLinks, aggregateRating, pricing, portals, portalCount } from '../src/data/site.ts';
+import {
+  site,
+  storeLinks,
+  aggregateRating,
+  pricing,
+  portals,
+  portalCount,
+  ratings,
+  totalReviewCount,
+} from '../src/data/site.ts';
 
 type Severity = 'error' | 'warn';
 interface Finding {
@@ -78,6 +87,13 @@ function visibleText($: cheerio.CheerioAPI): string {
 
 /** Preiswert im Seiten-Locale formatieren: 2.99 → „2,99" (de) / „2.99" (en). */
 const fmtPrice = (value: number, loc: 'de' | 'en') => value.toFixed(2).replace('.', loc === 'de' ? ',' : '.');
+
+/** Rating-Score im Seiten-Locale, feste 1 Nachkommastelle: 4.6 → „4,6"/„4.6" (wie Bewertungen.astro). */
+const fmtScore = (value: number, loc: 'de' | 'en') =>
+  new Intl.NumberFormat(loc === 'de' ? 'de-DE' : 'en-US', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
 
 /** Alle @type-Strings aus allen JSON-LD-Blöcken einer Seite (inkl. @graph). */
 function collectJsonLd($: cheerio.CheerioAPI, page: string): unknown[] {
@@ -256,6 +272,16 @@ function auditPage(file: string) {
     for (const portal of portals) {
       if (!vt.includes(portal.name)) add('S12', 'error', page, `Portal-Name „${portal.name}" (aus site.ts) fehlt im HTML.`);
     }
+    // Bewertungen: sichtbare Scores, Counts und totalReviewCount gegen site.ts.
+    for (const r of Object.values(ratings)) {
+      const s = fmtScore(r.stars, loc);
+      if (!vt.includes(s))
+        add('S12', 'error', page, `Rating-Score „${s}" (${r.label}, aus site.ts) fehlt im sichtbaren HTML.`);
+      if (!vt.includes(String(r.count)))
+        add('S12', 'error', page, `Rating-Count „${r.count}" (${r.label}, aus site.ts) fehlt im sichtbaren HTML.`);
+    }
+    if (!vt.includes(String(totalReviewCount)))
+      add('S12', 'error', page, `totalReviewCount „${totalReviewCount}" (aus site.ts) fehlt im sichtbaren HTML.`);
   }
 
   // --- S13: interne Links ---

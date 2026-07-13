@@ -269,7 +269,17 @@ export const de = {
         ],
       },
     },
-    socialProof: { title: 'Das sagen Nutzer' },
+    // Bewertungen-Sektion: Proof-Header (H2 + Marker + abgeleitete Zahlen) über der
+    // Zitat-Marquee. {total} = totalReviewCount, {downloads} = downloads, {count}/{n}
+    // je Kachel — ALLE aus site.ts, nichts hart. footnote nur EN (Zitate übersetzt).
+    bewertungen: {
+      headline: 'Gefunden, bevor es andere taten.',
+      headlineMark: 'Gefunden',
+      subline: '{total} Bewertungen auf drei Plattformen · {downloads} Downloads',
+      tileLabel: '{count} Bewertungen',
+      starsSr: '{n} von 5 Sternen',
+      footnote: '',
+    },
     faq: { title: 'Häufige Fragen' },
     contact: { title: 'Kontakt' },
     finalCta: { title: 'Deine nächste Wohnung wartet nicht.' },

@@ -58,9 +58,10 @@ user first, in real time, when a listing matches their criteria.
 
 ## Ratings
 
-- App Store: 4.6 stars (85 ratings)
-- Play Store: 4.2 stars (48 ratings)
+- App Store: 4.6 stars (86 ratings)
+- Google Play: 4.3 stars (48 ratings)
 - Google Maps: 5.0 stars (33 ratings)
+- 167 reviews across all platforms
 - 5.000+ downloads
 
 ## Portals monitored (20)

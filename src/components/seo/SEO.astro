@@ -14,6 +14,7 @@ import {
   pricing,
   portals,
   portalCount,
+  testimonials,
 } from '../../data/site';
 import { getAlternates, hreflangCodes } from '../../i18n';
 import type { Locale } from '../../data/site';
@@ -79,6 +80,20 @@ const jsonLd = {
         bestRating: aggregateRating.bestRating,
         worstRating: aggregateRating.worstRating,
       },
+      // Einzelne Reviews = die featured-Testimonials (reviewBody = DE-Original).
+      review: testimonials
+        .filter((tm) => tm.featured)
+        .map((tm) => ({
+          '@type': 'Review',
+          author: { '@type': 'Person', name: tm.author },
+          reviewBody: tm.quote.de,
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: tm.stars,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        })),
     },
     {
       '@type': 'Organization',

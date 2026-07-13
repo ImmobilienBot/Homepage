@@ -1345,6 +1345,42 @@ function initReveals() {
 }
 
 /**
+ * Bewertungen-Sektion: eine Timeline (once:true). Startzustände NUR per gsap.set
+ * (ohne JS / reduced-motion alles im Endzustand). H2 Mask-Reveal + Marker-Wipe →
+ * Subline → Rating-Kacheln gestaffelt → Marquee-Reihen weich einfaden. Nur
+ * transform/opacity (die Marquee selbst ist CSS-only und läuft unabhängig weiter).
+ */
+function initBewertungen() {
+  const section = document.querySelector<HTMLElement>('#bewertungen');
+  if (!section) return;
+  // Late-Setup-Garde (Trigger 'top 80%'): schon an/über der Startlinie → keine
+  // Startzustände, kein Trigger; Sektion bleibt im natürlichen (sichtbaren) Endzustand.
+  if (isPastRevealStart(section, 0.8)) return;
+
+  const maskIns = gsap.utils.toArray<HTMLElement>('#bewertungen .bw-mask-in');
+  const markHls = gsap.utils.toArray<HTMLElement>('#bewertungen .marker__bg');
+  const sub = section.querySelector<HTMLElement>('[data-bw-sub]');
+  const tiles = gsap.utils.toArray<HTMLElement>('#bewertungen [data-bw-tile]');
+  const rows = gsap.utils.toArray<HTMLElement>('#bewertungen [data-bw-marquee]');
+
+  if (maskIns.length) gsap.set(maskIns, { yPercent: 110 });
+  if (markHls.length) gsap.set(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center' });
+  if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
+  if (tiles.length) gsap.set(tiles, { autoAlpha: 0, y: 24 });
+  if (rows.length) gsap.set(rows, { autoAlpha: 0, y: 20 });
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: section, start: 'top 80%', once: true },
+    defaults: { ease: 'power3.out' },
+  });
+  if (maskIns.length) tl.to(maskIns, { yPercent: 0, duration: 0.7, ease: 'power4.out' }, 0);
+  if (markHls.length) tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4, ease: 'power2.out' }, 0.35);
+  if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.4);
+  if (tiles.length) tl.to(tiles, { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.12 }, 0.45);
+  if (rows.length) tl.to(rows, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.15 }, 0.7);
+}
+
+/**
  * Ablauf-Sektion (Ticket-Leiste): eine Timeline (once:true). Startzustände NUR
  * per gsap.set (ohne JS / reduced-motion alles im Endzustand). H2 zeilenweiser
  * Mask-Reveal + Marker-Wipe → Subline → Tickets gestaffelt. Nur transform/opacity.
@@ -1914,6 +1950,7 @@ runIdle(() => {
     safeInit('BenefitLottie', () => initBenefitLottie());
     safeInit('Portale', () => initPortale());
     safeInit('Ablauf', () => initAblauf());
+    safeInit('Bewertungen', () => initBewertungen());
     safeInit('Preise', () => initPreise());
     safeInit('Reveals', () => initReveals());
   }
