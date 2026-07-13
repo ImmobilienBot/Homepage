@@ -64,8 +64,8 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
       <h2 class="ft-h2">
         <span class="ft-mask"
           ><span class="ft-mask-in"
-            >{h2.pre}<span class="ft-mark"
-              ><span class="ft-mark-hl" aria-hidden="true"></span><span class="ft-mark-tx"
+            >{h2.pre}<span class="marker"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
                 >{h2.mark}</span
               ></span
             >{h2.post}</span
@@ -166,8 +166,8 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
       <h3 class="ft-bento-title">
         <span class="ft-mask"
           ><span class="ft-mask-in"
-            >{bento.pre}<span class="ft-mark"
-              ><span class="ft-mark-hl" aria-hidden="true"></span><span class="ft-mark-tx"
+            >{bento.pre}<span class="marker"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
                 >{bento.mark}</span
               ></span
             >{bento.post}</span
@@ -334,23 +334,8 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     display: inline-block;
     will-change: transform;
   }
-  .ft-mark {
-    position: relative;
-    display: inline-block;
-    white-space: nowrap;
-  }
-  .ft-mark-hl {
-    position: absolute;
-    inset: 0.08em -0.08em 0.05em -0.08em;
-    background-color: var(--color-yellow);
-    border-radius: 0.08em;
-    transform-origin: left center;
-    z-index: 0;
-  }
-  .ft-mark-tx {
-    position: relative;
-    z-index: 1;
-  }
+  /* Keyword-Marker (H2 + Bento): globale .marker-Klassen (siehe global.css).
+     Wipe fährt .marker__bg per gsap.from() herein (scaleX 0→1, skewX:-8 mitgeführt). */
   .ft-sub {
     margin-top: clamp(1rem, 2vw, 1.4rem);
     margin-inline: auto;

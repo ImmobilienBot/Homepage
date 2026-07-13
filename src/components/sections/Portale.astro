@@ -66,8 +66,8 @@ const feedData = {
         <span class="pf-line-mask"><span class="pf-line-inner">{P.headline}</span></span
         ><span class="pf-line-mask"
           ><span class="pf-line-inner"
-            ><span class="pf-mark"
-              ><span class="pf-mark-hl" aria-hidden="true"></span><span class="pf-mark-text"
+            ><span class="marker"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
                 >{P.headlineMark}</span
               ></span
             ></span
@@ -212,23 +212,8 @@ const feedData = {
   .pf-line-mask:first-of-type {
     display: block;
   }
-  .pf-mark {
-    position: relative;
-    display: inline-block;
-    white-space: nowrap;
-  }
-  .pf-mark-hl {
-    position: absolute;
-    inset: 0.08em -0.08em 0.05em -0.08em;
-    background-color: var(--color-yellow);
-    border-radius: 0.08em;
-    transform-origin: left center;
-    z-index: 0;
-  }
-  .pf-mark-text {
-    position: relative;
-    z-index: 1;
-  }
+  /* Keyword-Marker: globale .marker-Klassen (siehe global.css). Wipe fährt
+     .marker__bg per gsap.from() herein (scaleX 0→1, skewX:-8 mitgeführt). */
   .pf-sub {
     margin-top: clamp(1rem, 2vw, 1.4rem);
     margin-inline: auto;

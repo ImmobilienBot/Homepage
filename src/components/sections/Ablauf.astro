@@ -56,8 +56,8 @@ const howToLd = {
       <h2 id="ablauf-heading" class="ab-h2">
         <span class="ab-mask"
           ><span class="ab-mask-in"
-            >{h.pre}<span class="ab-mark"
-              ><span class="ab-mark-hl" aria-hidden="true"></span><span class="ab-mark-tx"
+            >{h.pre}<span class="marker"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
                 >{h.mark}</span
               ></span
             >{h.post}</span
@@ -135,23 +135,8 @@ const howToLd = {
     display: inline-block;
     will-change: transform;
   }
-  .ab-mark {
-    position: relative;
-    display: inline-block;
-    white-space: nowrap;
-  }
-  .ab-mark-hl {
-    position: absolute;
-    inset: 0.08em -0.08em 0.05em -0.08em;
-    background-color: var(--color-yellow);
-    border-radius: 0.08em;
-    transform-origin: left center;
-    z-index: 0;
-  }
-  .ab-mark-tx {
-    position: relative;
-    z-index: 1;
-  }
+  /* Keyword-Marker: globale .marker-Klassen (siehe global.css). Wipe fährt
+     .marker__bg per gsap.set/.to herein (scaleX 0→1, skewX:-8 mitgeführt). */
   .ab-sub {
     margin-top: clamp(1rem, 2vw, 1.4rem);
     max-width: 520px;

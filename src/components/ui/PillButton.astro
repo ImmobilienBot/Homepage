@@ -1,0 +1,287 @@
+---
+/**
+ * PillButton — EINHEITLICHES CTA-Button-System (siehe CLAUDE.md → Design-System).
+ *
+ * Gelbe „Dot-Pille": Punkt links, Label (Slot) rechts. Hover (NUR Desktop):
+ * ein Füll-Kreis wächst exakt aus der Dot-Position, Label invertiert auf --htx,
+ * das optionale Icon slidet von links ein. Rein CSS, nur transform/opacity.
+ *
+ * - Inhalt (Label) kommt als <slot> → nimmt die bestehenden responsiven
+ *   Header-Spans unverändert auf.
+ * - Touch: durch @media(hover:hover) kein Hover-Effekt; :active gibt Feedback.
+ * - prefers-reduced-motion: Füll-Kreis aus, Hover = harter Zustandswechsel.
+ * - Custom-Cursor: rendert ein <a> → die Invert-Lupe dockt automatisch an
+ *   (kein Extra-Hook nötig).
+ */
+interface Props {
+  href: string;
+  size?: 'sm' | 'md';
+  surface?: 'light' | 'dark' | 'yellow';
+  icon?: 'bolt' | 'arrow-down' | 'arrow-right' | 'check';
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  href,
+  size = 'md',
+  surface = 'light',
+  icon,
+  class: className = '',
+  ...rest
+} = Astro.props;
+---
+
+<a
+  class:list={['pill-btn', `pill-btn--${size}`, `pill-btn--${surface}`, className]}
+  href={href}
+  {...rest}
+>
+  <span class="pill-btn__dot" aria-hidden="true"></span>
+  <span class="pill-btn__label">
+    <slot />
+    {
+      icon === 'bolt' && (
+        <svg
+          class="pill-btn__icon"
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M13 3 5.5 13H11l-1 8 7.5-10H12l1-8z" />
+        </svg>
+      )
+    }
+    {
+      icon === 'arrow-down' && (
+        <svg
+          class="pill-btn__icon pill-btn__icon--down"
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 4v16" />
+          <path d="m6 14 6 6 6-6" />
+        </svg>
+      )
+    }
+    {
+      icon === 'arrow-right' && (
+        <svg
+          class="pill-btn__icon"
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 12h16" />
+          <path d="m14 6 6 6-6 6" />
+        </svg>
+      )
+    }
+    {
+      icon === 'check' && (
+        <svg
+          class="pill-btn__icon"
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8.5 12.3 2.4 2.4 4.8-5" />
+        </svg>
+      )
+    }
+  </span>
+</a>
+
+<style>
+  .pill-btn {
+    --fill: #3b3b3a;
+    --htx: #fff03c;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 999px;
+    background: #fff03c;
+    color: #3b3b3a;
+    font-family: var(--font-sans);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-decoration: none;
+    overflow: hidden;
+    isolation: isolate; /* isolate = Safari-Clipping-Fix bei radius + transform */
+  }
+
+  /* Füll-Kreis — wächst exakt aus der Dot-Position (left:var(--dx)). */
+  .pill-btn::before {
+    content: '';
+    position: absolute;
+    left: var(--dx);
+    top: 50%;
+    width: 240%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--fill);
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 450ms cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .pill-btn__dot {
+    flex: none;
+    border-radius: 50%;
+    background: #3b3b3a;
+    position: relative;
+    transition: opacity 150ms ease 80ms;
+  }
+  .pill-btn__label {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 200ms ease 100ms;
+  }
+  .pill-btn__icon {
+    opacity: 0;
+    transform: translateX(-8px);
+    transition:
+      opacity 300ms ease,
+      transform 350ms cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .pill-btn__icon--down {
+    transform: translateY(-6px);
+  }
+
+  /* ---- Größen (--dx = padding-left + Dot-Radius → Kreis startet im Dot-Zentrum) ---- */
+  .pill-btn--sm {
+    --dx: 22px;
+    height: 44px;
+    padding: 0 14px 0 18px;
+    font-size: 13px;
+  }
+  .pill-btn--sm .pill-btn__dot {
+    width: 8px;
+    height: 8px;
+  }
+  .pill-btn--md {
+    --dx: 24px;
+    height: 54px;
+    padding: 0 16px 0 20px;
+    font-size: 15px;
+  }
+  .pill-btn--md .pill-btn__dot {
+    width: 9px;
+    height: 9px;
+  }
+  /* Mobil: md etwas kompakter (Padding/--dx unverändert). */
+  @media (max-width: 767.98px) {
+    .pill-btn--md {
+      height: 50px;
+      font-size: 14px;
+    }
+  }
+
+  /* ---- Surfaces ---- */
+  .pill-btn--dark {
+    /* dunkle Sektionen: Off-White-Füllung — Schwarz würde mit dem BG verschmelzen */
+    --fill: #f6f6f6;
+    --htx: #3b3b3a;
+  }
+  .pill-btn--yellow {
+    /* nur auf gelben Flächen: dünne Kontur im Ruhezustand, sonst unsichtbar */
+    box-shadow: inset 0 0 0 1.5px #3b3b3a;
+    transition: box-shadow 250ms ease;
+  }
+
+  /* ---- Hover — AUSSCHLIESSLICH Desktop (echter Zeiger) ---- */
+  @media (hover: hover) and (pointer: fine) {
+    .pill-btn:hover::before {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .pill-btn:hover .pill-btn__dot {
+      opacity: 0;
+    }
+    .pill-btn:hover .pill-btn__label {
+      color: var(--htx);
+    }
+    .pill-btn:hover .pill-btn__icon {
+      opacity: 1;
+      transform: none;
+    }
+    .pill-btn--yellow:hover {
+      box-shadow: inset 0 0 0 1.5px transparent;
+    }
+  }
+
+  /* ---- Weitere States ---- */
+  .pill-btn:active {
+    transform: scale(0.97);
+    transition: transform 120ms ease;
+  }
+  .pill-btn:focus-visible {
+    outline: 2px solid #3b3b3a;
+    outline-offset: 3px;
+  }
+  .pill-btn--dark:focus-visible {
+    outline-color: #fff03c;
+  }
+
+  /* ---- prefers-reduced-motion: kein Wachsen, harter Zustandswechsel ---- */
+  @media (prefers-reduced-motion: reduce) {
+    .pill-btn,
+    .pill-btn--yellow,
+    .pill-btn__dot,
+    .pill-btn__label,
+    .pill-btn__icon {
+      transition: none;
+    }
+    .pill-btn::before {
+      display: none;
+    }
+    .pill-btn:active {
+      transform: none;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .pill-btn:hover {
+        background: var(--fill);
+      }
+      .pill-btn:hover .pill-btn__label {
+        color: var(--htx);
+      }
+      .pill-btn:hover .pill-btn__icon {
+        opacity: 1;
+        transform: none;
+      }
+      .pill-btn:hover .pill-btn__dot {
+        opacity: 0;
+      }
+    }
+  }
+</style>

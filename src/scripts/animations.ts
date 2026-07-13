@@ -72,7 +72,7 @@ function initHeroReveal() {
   if (!hero) return;
 
   const lines = gsap.utils.toArray<HTMLElement>('#hero .line-inner');
-  const marks = gsap.utils.toArray<HTMLElement>('#hero .mark-hl');
+  const marks = gsap.utils.toArray<HTMLElement>('#hero .marker__bg');
   const fades = gsap.utils.toArray<HTMLElement>(
     '#hero [data-hero-sub], #hero [data-hero-trust]',
   );
@@ -88,7 +88,9 @@ function initHeroReveal() {
   if (marks.length) {
     tl.from(
       marks,
-      { scaleX: 0, duration: 0.5, ease: 'power2.out', stagger: 0.12 },
+      // skewX:-8 mitführen — GSAP überschreibt transform komplett; sonst ginge der
+      // CSS-Default skewX(-8deg) beim Wipe verloren. transformOrigin links = Wisch von links.
+      { scaleX: 0, skewX: -8, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out', stagger: 0.12 },
       0.35,
     );
   }
@@ -617,7 +619,7 @@ async function initProblem3c() {
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
   const NUM_RGB = [220, 221, 220]; // Zahl-Partikelfarbe (hell, lesbar auf Dunkel)
-  const duLabel = section.querySelector('.mark')?.textContent?.trim() || 'du';
+  const duLabel = section.querySelector('.marker__label')?.textContent?.trim() || 'du';
 
   // ---- Justierbare Konstanten ----
   const WIPE_DUR = 0.7; // Wisch-Dauer (s) — NICHT anfassen
@@ -1002,7 +1004,7 @@ function initPortale() {
 
   // --- Entry-Reveal: Headline-Mask + Marker-Wipe → Subline → Pills → Phone ---
   const lineInners = gsap.utils.toArray<HTMLElement>('#portale .pf-line-inner');
-  const markHls = gsap.utils.toArray<HTMLElement>('#portale .pf-mark-hl');
+  const markHls = gsap.utils.toArray<HTMLElement>('#portale .marker__bg');
   const sub = section.querySelector<HTMLElement>('[data-pf-sub]');
   const pills = gsap.utils.toArray<HTMLElement>('#portale [data-pf-pill]');
   const phoneStage = section.querySelector<HTMLElement>('[data-pf-phone-stage]');
@@ -1013,7 +1015,7 @@ function initPortale() {
   });
   if (lineInners.length) tl.from(lineInners, { yPercent: 110, duration: 0.9, stagger: 0.12 }, 0);
   if (markHls.length)
-    tl.from(markHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
+    tl.from(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
   if (sub) tl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
   if (pills.length) tl.from(pills, { autoAlpha: 0, y: 16, duration: 0.5, stagger: 0.035 }, 0.55);
   if (phoneStage)
@@ -1343,13 +1345,13 @@ function initAblauf() {
   if (!section) return;
 
   const maskIns = gsap.utils.toArray<HTMLElement>('#ablauf .ab-mask-in');
-  const markHls = gsap.utils.toArray<HTMLElement>('#ablauf .ab-mark-hl');
+  const markHls = gsap.utils.toArray<HTMLElement>('#ablauf .marker__bg');
   const sub = section.querySelector<HTMLElement>('[data-ab-sub]');
   const tickets = gsap.utils.toArray<HTMLElement>('#ablauf [data-ab-ticket]');
   const isMobile = !window.matchMedia('(min-width: 1024px)').matches;
 
   if (maskIns.length) gsap.set(maskIns, { yPercent: 110 });
-  if (markHls.length) gsap.set(markHls, { scaleX: 0, transformOrigin: 'left center' });
+  if (markHls.length) gsap.set(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center' });
   if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
   if (tickets.length) gsap.set(tickets, { autoAlpha: 0, y: isMobile ? 16 : 24 });
 
@@ -1359,7 +1361,7 @@ function initAblauf() {
   });
   if (maskIns.length) tl.to(maskIns, { yPercent: 0, duration: 0.7, ease: 'power4.out' }, 0);
   if (markHls.length)
-    tl.to(markHls, { scaleX: 1, duration: 0.4, ease: 'power2.out' }, 0.35);
+    tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4, ease: 'power2.out' }, 0.35);
   if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.4);
   if (tickets.length)
     // clearProps:'transform' entfernt den Inline-Transform nach Abschluss → der
@@ -1384,7 +1386,7 @@ function initPreise() {
 
   const tile = section.querySelector<HTMLElement>('[data-pr-tile]');
   const lineIns = gsap.utils.toArray<HTMLElement>('#preise .pr-line-in');
-  const markHls = gsap.utils.toArray<HTMLElement>('#preise .pr-mark-hl');
+  const markHls = gsap.utils.toArray<HTMLElement>('#preise .marker__bg');
   const sub = section.querySelector<HTMLElement>('[data-pr-sub]');
   const cards = gsap.utils.toArray<HTMLElement>('#preise [data-pr-card]');
   const benefits = gsap.utils.toArray<HTMLElement>('#preise [data-pr-benefit]');
@@ -1395,7 +1397,7 @@ function initPreise() {
   // Startzustände NUR per gsap.set (ohne JS / reduced-motion: Kachel sofort da).
   if (tile) gsap.set(tile, { clipPath: `inset(0 0 100% 0 round ${radius})` });
   if (lineIns.length) gsap.set(lineIns, { yPercent: 110 });
-  if (markHls.length) gsap.set(markHls, { scaleX: 0, transformOrigin: 'left center' });
+  if (markHls.length) gsap.set(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center' });
   if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
   if (cards.length) gsap.set(cards, { autoAlpha: 0, y: 24 });
   if (benefits.length) gsap.set(benefits, { autoAlpha: 0, y: 16 });
@@ -1424,7 +1426,7 @@ function initPreise() {
   // Headline zeilenweise aus der Maske, +0.45s nach Wipe-Beginn.
   if (lineIns.length) tl.to(lineIns, { yPercent: 0, duration: 0.7, ease: 'power4.out', stagger: 0.09 }, 0.45);
   // Marker ~0.35s nach seiner Zeile.
-  if (markHls.length) tl.to(markHls, { scaleX: 1, duration: 0.4, ease: 'power2.out' }, 0.8);
+  if (markHls.length) tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4, ease: 'power2.out' }, 0.8);
   // Subline.
   if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.5);
   // Karten (Trial, Plan 1, Plan 2) gestaffelt — Store-Badges kommen mit.
@@ -1705,7 +1707,7 @@ function initFeatures() {
 
   // ---- Header-Reveal: Mask-Zeile + Marker-Wipe → Subline ----
   const maskIns = gsap.utils.toArray<HTMLElement>('#features .ft-head .ft-mask-in');
-  const headHls = gsap.utils.toArray<HTMLElement>('#features .ft-head .ft-mark-hl');
+  const headHls = gsap.utils.toArray<HTMLElement>('#features .ft-head .marker__bg');
   const sub = section.querySelector<HTMLElement>('[data-ft-sub]');
   const headTl = gsap.timeline({
     scrollTrigger: { trigger: '#features .ft-head', start: 'top 82%', once: true },
@@ -1713,12 +1715,12 @@ function initFeatures() {
   });
   if (maskIns.length) headTl.from(maskIns, { yPercent: 110, duration: 0.9 }, 0);
   if (headHls.length)
-    headTl.from(headHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
+    headTl.from(headHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.35);
   if (sub) headTl.from(sub, { autoAlpha: 0, y: 18, duration: 0.6 }, 0.5);
 
   // ---- TIER 2: Bento-Reveal (Titel-Marker + Kacheln) ----
   const bentoIns = gsap.utils.toArray<HTMLElement>('#features .ft-bento-title .ft-mask-in');
-  const bentoHls = gsap.utils.toArray<HTMLElement>('#features .ft-bento-title .ft-mark-hl');
+  const bentoHls = gsap.utils.toArray<HTMLElement>('#features .ft-bento-title .marker__bg');
   const tiles = gsap.utils.toArray<HTMLElement>('#features .ft-tile');
   const bentoTl = gsap.timeline({
     scrollTrigger: { trigger: '#features .ft-bento-wrap', start: 'top 80%', once: true },
@@ -1726,7 +1728,7 @@ function initFeatures() {
   });
   if (bentoIns.length) bentoTl.from(bentoIns, { yPercent: 110, duration: 0.8 }, 0);
   if (bentoHls.length)
-    bentoTl.from(bentoHls, { scaleX: 0, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.3);
+    bentoTl.from(bentoHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center', duration: 0.5, ease: 'power2.out' }, 0.3);
   if (tiles.length) bentoTl.from(tiles, { autoAlpha: 0, y: 22, duration: 0.55, stagger: 0.08 }, 0.35);
 }
 

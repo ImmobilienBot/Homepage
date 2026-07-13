@@ -22,6 +22,7 @@
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import { portalCount } from '../../data/site';
 import type { Locale } from '../../data/site';
+import PillButton from '../ui/PillButton.astro';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -90,7 +91,11 @@ const ICONS = [
         reduced-motion sofort sichtbar. */}
     <h2 class="p3-head" data-p3-reveal>
       <span>{headPrefix}</span><span class="p3-head-nowrap"
-        ><span class="mark">{headMark}</span>{headSuffix}</span
+        ><span class="marker"
+          ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
+            >{headMark}</span
+          ></span
+        >{headSuffix}</span
       >
     </h2>
 
@@ -116,11 +121,13 @@ const ICONS = [
     </ul>
 
     {/* 5 · Features-Verweis — direkt unter der Vorteils-Reihe. Store-Badges/Trust
-        bewusst NICHT hier (CTA lebt im Header/Hero). Scrollt smooth zur nächsten Sektion. */}
-    <a href="#portale" class="p3-more" data-p3-more data-p3-reveal>
-      <span>{P.moreLink}</span>
-      <span class="p3-more-arrow" aria-hidden="true">↓</span>
-    </a>
+        bewusst NICHT hier (CTA lebt im Header/Hero). Scrollt smooth zur nächsten Sektion.
+        Einheitliche PillButton (dunkle Fläche): Pfeil erscheint nur im Desktop-Hover. */}
+    <div class="p3-more-wrap" data-p3-reveal>
+      <PillButton href="#portale" size="md" surface="dark" icon="arrow-down">
+        {P.moreLink}
+      </PillButton>
+    </div>
   </div>
 </section>
 
@@ -256,18 +263,10 @@ const ICONS = [
       white-space: nowrap;
     }
   }
-  /* „du." zusammenhalten (kein Umbruch zwischen Marker und Punkt). */
+  /* „du." zusammenhalten (kein Umbruch zwischen Marker und Punkt).
+     Gelber Marker NUR auf „du" → globale .marker-Klassen (siehe global.css). */
   .p3-head-nowrap {
     white-space: nowrap;
-  }
-  /* Gelber Marker NUR auf „du" (Brand-Signature). */
-  .p3-head :global(.mark) {
-    background-color: var(--color-yellow);
-    color: var(--color-black);
-    padding: 0 0.12em;
-    border-radius: 0.08em;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
   }
 
   /* ---- 4 · Vorteils-Reihe: Desktop nebeneinander, Mobile umgebrochen ---- */
@@ -310,67 +309,20 @@ const ICONS = [
     display: block;
   }
 
-  /* ---- 5 · Features-Verweis („Wir zeigen dir wie ↓") — direkt unter den Vorteilen.
-     Grundzustand: gelber Text + Pfeil, KEINE Pillenfläche. Hover/Fokus: gelbe Pille
-     mit dunkelgrauem Text+Pfeil. Padding ist IMMER reserviert (transparent) → kein CLS. */
-  .p3-more {
+  /* ---- 5 · Features-Verweis („Wir zeigen dir wie") — direkt unter den Vorteilen.
+     Einheitliche PillButton (surface=dark). Der Wrapper trägt nur Abstand + Zentrierung
+     (die Pille selbst bringt ihre Optik/States mit). data-p3-reveal blendet ihn ein. */
+  .p3-more-wrap {
     margin-top: clamp(2rem, 5vh, 3.25rem);
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.625rem 1.25rem; /* ~10px 20px — reserviert, damit die Pille nicht schiebt */
-    border-radius: 999px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-yellow); /* Grundzustand: gelb (Text + Pfeil erben die Farbe) */
-    background-color: transparent;
-    text-decoration: none;
-    transition:
-      color 0.18s ease,
-      background-color 0.18s ease,
-      transform 0.18s ease;
-  }
-  .p3-more:hover,
-  .p3-more:focus-visible {
-    background-color: var(--color-yellow); /* gelbe Pille */
-    color: var(--color-black); /* dunkelgrauer Text + Pfeil (#3b3b3a) */
-    transform: translateY(-2px); /* subtiles Anheben (nur transform) */
-    outline: none;
-  }
-  /* reduced-motion: Farb-/Pillenwechsel ja, aber kein Anheben (Bewegung). */
-  @media (prefers-reduced-motion: reduce) {
-    .p3-more:hover,
-    .p3-more:focus-visible {
-      transform: none;
-    }
-  }
-  .p3-more-arrow {
-    font-size: 1.15rem;
-    line-height: 1;
+    display: flex;
+    justify-content: center;
   }
 
-  /* Sanftes Idle am Pfeil (nur JS+Motion). */
+  /* Partikel-Canvas + Übergangs-Fläche nur mit JS + erlaubter Bewegung sichtbar. */
   @media (prefers-reduced-motion: no-preference) {
     :global(html.js) .p3-canvas,
     :global(html.js) .section-wipe {
       display: block;
-    }
-    .p3-more-arrow {
-      animation: p3ArrowBob 1.8s ease-in-out infinite;
-    }
-  }
-  @keyframes p3ArrowBob {
-    0%,
-    100% {
-      transform: translateY(0);
-      opacity: 0.7;
-    }
-    50% {
-      transform: translateY(4px);
-      opacity: 1;
     }
   }
 

@@ -78,6 +78,21 @@ Ordnung/Ruhe.
   (nicht pro Sektion frei wählen). Zentrales Ordnungsprinzip.
 - Buttons: Pill-Form. Karten/Container: dezent abgerundet.
 
+### CTA-Buttons & Keyword-Marker (verbindliche Standards)
+- **CTA-Buttons: ausschließlich `PillButton`** (`src/components/ui/PillButton.astro`). Gelbe Pille
+  ohne Kontur, dunkler Dot links; Hover (nur Desktop) lässt einen Füll-Kreis **aus dem Dot** wachsen
+  (`#3b3b3a`, auf dunklen Sektionen `#f6f6f6`), invertiert den Text und **slidet das Icon** von links
+  ein. Größen `sm`/`md`, Surfaces `light`/`dark`/`yellow`, Icons `bolt`/`arrow-down`/`arrow-right`/
+  `check`. Label kommt als Slot. Rein CSS, nur `transform`/`opacity`; Touch = kein Hover, `:active`-
+  Feedback; `prefers-reduced-motion` = harter Zustandswechsel ohne Bewegung. **Einzige Ausnahme:**
+  offizielle Store-Badges (`StoreBadges.astro`). Keine eigenen Button-Styles mehr bauen.
+- **Keyword-Marker: ausschließlich `.marker`** (global in `src/styles/global.css`), auf **gelben
+  Flächen** die Variante `.marker--dark`. Feste Geometrie — **nie neu erfinden, nie abweichen:**
+  `skewX(-8deg)`, `border-radius: .13em`, `padding: 0 .14em` (alle Maße in `em` → skaliert mit der
+  Schrift). Markup: `.marker` › `.marker__bg` (aria-hidden) + `.marker__label`, sitzt IM `h1`/`h2`/`p`.
+  Animierte Wipes fahren `.marker__bg` per GSAP herein (`scaleX 0→1`) und **führen `skewX:-8` in
+  jedem `set`/`tween` mit**. Ohne JS / `prefers-reduced-motion` sofort voll sichtbar.
+
 ### Bot / Maskottchen
 Bewusst **zurückhaltend**. Der Bot lebt im Logo; maximal eine kleine Signatur am Schluss
 („Das Original. Schneller als die anderen."). Wiedererkennung tragen v. a. **Farbe + Typo + echte

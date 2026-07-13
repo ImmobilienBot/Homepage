@@ -63,9 +63,9 @@ function splitLine(line: string) {
               <span class="line-inner">
                 {splitLine(line).map((seg) =>
                   seg.mark ? (
-                    <span class="mark-word">
-                      <span class="mark-hl" aria-hidden="true" />
-                      <span class="mark-text">{seg.text}</span>
+                    <span class="marker">
+                      <span class="marker__bg" aria-hidden="true" />
+                      <span class="marker__label">{seg.text}</span>
                     </span>
                   ) : (
                     <span>{seg.text}</span>
@@ -281,24 +281,8 @@ function splitLine(line: string) {
     display: block;
     will-change: transform;
   }
-  .mark-word {
-    position: relative;
-    display: inline-block;
-    white-space: nowrap;
-  }
-  .mark-hl {
-    position: absolute;
-    inset: 0.08em -0.06em 0.04em -0.06em;
-    background-color: var(--color-yellow);
-    border-radius: 0.08em;
-    transform-origin: left center;
-    z-index: 0;
-    /* Default: voll sichtbar. gsap.from() wischt beim Reveal von scaleX(0) herein. */
-  }
-  .mark-text {
-    position: relative;
-    z-index: 1;
-  }
+  /* Keyword-Marker: globale .marker-Klassen (siehe global.css). Der Wipe fährt
+     .marker__bg per gsap.from() herein (scaleX 0→1, skewX:-8 mitgeführt). */
 
   /* ---- Subline: bewusster Sekundär-Block (nicht Fließtext) ----
      Etwas größer, luftige Zeilenhöhe, engere max-Breite (sauberer 2–3-Zeiler),

@@ -101,15 +101,44 @@
 }
 
 /*
-  Wiederkehrendes CD-Stilmittel: gelber Marker-Highlight auf einzelnen
-  Keywords in Headlines. Nutzung: <span class="mark">Wort</span>
+  Wiederkehrendes CD-Stilmittel: gelber Keyword-Marker — schräg, leicht abgerundet.
+  EINZIGE Marker-Geometrie der Seite (siehe CLAUDE.md → Design-System):
+  skewX(-8deg), radius .13em, padding .14em. Alle Maße in em → skaliert automatisch
+  mit jeder Schriftgröße. Farben explizit, damit der Marker auf jeder Sektionsfarbe
+  kontrastiert. Auf GELBEN Flächen die Variante `.marker--dark` verwenden.
+
+  Markup (sitzt IM h1/h2/p — Heading-Struktur nicht zerreißen):
+    <span class="marker">
+      <span class="marker__bg" aria-hidden="true"></span>
+      <span class="marker__label">Keyword</span>
+    </span>
+
+  Animierte Wipes (Hero, Portale, Features, Ablauf, Preise) fahren `.marker__bg`
+  per GSAP herein (scaleX 0→1) und führen dabei skewX:-8 mit. Ohne JS /
+  prefers-reduced-motion bleibt der CSS-Default (scaleX 1) → Marker sofort voll da.
 */
-@utility mark {
-  background-color: var(--color-yellow);
-  padding: 0 0.12em;
-  border-radius: 0.08em;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+.marker {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.14em;
+  white-space: nowrap;
+}
+.marker__bg {
+  position: absolute;
+  inset: 0.05em -0.1em;
+  border-radius: 0.13em;
+  transform: skewX(-8deg);
+  background: #fff03c;
+}
+.marker__label {
+  position: relative;
+  color: #3b3b3a;
+}
+.marker--dark .marker__bg {
+  background: #3b3b3a;
+}
+.marker--dark .marker__label {
+  color: #fff03c;
 }
 
 /*

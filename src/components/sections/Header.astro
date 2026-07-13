@@ -11,6 +11,7 @@
 import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
 import type { Locale } from '../../data/site';
 import Logo from '../../assets/images/immobilien-bot-logo.svg';
+import PillButton from '../ui/PillButton.astro';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -37,17 +38,12 @@ const navItems = [
       ))}
     </nav>
 
-    <a
-      href={`${base}/#preise`}
-      class="nav-cta"
-      data-lenis-target="#preise"
-    >
+    <PillButton href={`${base}/#preise`} size="sm" surface="light" icon="bolt">
       {/* Desktop: volle Variante ab sm (640px). Mobile (<640px): kurze Variante.
           Pille hat white-space:nowrap → bleibt immer einzeilig. */}
       <span class="hidden sm:inline">{t.nav.ctaFree}</span>
       <span class="sm:hidden">{t.nav.ctaShort}</span>
-      <span class="nav-cta-arrow" aria-hidden="true">→</span>
-    </a>
+    </PillButton>
   </div>
 </header>
 
@@ -207,50 +203,11 @@ const navItems = [
     background-color: var(--color-yellow);
   }
 
-  /* „Kostenlos testen" — gelber Pill-CTA mit Pfeil, apple-ruhiger Rollover:
-     hebt sich dezent an (translateY) + Pfeil rutscht nach rechts, keine Farbänderung. */
-  .nav-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    white-space: nowrap;
-    border-radius: 9999px;
-    background-color: var(--color-yellow);
-    color: var(--color-black);
-    font-weight: 700;
-    padding: 0.55rem 1.1rem;
-    /* Einen Tick kleiner als Body → kompakter in der Pille, bleibt gut lesbar. */
-    font-size: 0.9rem;
-    box-shadow: 0 6px 16px -8px rgb(59 59 58 / 0.35);
-    transition:
-      transform 0.25s ease,
-      box-shadow 0.25s ease;
-  }
-  .nav-cta-arrow {
-    display: inline-block;
-    transition: transform 0.25s ease;
-  }
-  .nav-cta:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 30px -10px rgb(59 59 58 / 0.35);
-  }
-  .nav-cta:hover .nav-cta-arrow {
-    transform: translateX(3px);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .site-header,
     .nav-inner,
-    .nav-cta,
-    .nav-cta-arrow,
     .nav-link::after {
       transition: none;
-    }
-    .nav-cta:hover {
-      transform: none;
-    }
-    .nav-cta:hover .nav-cta-arrow {
-      transform: none;
     }
   }
 </style>

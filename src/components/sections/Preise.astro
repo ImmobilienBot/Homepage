@@ -67,8 +67,8 @@ const BENEFIT_ICONS = [
       <h2 id="preise-heading" class="pr-h2">
         <span class="pr-line"
           ><span class="pr-line-in"
-            >{h.pre}<span class="pr-mark"
-              ><span class="pr-mark-hl" aria-hidden="true"></span><span class="pr-mark-tx"
+            >{h.pre}<span class="marker marker--dark"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
                 >{h.mark}</span
               ></span
             >{h.post}</span
@@ -227,28 +227,9 @@ const BENEFIT_ICONS = [
     display: inline-block;
     will-change: transform;
   }
-  /* Invertierter Marker: schwarzer Grund, gelber Text, leicht geschert. */
-  .pr-mark {
-    position: relative;
-    display: inline-block;
-    padding: 0.05em 0.3em;
-    transform: skew(-8deg);
-  }
-  .pr-mark-hl {
-    position: absolute;
-    inset: 0;
-    background-color: var(--color-black);
-    border-radius: 4px;
-    transform-origin: left center;
-    z-index: 0;
-  }
-  .pr-mark-tx {
-    position: relative;
-    z-index: 1;
-    display: inline-block;
-    color: var(--color-yellow);
-    transform: skew(8deg); /* Text aufrecht */
-  }
+  /* Invertierter Keyword-Marker (schwarzer Grund, gelber Text) auf der gelben
+     Kachel → globale Klassen .marker.marker--dark (siehe global.css). Der Wipe
+     fährt .marker__bg per gsap.set/.to herein (scaleX 0→1, skewX:-8 mitgeführt). */
   .pr-sub {
     margin-top: clamp(1rem, 2vw, 1.4rem);
     max-width: 34rem;
