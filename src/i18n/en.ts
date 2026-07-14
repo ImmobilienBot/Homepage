@@ -81,7 +81,7 @@ export const en: Dict = {
       // H2 with a yellow marker on „first".
       h2: 'Everything you need to be first.',
       h2Mark: 'first',
-      subline: 'Three steps from search to application — all in one app.',
+      subline: 'From search to application — all in one app.',
       // Tier 1 — the three steps (order: map, listings, cover letter).
       steps: [
         {
@@ -97,6 +97,17 @@ export const en: Dict = {
         },
         {
           num: '02',
+          h3: 'As precise as you want',
+          body: 'Rooms, size, price — plus advanced criteria like furnished, shared flats, WBS or swap listings. The bot searches exactly to your profile.',
+          checks: [
+            'Furnished · shared room · WBS',
+            'Swap flat · interim rental',
+            'Exclude IS24-Plus listings',
+          ],
+          alt: 'App screen: configure search — room selection, size and price sliders',
+        },
+        {
+          num: '03',
           h3: 'Your feed instead of ten open tabs.',
           body: 'Every matching listing lands in one tidy list — sorted, filtered, under control.',
           checks: [
@@ -107,7 +118,7 @@ export const en: Dict = {
           alt: 'App listings feed with 18 results: flat cards showing photo, price, number of rooms and square meters, plus filters for favorites and applications.',
         },
         {
-          num: '03',
+          num: '04',
           h3: 'Your application. One tap. Done.',
           body: "Save your cover letter once — tap a listing and it's automatically in your clipboard.",
           checks: [

@@ -26,6 +26,7 @@ import { getLangFromUrl, useTranslations } from '../../i18n';
 
 import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
 import screenMap from '../../assets/images/immobilien-bot-suchbereich-karte-zeichnen.png';
+import screenConfig from '../../assets/images/immobilien-bot-suche-konfigurieren.png';
 import screenList from '../../assets/images/immobilien-bot-app-angebotsliste.png';
 import screenLetter from '../../assets/images/immobilien-bot-bewerbungsschreiben.png';
 
@@ -37,8 +38,8 @@ import globeUrl from '../../assets/icons/system-regular-73-world-globe-wikis-hov
 const t = useTranslations(getLangFromUrl(Astro.url));
 const F = t.sections.features;
 
-// Screens je Schritt (Reihenfolge = steps): Karte, Angebotsliste, Bewerbung.
-const shots = [screenMap, screenList, screenLetter];
+// Screens je Schritt (Reihenfolge = steps): Karte, Kriterien, Angebotsliste, Bewerbung.
+const shots = [screenMap, screenConfig, screenList, screenLetter];
 
 // Marker-Split: Prefix + markiertes Keyword + Suffix (wie Hero/Problem/Portale).
 function markParts(text: string, mark: string) {

@@ -83,8 +83,8 @@ export const de = {
       // H2 mit gelbem Marker auf „der Erste".
       h2: 'Alles, um der Erste zu sein.',
       h2Mark: 'der Erste',
-      subline: 'Drei Schritte von der Suche bis zur Bewerbung — alles in einer App.',
-      // Tier 1 — die drei Schritte (Reihenfolge: Karte, Angebotsliste, Bewerbung).
+      subline: 'Von der Suche bis zur Bewerbung — alles in einer App.',
+      // Tier 1 — die vier Schritte (Reihenfolge: Karte, Kriterien, Angebotsliste, Bewerbung).
       steps: [
         {
           num: '01',
@@ -99,6 +99,17 @@ export const de = {
         },
         {
           num: '02',
+          h3: 'So präzise wie du willst',
+          body: 'Zimmer, Größe, Preis — plus erweiterte Kriterien wie möbliert, WG-Zimmer, WBS oder Tauschwohnung. Der Bot sucht exakt nach deinem Profil.',
+          checks: [
+            'Möbliert · WG-Zimmer · WBS',
+            'Tauschwohnung · Zwischenmiete',
+            'Ohne IS24-Plus-Angebote',
+          ],
+          alt: 'App-Screen: Suche konfigurieren — Zimmer-Auswahl, Größen- und Preis-Slider',
+        },
+        {
+          num: '03',
           h3: 'Dein Feed statt zehn offener Tabs.',
           body: 'Alle passenden Angebote landen in einer aufgeräumten Liste — sortiert, gefiltert, im Griff.',
           checks: [
@@ -109,7 +120,7 @@ export const de = {
           alt: 'Angebotsliste der App mit 18 Treffern: Wohnungskarten mit Foto, Preis, Zimmerzahl und Quadratmetern, dazu Filter für Favoriten und Bewerbungen.',
         },
         {
-          num: '03',
+          num: '04',
           h3: 'Deine Bewerbung. Ein Tipp. Fertig.',
           body: 'Hinterlege dein Anschreiben einmal — beim Antippen eines Angebots liegt es automatisch in der Zwischenablage.',
           checks: [

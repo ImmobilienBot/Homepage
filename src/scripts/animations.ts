@@ -1134,19 +1134,24 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
   const FLIER_SCALE = 1.15;
   let baseScale = (phoneEl.getBoundingClientRect().width / REF) * FLIER_SCALE;
 
+  // Flieger = flacher dunkelgrauer Dot (kein Kärtchen/Icon/Text/Schatten). 4 Größen-
+  // Varianten (nativ; ×baseScale → ~8–16px final) mit leichter Opacity-Varianz (Tiefe).
+  const DOT_VARIANTS = [
+    { r: 3.4, o: 0.78 },
+    { r: 4.4, o: 0.88 },
+    { r: 5.4, o: 1.0 },
+    { r: 6.4, o: 0.82 },
+  ];
   const createFlierCard = (): SVGGElement => {
     const g = document.createElementNS(NS, 'g') as SVGGElement;
-    const mk = (tag: string, attrs: Record<string, string | number>) => {
-      const el = document.createElementNS(NS, tag);
-      for (const k in attrs) el.setAttribute(k, String(attrs[k]));
-      g.appendChild(el);
-    };
-    // Schatten → Karte → 2 graue Zeilen → gelber Preis-Marker (um (0,0) zentriert).
-    mk('rect', { x: -10, y: -5.8, width: 20, height: 14, rx: 3, fill: 'rgba(59,59,58,0.16)' });
-    mk('rect', { x: -10, y: -7, width: 20, height: 14, rx: 3, fill: '#ffffff', stroke: 'rgba(59,59,58,0.22)', 'stroke-width': 0.8 });
-    mk('rect', { x: -7.5, y: -4, width: 11, height: 1.7, rx: 0.6, fill: '#c6c6c5' });
-    mk('rect', { x: -7.5, y: -1, width: 8, height: 1.7, rx: 0.6, fill: '#d8d8d7' });
-    mk('rect', { x: -7.5, y: 2.2, width: 6.4, height: 2.6, rx: 0.7, fill: '#fff03c', stroke: 'rgba(59,59,58,0.5)', 'stroke-width': 0.4 });
+    const v = DOT_VARIANTS[Math.floor(Math.random() * DOT_VARIANTS.length)];
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', '0');
+    c.setAttribute('cy', '0');
+    c.setAttribute('r', String(v.r));
+    c.setAttribute('fill', '#3b3b3a');
+    c.setAttribute('fill-opacity', String(v.o));
+    g.appendChild(c);
     g.style.visibility = 'hidden';
     return g;
   };
@@ -1659,7 +1664,7 @@ function initFeatureLangLottie(section: HTMLElement) {
 function initFeatureAccordion(section: HTMLElement) {
   const steps = section.querySelector<HTMLElement>('[data-ft-steps]');
   const blocks = gsap.utils.toArray<HTMLElement>('#features [data-ft-block]');
-  if (!steps || blocks.length !== 3) return;
+  if (!steps || blocks.length !== 4) return;
 
   const canEnhance = window.matchMedia('(min-width: 1024px)').matches;
   if (!canEnhance) {
@@ -1756,7 +1761,7 @@ function initFeatureAccordion(section: HTMLElement) {
       setFill(cur, p);
       if (p >= 1) {
         accum = 0;
-        openStep((cur + 1) % 3);
+        openStep((cur + 1) % blocks.length);
       }
     }
     rafId = requestAnimationFrame(frame);
