@@ -484,7 +484,13 @@ export const en: Dict = {
     privacy: 'Privacy',
     terms: 'Terms',
     contact: 'Contact',
+    blog: 'Blog',
+    // Column labels (no heading — small labels).
+    colLegal: 'Legal',
+    colMore: 'More',
+    colLang: 'Language',
     langSwitch: 'Deutsch',
+    copyright: '© 2026 JS Immobilien Bot GmbH',
     signature: 'The original. Faster than the rest.',
     // Consecutively numbered source notes (footer, id="quellen"):
     // ¹ Berlin statistic of the problem story · ² 70% figure of the Ablauf section.
@@ -500,5 +506,13 @@ export const en: Dict = {
     privacy: { title: 'Privacy Policy' },
     terms: { title: 'Terms & Conditions' },
     placeholder: 'Content coming soon. [TODO: legal content from Artem]',
+  },
+
+  // Blog — placeholder route (noindex); the footer link already points here.
+  blog: {
+    title: 'Blog',
+    metaTitle: 'Blog – Immobilien Bot',
+    soon: 'Our blog is in the works — soon with tips on apartment hunting.',
+    back: 'Back to homepage',
   },
 };

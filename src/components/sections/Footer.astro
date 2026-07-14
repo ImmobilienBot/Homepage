@@ -1,62 +1,90 @@
 ---
 /**
- * Footer — Impressum · Datenschutz · AGB · Kontakt · Sprachumschalter · Store-Badges.
- * [Platzhalter-Struktur — finales Design folgt.]
+ * Footer — letzter Block des One-Pagers, conversion-fokussiert (Store-CTAs).
+ * CD-Grau (#eaebeb), Text CD-Schwarz (#3b3b3a). Desktop 4-spaltig (Rechtliches ·
+ * Mehr · Sprache · Store-Badges + Copyright), Mobile 1-spaltig gestapelt.
+ *
+ * Statisch (keine Animationen). Texte aus i18n, Store-Links via <StoreBadges> mit
+ * ct=footer. Der Quellen-Fußnotenblock (#quellen / #quelle-statistik) MUSS erhalten
+ * bleiben — Problem-, Ablauf- und Preise-Sektion verankern dorthin.
  */
-import {
-  getLangFromUrl,
-  useTranslations,
-  localizePath,
-  defaultLang,
-} from '../../i18n';
-import { site } from '../../data/site';
+import { getLangFromUrl, useTranslations, localizePath, languages } from '../../i18n';
 import type { Locale } from '../../data/site';
-import Logo from '../../assets/images/immobilien-bot-logo.svg';
+import StoreBadges from '../StoreBadges.astro';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-const otherLang: Locale = lang === 'de' ? 'en' : 'de';
-const home = localizePath('/', lang);
-const base = home === '/' ? '' : home.replace(/\/$/, '');
+const F = t.footer;
 
+// Rechtliches (Routen werden noch gebaut, Links existieren bereits).
 const legalLinks = [
-  { label: t.footer.imprint, href: localizePath('/impressum', lang) },
-  { label: t.footer.privacy, href: localizePath('/datenschutz', lang) },
-  { label: t.footer.terms, href: localizePath('/agb', lang) },
-  { label: t.footer.contact, href: `${base}/#kontakt` },
+  { label: F.imprint, href: localizePath('/impressum', lang) },
+  { label: F.privacy, href: localizePath('/datenschutz', lang) },
+  { label: F.terms, href: localizePath('/agb', lang) },
 ];
 
-const switchHref = localizePath(Astro.url.pathname, otherLang);
+// Sprachumschalter: beide Sprachen als Links (aktuelle Seite je Sprache).
+const deHref = localizePath(Astro.url.pathname, 'de');
+const enHref = localizePath(Astro.url.pathname, 'en');
 ---
 
-<footer class="bg-black px-inset py-12 text-offwhite">
-  <div class="mx-auto flex max-w-6xl flex-col gap-8">
-    <a href={home} class="footer-logo-link" aria-label={`${site.name} – Startseite`}>
-      <Logo class="footer-logo" aria-hidden="true" />
-    </a>
-
-    <div
-      class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
-    >
-      <nav class="flex flex-wrap gap-x-6 gap-y-2 text-body">
-        {legalLinks.map((l) => <a href={l.href}>{l.label}</a>)}
-        <a href={switchHref} hreflang={otherLang}>{t.footer.langSwitch}</a>
+<footer class="footer bg-grey px-inset pt-14 pb-8 text-black">
+  <div class="mx-auto max-w-6xl">
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-4 sm:gap-8">
+      {/* Spalte 1 — Rechtliches */}
+      <nav class="footer-col" aria-label={F.colLegal}>
+        <p class="footer-label">{F.colLegal}</p>
+        <ul class="footer-list">
+          {legalLinks.map((l) => (
+            <li>
+              <a class="footer-link" href={l.href}>{l.label}</a>
+            </li>
+          ))}
+        </ul>
       </nav>
 
-      {/* Store-Badges (Platzhalter) */}
-      <div class="flex gap-3 text-body opacity-70">
-        <span>[App Store Badge]</span>
-        <span>[Google Play Badge]</span>
-      </div>
+      {/* Spalte 2 — Mehr */}
+      <nav class="footer-col" aria-label={F.colMore}>
+        <p class="footer-label">{F.colMore}</p>
+        <ul class="footer-list">
+          <li><a class="footer-link" href="/blog">{F.blog}</a></li>
+        </ul>
+      </nav>
+
+      {/* Spalte 3 — Sprache */}
+      <nav class="footer-col footer-col--lang" aria-label={F.colLang}>
+        <p class="footer-label">{F.colLang}</p>
+        <p class="footer-lang">
+          <a
+            class="footer-link"
+            href={deHref}
+            hreflang="de"
+            aria-current={lang === 'de' ? 'true' : undefined}
+          >{languages.de}</a>
+          <span class="footer-lang-sep" aria-hidden="true">·</span>
+          <a
+            class="footer-link"
+            href={enHref}
+            hreflang="en"
+            aria-current={lang === 'en' ? 'true' : undefined}
+          >{languages.en}</a>
+        </p>
+      </nav>
+
+      {/* Spalte 4 — Store-Badges + Copyright */}
+      <section class="footer-col footer-col--badges" aria-label={t.nav.cta}>
+        <StoreBadges position="footer" class="footer-badges" />
+        <p class="footer-copy">
+          {F.copyright}<br />
+          <span class="footer-tagline">{F.signature}</span>
+        </p>
+      </section>
     </div>
 
-    <p class="text-body opacity-60">© {site.name} · {t.footer.signature}</p>
-
-    {/* Fortlaufend nummerierte Quellenangaben. Anker: #quellen (Ablauf-Ticket 4)
-        und #quelle-statistik (Problem-Story ¹) zeigen beide hierher. */}
+    {/* Quellen-Fußnoten — Anker #quellen / #quelle-statistik (nicht entfernen). */}
     <div class="footer-sources" id="quellen">
       {
-        t.footer.sources.map((s, i) => (
+        F.sources.map((s, i) => (
           <p class="footer-source" id={i === 0 ? 'quelle-statistik' : undefined}>
             <sup class="footer-source-num">{i + 1}</sup> {s}
           </p>
@@ -67,30 +95,96 @@ const switchHref = localizePath(Astro.url.pathname, otherLang);
 </footer>
 
 <style>
-  .footer-logo-link {
-    display: inline-flex;
-    align-items: center;
+  .footer {
+    font-size: 14px;
+    line-height: 1.2;
   }
-  .footer-logo {
-    display: block;
-    height: 2rem;
-    width: auto;
-    /* Logo ist CD-Schwarz → für den dunklen Footer auf Offwhite umfärben. */
-    filter: brightness(0) invert(1);
-    opacity: 0.92;
-  }
-  /* Kleine, nummerierte Quellen-Fußnoten. */
-  .footer-sources {
+  .footer-col {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 12px;
+  }
+  /* kleines Spalten-Label (bewusst KEIN Heading) */
+  .footer-label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-grey-text); /* AA-sicheres Grau auf #eaebeb (≥4,6:1) */
+  }
+  .footer-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .footer-link {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .footer-link:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .footer-link[aria-current='true'] {
+    font-weight: 700;
+  }
+  .footer-lang {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .footer-lang-sep {
+    color: var(--color-grey-text);
+  }
+  /* Sprache-Spalte auf Desktop vertikal zentriert. */
+  @media (min-width: 640px) {
+    .footer-col--lang {
+      justify-content: center;
+    }
+  }
+
+  /* Spalte 4 — Badges + Copyright. Badge-Höhe exakt 40px (wie Header-Format).
+     !important schlägt die (höher spezifische, gescopte) Default-Var der Komponente. */
+  .footer-col--badges {
+    gap: 16px;
+  }
+  :global(.footer-badges) {
+    --badge-h: 2.5rem !important; /* 40px */
+  }
+  .footer-copy {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--color-grey-text);
+  }
+  .footer-tagline {
+    font-style: italic;
+  }
+
+  /* Quellen-Fußnoten — dezent unter dem Grid, volle Breite. */
+  .footer-sources {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-darkgrey);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
   .footer-source {
     margin: 0;
-    font-size: 0.75rem;
-    /* 0.6 statt 0.5 → Off-White auf #3b3b3a erreicht ~4,9:1 (WCAG); Optik bleibt gedämpft */
-    opacity: 0.6;
-    letter-spacing: 0.01em;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--color-grey-text);
   }
   .footer-source-num {
     font-size: 0.85em;

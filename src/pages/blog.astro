@@ -1,0 +1,49 @@
+---
+/**
+ * /blog — Platzhalter-Route (noindex, aus der Sitemap gefiltert). Der Footer-Link
+ * „Blog" zeigt bereits hierher; die eigentlichen Inhalte folgen später.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { useTranslations } from '../i18n';
+import PillButton from '../components/ui/PillButton.astro';
+
+const t = useTranslations('de');
+const B = t.blog;
+---
+
+<BaseLayout title={B.metaTitle} description={B.soon} noindex>
+  <section class="blog-soon">
+    <h1 class="blog-soon-title">{B.title}</h1>
+    <p class="blog-soon-text">{B.soon}</p>
+    <PillButton href="/" surface="light" size="md" icon="arrow-right">{B.back}</PillButton>
+  </section>
+</BaseLayout>
+
+<style>
+  .blog-soon {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+    background-color: var(--color-grey);
+  }
+  .blog-soon-title {
+    margin: 0;
+    font-weight: 900;
+    font-size: clamp(2rem, 5vw, 3rem);
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  .blog-soon-text {
+    margin: 0 0 8px;
+    max-width: 44ch;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+</style>

@@ -506,7 +506,13 @@ export const de = {
     privacy: 'Datenschutz',
     terms: 'AGB',
     contact: 'Kontakt',
+    blog: 'Blog',
+    // Spalten-Labels (kein Heading — kleine Labels).
+    colLegal: 'Rechtliches',
+    colMore: 'Mehr',
+    colLang: 'Sprache',
     langSwitch: 'English',
+    copyright: '© 2026 JS Immobilien Bot GmbH',
     signature: 'Das Original. Schneller als die anderen.',
     // Fortlaufend nummerierte Quellenangaben (Footer, id="quellen"):
     // ¹ Berlin-Statistik der Problem-Story · ² 70-%-Zahl der Ablauf-Sektion.
@@ -522,6 +528,14 @@ export const de = {
     privacy: { title: 'Datenschutzerklärung' },
     terms: { title: 'AGB' },
     placeholder: 'Inhalte folgen. [TODO: juristische Inhalte von Artem]',
+  },
+
+  // Blog — Platzhalter-Route (noindex); der Footer-Link zeigt schon hierher.
+  blog: {
+    title: 'Blog',
+    metaTitle: 'Blog – Immobilien Bot',
+    soon: 'Unser Blog ist in Arbeit — bald mit Tipps rund um die Wohnungssuche.',
+    back: 'Zurück zur Startseite',
   },
 };
 
