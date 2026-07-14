@@ -103,6 +103,25 @@ Ordnung/Ruhe.
   Marker-Geometrie (`skewX(-8deg)`, `scaleX 0→1`). Rein CSS — kein GSAP für die Nav; Aktiv schlägt
   Hover (bleibt beim Hover gelb). Fokus: `:focus-visible`-Outline. `prefers-reduced-motion`: hart.
 
+### Marker-Toggle (Akkordeon-Signature, wiederverwendbar)
+Aufklapp-Trigger (FAQ, künftige Akkordeons) tragen KEIN Chip/Container, sondern einen
+**Plus-Icon mit gelbem Marker-Wisch** — dieselbe schräge Geometrie wie der Keyword-Marker,
+als Interaktions-Echo. Verbindliche Werte (nie neu erfinden):
+- **Toggle-Box** `.faq-toggle`: `30×30`, `display:grid; place-items:center`, `flex-shrink:0`.
+  Darin Plus-SVG `20×20`, `stroke:#3b3b3a`, Stroke-Stärke = einheitlicher Icon-Standard (`2.2`),
+  `fill:none`.
+- **Marker** `::before`: `background:#fff03c`, `left/right:-6px`, `top/bottom:4px`,
+  `transform: skewX(-12deg) scaleX(0)` (origin links), `transition: transform 250ms cubic-bezier(.2,.7,.3,1)`.
+- **Hover-/Fokus-Tease** NUR `@media (hover:hover) and (pointer:fine)` bzw. `:focus-visible`
+  (Tastatur-Parität) → `scaleX(1)`. Touch: kein Tease.
+- **Offen** `[open]`: Marker dauerhaft `scaleX(1)`; Plus rotiert `45°` zum ×
+  (`transition: transform 320ms` gleiche Kurve).
+- **Auf-/Zuklappen:** `.faq-body { display:grid; grid-template-rows:0fr → 1fr }` (dokumentierte
+  grid-rows-Ausnahme, `380ms` gleiche Kurve), Inner `overflow:hidden`. Natives `<details>/<summary>`
+  → ohne JS voll funktionsfähig; JS fängt nur das SCHLIESSEN ab (`.is-closing` erzwingt `0fr`,
+  nach `transitionend` `[open]` entfernen), damit die Transition auch beim Zuklappen läuft.
+- **`prefers-reduced-motion`:** alle Transitions aus (natives Sofort-Toggle).
+
 ### Bot / Maskottchen
 Bewusst **zurückhaltend**. Der Bot lebt im Logo; maximal eine kleine Signatur am Schluss
 („Das Original. Schneller als die anderen."). Wiedererkennung tragen v. a. **Farbe + Typo + echte
@@ -229,8 +248,16 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
    je Reihe ein gelber `featured`). **Sitzt zwischen Ablauf und Preise** (Proof vor Pricing). Alle
    Zahlen/Zitate aus `site.ts` (`testimonials`); Marquee läuft ohne JS identisch, pausiert bei
    Hover/Fokus, `prefers-reduced-motion` → nativ scrollbar.
-9. **FAQ** — Welche Portale? Kosten? Wie schnell? Seriös/legal? Kündbar? DE/EN? Dark Mode?
-   Telegram? (Conversion + SEO)
+9. **FAQ** (steht zwischen Preise und Kontakt) — Zwei-Spalten-Anlage: Desktop sticky
+   Kategorie-Rail links (Scroll-Spy, Marker-Aktivpunkt) + Akkordeon-Liste rechts; Mobile statisch
+   gestapelt mit horizontaler Kategorie-Chip-Zeile. 20 Fragen in 4 Kategorien (Allgemein · Suche &
+   Benachrichtigungen · Preise & Abo · App & Technik). Items = native `<details>/<summary>` mit
+   **Marker-Toggle** (siehe Design-System) → ohne JS voll auf-/zuklappbar; JS ergänzt nur die
+   Schließen-Animation, Scroll-Spy und Deep-Links (Hash → Item öffnen + Offset-Scroll, DE/EN gleiche
+   IDs). Alle Fakten aus `site.ts` interpoliert (`portalCount`, Preise, `trialDays`, Rating,
+   Downloads) — nichts hart in i18n. **FAQPage-JSON-LD** aus DERSELBEN i18n-Struktur (kein Duplikat-
+   Text); der SEO-Audit (S15) prüft, dass Anzahl + Wortlaut der Questions exakt den `<summary>`-
+   Texten entsprechen. (Conversion + SEO/GEO)
 10. **Kontakt** — kompakte Sektion unten.
 11. **Finaler CTA** — „Deine nächste Wohnung wartet nicht." Store-Badges + **QR-Code (nur Desktop)**.
 12. **Footer** — Impressum · Datenschutz · AGB · Kontakt · Sprachumschalter DE/EN · Store-Badges.

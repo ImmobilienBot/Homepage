@@ -1,34 +1,620 @@
 ---
 /**
- * FAQ — Portale? Kosten? Wie schnell? Seriös/legal? Kündbar? DE/EN? Dark Mode? Telegram?
- * [Platzhalter — Antworten folgen; später nach i18n auslagern.]
+ * FAQ — Häufige Fragen (#faq, zwischen Preise und Kontakt).
+ *
+ * Zwei-Spalten-Anlage: Desktop (≥lg) sticky Kategorie-Rail links (Scroll-Spy) +
+ * Akkordeon-Liste rechts; Mobile statisch gestapelt mit horizontaler Chip-Zeile.
+ * Jedes Item ist ein natives <details>/<summary> → OHNE JS voll auf-/zuklappbar.
+ *
+ * Guardrails (CLAUDE.md): Genau EINE H1 bleibt im Hero → hier H2; Kategorien tragen
+ * H3 (lückenlose Hierarchie, Kontaktkarten-Titel ist bewusst KEIN Heading). ALLE
+ * Fakten aus site.ts interpoliert ({portalCount}/{downloads}/{appStoreRating}/
+ * {trialDays}/{price7d}/{price1m}) — nichts hart. Der Datenschutz-Link steckt als
+ * [[…]] in der Antwort. FAQPage-JSON-LD wird aus DERSELBEN i18n-Struktur erzeugt
+ * (kein Duplikat-Text) und deckt sich exakt mit den <summary>-Texten (audit S15).
+ * Entry-Reveal + Toggle-/Body-Animation nur transform/opacity bzw. grid-rows
+ * (dokumentierte Ausnahme); reduced-motion / ohne JS = alles sofort im Endzustand.
  */
-import Section from '../Section.astro';
-import { getLangFromUrl, useTranslations } from '../../i18n';
+import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
+import { portals, portalCount, ratings, downloads, trialDays, pricing } from '../../data/site';
+import PillButton from '../ui/PillButton.astro';
 
-const t = useTranslations(getLangFromUrl(Astro.url));
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const F = t.sections.faq;
 
-const questions = [
-  'Welche Portale werden durchsucht?',
-  'Was kostet die App?',
-  'Wie schnell werde ich benachrichtigt?',
-  'Ist das seriös und legal?',
-  'Kann ich jederzeit kündigen?',
-  'Gibt es die App auf Deutsch und Englisch?',
-  'Gibt es einen Dark Mode?',
-  'Kann ich Telegram nutzen?',
-];
+// Preise/Rating locale-abhängig via Intl (identisch zu Preise/Bewertungen).
+const nf = (value: number, frac: number) =>
+  new Intl.NumberFormat(lang === 'en' ? 'en-IE' : 'de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: frac,
+    maximumFractionDigits: frac,
+  }).format(value);
+const fmtScore = (v: number) =>
+  new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(v);
+
+const weekPrice = nf(pricing.find((p) => p.id === 'week')!.priceValue, 2);
+const monthPrice = nf(pricing.find((p) => p.id === 'month')!.priceValue, 2);
+
+/** Alle Fakten-Tokens aus site.ts einsetzen (kein Literal in i18n). */
+const interpolate = (s: string): string =>
+  s
+    .replaceAll('{portalCount}', String(portalCount))
+    .replaceAll('{downloads}', downloads)
+    .replaceAll('{appStoreRating}', fmtScore(ratings.appStore.stars))
+    .replaceAll('{trialDays}', String(trialDays))
+    .replaceAll('{price7d}', weekPrice)
+    .replaceAll('{price1m}', monthPrice);
+
+// Datenschutz-Route (sprachabhängig) — Ziel des [[…]]-Links in der Antwort.
+const privacyHref = localizePath('/datenschutz', lang);
+
+type AnswerPart =
+  | { kind: 'text'; text: string }
+  | { kind: 'link'; label: string; href: string };
+
+/** Antwort in Text-/Link-Segmente zerlegen ([[Label]] → Anchor auf privacyHref). */
+function answerParts(a: string): AnswerPart[] {
+  const text = interpolate(a);
+  const m = text.match(/\[\[(.+?)\]\]/);
+  if (!m) return [{ kind: 'text', text }];
+  const i = text.indexOf(m[0]);
+  return [
+    { kind: 'text', text: text.slice(0, i) },
+    { kind: 'link', label: m[1], href: privacyHref },
+    { kind: 'text', text: text.slice(i + m[0].length) },
+  ];
+}
+
+/** Plaintext-Antwort für JSON-LD (Marker entfernt, nur der Label-Text bleibt). */
+const plainAnswer = (a: string): string => interpolate(a).replace(/\[\[(.+?)\]\]/g, '$1');
+
+// FAQPage-JSON-LD aus DERSELBEN Struktur — mainEntity = alle Fragen (Plaintext).
+// name deckt sich exakt mit dem gerenderten <summary>-Text (audit S15 prüft das).
+const allItems = F.categories.flatMap((c) => c.items);
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: allItems.map((it) => ({
+    '@type': 'Question',
+    name: interpolate(it.q),
+    acceptedAnswer: { '@type': 'Answer', text: plainAnswer(it.a) },
+  })),
+};
+
+// Keyword-Marker im Headline-Text (wie Bewertungen/Ablauf).
+function markParts(text: string, mark: string) {
+  const i = text.indexOf(mark);
+  if (i < 0) return { pre: text, mark: '', post: '' };
+  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
+}
+const h = markParts(F.headline, F.headlineMarker);
+
+// Plus-Icon (Marker-Toggle) — 20×20, CD-Schwarz, einheitliche Icon-Stroke.
+const PLUS_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3b3b3a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>`;
 ---
 
-<Section id="faq" title={t.sections.faq.title}>
-  <ul class="divide-y divide-darkgrey">
-    {
-      questions.map((q) => (
-        <li class="py-4">
-          <p class="font-bold">{q}</p>
-          <p class="mt-1 text-body opacity-60">[Antwort folgt]</p>
-        </li>
-      ))
+<section id="faq" aria-labelledby="faq-heading" class="faq-section">
+  <div class="faq-inner">
+    {/* ---- Header: H2 (Mask-Reveal + Marker) + Sub ---- */}
+    <header class="faq-head">
+      <h2 id="faq-heading" class="faq-h2">
+        <span class="faq-mask"
+          ><span class="faq-mask-in"
+            >{h.pre}<span class="marker"
+              ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
+                >{h.mark}</span
+              ></span
+            >{h.post}</span
+          ></span
+        >
+      </h2>
+      <p class="faq-sub" data-faq-sub>{F.sub}</p>
+    </header>
+
+    <div class="faq-grid">
+      {/* ================= Rail (Desktop, sticky) ================= */}
+      <aside class="faq-rail" data-faq-rail aria-label={F.title}>
+        <nav class="faq-nav" data-faq-reveal>
+          {
+            F.categories.map((cat) => (
+              <a class="faq-navlink" href={`#${cat.id}`} data-faq-cat>
+                <span class="faq-navlink-tx">{cat.label}</span>
+              </a>
+            ))
+          }
+        </nav>
+
+        {/* Kontaktkarte (Desktop) */}
+        <div class="faq-cc" data-faq-reveal>
+          <p class="faq-cc-title">{F.contactCard.title}</p>
+          <p class="faq-cc-text">{F.contactCard.text}</p>
+          <PillButton href="#kontakt" surface="light" size="sm" icon="arrow-right">
+            {F.contactCard.cta}
+          </PillButton>
+        </div>
+      </aside>
+
+      {/* ================= Liste (Akkordeon) ================= */}
+      <div class="faq-list">
+        {/* Mobile-Chip-Zeile (Anker-Links zu den Kategorien) */}
+        <div class="faq-chips" data-faq-reveal>
+          {
+            F.categories.map((cat) => (
+              <a class="faq-chip" href={`#${cat.id}`}>
+                {cat.label}
+              </a>
+            ))
+          }
+        </div>
+
+        {
+          F.categories.map((cat) => (
+            <section id={cat.id} class="faq-cat" data-faq-catsec data-faq-reveal>
+              <h3 class="faq-cat-label">{cat.label}</h3>
+              <div class="faq-items">
+                {cat.items.map((it) => (
+                  <details id={it.id} class="faq-item">
+                    <summary class="faq-summary">
+                      <span class="faq-q">{interpolate(it.q)}</span>
+                      <span class="faq-toggle" aria-hidden="true" set:html={PLUS_SVG} />
+                    </summary>
+                    <div class="faq-body">
+                      <div class="faq-body-inner">
+                        <p class="faq-a">
+                          {answerParts(it.a).map((part) =>
+                            part.kind === 'text' ? (
+                              part.text
+                            ) : (
+                              <a class="faq-a-link" href={part.href}>
+                                {part.label}
+                              </a>
+                            ),
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          ))
+        }
+
+        {/* Kontaktkarte (Mobile, am Ende) */}
+        <div class="faq-cc faq-cc--mobile" data-faq-reveal>
+          <p class="faq-cc-title">{F.contactCard.title}</p>
+          <p class="faq-cc-text">{F.contactCard.text}</p>
+          <PillButton href="#kontakt" surface="light" size="sm" icon="arrow-right">
+            {F.contactCard.cta}
+          </PillButton>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* FAQPage-JSON-LD (aus derselben i18n-Struktur; je Sprache auf ihrer Seite) */}
+  <script
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify(faqJsonLd)}
+  />
+
+  <script>
+    // ---- FAQ-Island: Schließen-Animation, Scroll-Spy (Rail), Deep-Links ----
+    // Öffnen wird von CSS animiert (grid-rows 0fr→1fr). Natives Entfernen von [open]
+    // würde die Schließen-Transition killen → hier abgefangen. reduced-motion: nativ.
+    const section = document.querySelector<HTMLElement>('#faq');
+    if (section) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const HEADER_OFFSET = 84; // = initAnchorScroll-Offset (animations.ts)
+
+      // 1) Zuklapp-Animation (mehrere Items dürfen gleichzeitig offen sein).
+      if (!reduce) {
+        section.querySelectorAll<HTMLDetailsElement>('details.faq-item').forEach((det) => {
+          const summary = det.querySelector<HTMLElement>('summary');
+          const body = det.querySelector<HTMLElement>('.faq-body');
+          if (!summary || !body) return;
+          summary.addEventListener('click', (e) => {
+            if (det.classList.contains('is-closing')) return; // Zuklappen läuft
+            if (!det.open) return; // Öffnen: nativ zulassen (CSS animiert 0fr→1fr)
+            e.preventDefault(); // Schließen: erst animieren, dann [open] entfernen
+            det.classList.add('is-closing');
+            const onEnd = (ev: TransitionEvent) => {
+              if (ev.propertyName !== 'grid-template-rows') return;
+              body.removeEventListener('transitionend', onEnd);
+              det.open = false;
+              det.classList.remove('is-closing');
+            };
+            body.addEventListener('transitionend', onEnd);
+          });
+        });
+      }
+
+      // 2) Scroll-Spy nur am Desktop-Breakpoint (Rail sichtbar).
+      const rail = section.querySelector<HTMLElement>('[data-faq-rail]');
+      if (rail && window.matchMedia('(min-width: 1024px)').matches) {
+        const links = Array.from(rail.querySelectorAll<HTMLElement>('[data-faq-cat]'));
+        const cats = Array.from(section.querySelectorAll<HTMLElement>('[data-faq-catsec]'));
+        const setActive = (id: string) =>
+          links.forEach((l) => l.classList.toggle('is-active', l.getAttribute('href') === `#${id}`));
+        if (cats[0]) setActive(cats[0].id); // initial erste Kategorie aktiv
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const en of entries) if (en.isIntersecting) setActive((en.target as HTMLElement).id);
+          },
+          { rootMargin: '-25% 0px -65% 0px' },
+        );
+        cats.forEach((c) => io.observe(c));
+      }
+
+      // 3) Deep-Link: matcht der Hash eine Item- oder Kategorie-ID → öffnen (ohne
+      //    Animation) + mit Offset hinscrollen. Funktioniert in DE und EN (gleiche IDs).
+      const applyHash = () => {
+        const id = location.hash.slice(1);
+        if (!id) return;
+        const el = document.getElementById(id);
+        if (!el || !section.contains(el)) return;
+        if (el instanceof HTMLDetailsElement && el.classList.contains('faq-item')) {
+          const body = el.querySelector<HTMLElement>('.faq-body');
+          if (body) body.style.transition = 'none'; // sofort, ohne Auffahren
+          el.open = true;
+          if (body) requestAnimationFrame(() => (body.style.transition = ''));
+        }
+        const y = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+        window.scrollTo(0, y);
+      };
+      // Beim Laden anwenden — verzögert, damit der Offset-Scroll den nativen
+      // Fragment-Sprung (Ziel an Viewport-Oberkante) sicher überschreibt.
+      requestAnimationFrame(() => requestAnimationFrame(applyHash));
+      window.addEventListener('load', () => setTimeout(applyHash, 120));
     }
-  </ul>
-</Section>
+  </script>
+</section>
+
+<style>
+  /* =====================================================================
+     Basis — Off-White-Fläche (Rhythmus-Wechsel: gelbe Preise → helle FAQ →
+     graue Kontakt). Standard-Sektionsabstand + Content-Einschub.
+     ===================================================================== */
+  .faq-section {
+    position: relative;
+    background-color: var(--color-offwhite);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+  }
+  .faq-inner {
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* ---- Header ---- */
+  .faq-head {
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+  .faq-h2 {
+    margin: 0;
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.4vw, 3.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  .faq-mask {
+    display: inline-block;
+    overflow: hidden;
+    padding-block: 0.12em;
+    margin-block: -0.12em;
+    padding-inline: 0.14em;
+    margin-inline: -0.14em;
+    vertical-align: top;
+  }
+  .faq-mask-in {
+    display: inline-block;
+    will-change: transform;
+  }
+  .faq-sub {
+    margin: clamp(1rem, 2vw, 1.4rem) 0 0;
+    max-width: 560px;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.5;
+    color: rgb(59 59 58 / 0.78);
+  }
+
+  /* =====================================================================
+     Grid — Mobile einspaltig; ab lg Rail (~210px) + Liste.
+     ===================================================================== */
+  .faq-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  @media (min-width: 1024px) {
+    .faq-grid {
+      grid-template-columns: 210px 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+  }
+
+  /* =====================================================================
+     Rail (Desktop, sticky). Mobile ausgeblendet.
+     ===================================================================== */
+  .faq-rail {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .faq-rail {
+      display: block;
+      position: sticky;
+      /* Header-/Anker-Offset (84px) + 24px Luft. */
+      top: 108px;
+    }
+  }
+  .faq-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .faq-navlink {
+    position: relative;
+    align-self: flex-start;
+    padding: 4px 0;
+    font-weight: 900;
+    font-size: 15px;
+    line-height: 1.3;
+    color: var(--color-black);
+    text-decoration: none;
+    opacity: 0.45;
+    transition: opacity 0.25s ease;
+  }
+  .faq-navlink-tx {
+    position: relative;
+    z-index: 1;
+  }
+  /* Aktiv-Mini-Marker: gelb, skewX, unter dem Text (scaleX 0→1). */
+  .faq-navlink::after {
+    content: '';
+    position: absolute;
+    left: -0.14em;
+    right: -0.14em;
+    bottom: 0.16em;
+    height: 7px;
+    z-index: 0;
+    background: var(--color-yellow);
+    border-radius: 0.13em;
+    transform: skewX(-12deg) scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .faq-navlink.is-active {
+    opacity: 1;
+  }
+  .faq-navlink.is-active::after {
+    transform: skewX(-12deg) scaleX(1);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .faq-navlink:hover {
+      opacity: 1;
+    }
+  }
+  .faq-navlink:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
+    border-radius: 3px;
+    opacity: 1;
+  }
+
+  /* ---- Kontaktkarte ---- */
+  .faq-cc {
+    margin-top: 28px;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--color-grey);
+    border: 1px solid rgb(59 59 58 / 0.05);
+  }
+  .faq-cc-title {
+    margin: 0;
+    font-weight: 900;
+    font-size: 16px;
+    line-height: 1.25;
+    color: var(--color-black);
+  }
+  .faq-cc-text {
+    margin: 6px 0 16px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+  /* Mobile-Karte nur < lg (am Ende der Liste, volle Breite). */
+  .faq-cc--mobile {
+    display: block;
+    margin-top: 32px;
+  }
+  @media (min-width: 1024px) {
+    .faq-cc--mobile {
+      display: none;
+    }
+  }
+
+  /* =====================================================================
+     Chip-Zeile (nur Mobile) — horizontale Anker-Pillen zu den Kategorien.
+     ===================================================================== */
+  .faq-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin: 0 calc(-1 * var(--spacing-inset));
+    padding: 2px var(--spacing-inset) 14px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .faq-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .faq-chip {
+    flex: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--color-grey);
+    color: var(--color-black);
+    font-weight: 900;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .faq-chip:active {
+    background: var(--color-darkgrey);
+  }
+  @media (min-width: 1024px) {
+    .faq-chips {
+      display: none;
+    }
+  }
+
+  /* =====================================================================
+     Kategorien + Items.
+     ===================================================================== */
+  .faq-cat + .faq-cat {
+    margin-top: 40px;
+  }
+  .faq-cat-label {
+    margin: 0 0 6px;
+    font-weight: 900;
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+  .faq-items {
+    /* obere Trennlinie (erste Zeile auch oben). */
+    border-top: 1px solid var(--color-darkgrey);
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--color-darkgrey);
+  }
+
+  /* ---- Summary (Frage + Toggle) ---- */
+  .faq-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 20px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .faq-summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq-q {
+    font-weight: 900;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--color-black);
+  }
+  @media (max-width: 1023.98px) {
+    .faq-q {
+      font-size: 16px;
+    }
+  }
+  .faq-summary:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* ---- Marker-Toggle (Signature) ---- */
+  .faq-toggle {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+  .faq-toggle::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    right: -6px;
+    top: 4px;
+    bottom: 4px;
+    z-index: 0;
+    background: var(--color-yellow);
+    transform: skewX(-12deg) scaleX(0);
+    transform-origin: left center;
+    transition: transform 250ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .faq-toggle :global(svg) {
+    position: relative;
+    z-index: 1;
+    display: block;
+    transition: transform 320ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  /* Hover-/Fokus-Tease NUR bei echtem Zeiger (Touch: kein Tease). */
+  @media (hover: hover) and (pointer: fine) {
+    .faq-summary:hover .faq-toggle::before {
+      transform: skewX(-12deg) scaleX(1);
+    }
+  }
+  .faq-summary:focus-visible .faq-toggle::before {
+    transform: skewX(-12deg) scaleX(1);
+  }
+  /* Offen: Marker dauerhaft, Plus rotiert zum ×. */
+  .faq-item[open] .faq-toggle::before {
+    transform: skewX(-12deg) scaleX(1);
+  }
+  .faq-item[open] .faq-toggle :global(svg) {
+    transform: rotate(45deg);
+  }
+
+  /* ---- Auf-/Zuklappen (grid-rows — dokumentierte Ausnahme) ---- */
+  .faq-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 380ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .faq-item[open] .faq-body {
+    grid-template-rows: 1fr;
+  }
+  /* JS-Schließen: erzwingt 0fr trotz [open] (bis transitionend). */
+  .faq-item.is-closing .faq-body {
+    grid-template-rows: 0fr;
+  }
+  .faq-body-inner {
+    overflow: hidden;
+  }
+  .faq-a {
+    margin: 0;
+    padding-bottom: 20px;
+    max-width: 58ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgb(59 59 58 / 0.82);
+  }
+  .faq-a-link {
+    color: var(--color-black);
+    font-weight: 700;
+    text-underline-offset: 2px;
+  }
+
+  /* =====================================================================
+     prefers-reduced-motion — keine Bewegung: Toggle-Marker/Plus + Body-Grid
+     ohne Transition (natives Sofort-Toggle), Nav-Marker statisch.
+     ===================================================================== */
+  @media (prefers-reduced-motion: reduce) {
+    .faq-toggle::before,
+    .faq-toggle :global(svg),
+    .faq-body,
+    .faq-navlink,
+    .faq-navlink::after,
+    .faq-mask-in {
+      transition: none;
+    }
+  }
+</style>

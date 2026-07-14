@@ -204,6 +204,12 @@ export interface Plan {
   note?: string;
 }
 
+/**
+ * Kostenlose Testphase in Tagen — Produktfakt, EINE Quelle. In sichtbare Texte
+ * (Preise, FAQ) via {trialDays} interpoliert, nie als Literal wiederholen.
+ */
+export const trialDays = 7;
+
 export const pricing: Plan[] = [
   {
     id: 'free',

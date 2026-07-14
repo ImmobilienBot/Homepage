@@ -276,7 +276,152 @@ export const de = {
       starsSr: '{n} von 5 Sternen',
       footnote: '',
     },
-    faq: { title: 'Häufige Fragen' },
+    // FAQ-Sektion (#faq, zwischen Preise und Kontakt). Struktur: headline (+Marker),
+    // sub, contactCard, categories[{id,label,items[{id,q,a}]}]. IDs sprachneutral &
+    // in DE/EN identisch (Deep-Links). KEINE Fakten hart: {portalCount}/{downloads}/
+    // {appStoreRating}/{trialDays}/{price7d}/{price1m} werden zur Buildzeit aus
+    // site.ts interpoliert. Der Datenschutz-Link steckt als [[…]] in der Antwort.
+    faq: {
+      title: 'Häufige Fragen',
+      headline: 'Häufige Fragen.',
+      headlineMarker: 'Fragen',
+      sub: 'Kurz und ehrlich beantwortet — von Portalen bis Preisen. Wenn etwas fehlt, schreib uns einfach.',
+      contactCard: {
+        title: 'Deine Frage fehlt?',
+        text: 'Schreib uns — wir antworten schnell und persönlich.',
+        cta: 'Zum Kontakt',
+      },
+      categories: [
+        {
+          id: 'faq-allgemein',
+          label: 'Allgemein',
+          items: [
+            {
+              id: 'faq-was-ist',
+              q: 'Was ist der Immobilien Bot?',
+              a: 'Der Immobilien Bot ist eine App für die Wohnungssuche in Deutschland (iOS & Android). Er scannt rund um die Uhr {portalCount} Immobilienportale und schickt dir eine Push-Benachrichtigung, sobald ein neues Angebot zu deiner Suche passt — oft Minuten, bevor andere es überhaupt sehen.',
+            },
+            {
+              id: 'faq-wie-funktioniert',
+              q: 'Wie funktioniert der Immobilien Bot?',
+              a: 'Du legst einmal fest, wo und wie du wohnen willst: Suchbereich auf der Karte, Zimmer, Größe, Preis und weitere Kriterien. Danach übernimmt der Bot — er prüft die Portale ununterbrochen auf neue Inserate und meldet sich in Echtzeit, sobald ein Treffer online geht. Ein Tipp auf die Benachrichtigung bringt dich direkt zum Original-Angebot.',
+            },
+            {
+              id: 'faq-serioes',
+              q: 'Ist der Immobilien Bot seriös?',
+              a: 'Ja. Der Immobilien Bot durchsucht ausschließlich öffentlich zugängliche Inserate und verlinkt dich direkt zum Original-Angebot auf dem jeweiligen Portal. Dort bewirbst du dich ganz normal selbst — der Bot verschafft dir den Zeitvorsprung, nicht mehr und nicht weniger. Über {downloads} Downloads und {appStoreRating} Sterne im App Store sprechen für sich.',
+            },
+            {
+              id: 'faq-auto-bewerbung',
+              q: 'Bewirbt sich der Bot automatisch für mich?',
+              a: 'Nein — und das ist Absicht. Du entscheidest selbst, auf welche Angebote du dich bewirbst. Der Immobilien Bot sorgt dafür, dass du sie unter den Ersten siehst und mit deinem hinterlegten Bewerbungsschreiben in Sekunden reagieren kannst. Automatische Massenbewerbungen gibt es nicht.',
+            },
+            {
+              id: 'faq-geschwindigkeit',
+              q: 'Warum ist Geschwindigkeit bei der Wohnungssuche so entscheidend?',
+              a: 'Auf ein einziges Wohnungsbauprojekt in Berlin kamen laut Berliner Zeitung in nur 30 Minuten rund 43.000 Bewerbungen — auf 288 Wohnungen. Wer ein Angebot erst am Abend sieht, ist oft schon zu spät. Genau dieses Zeitfenster öffnet dir der Immobilien Bot mit Benachrichtigungen in Echtzeit.',
+            },
+          ],
+        },
+        {
+          id: 'faq-suche',
+          label: 'Suche & Benachrichtigungen',
+          items: [
+            {
+              id: 'faq-portale',
+              q: 'Welche Immobilienportale werden durchsucht?',
+              a: 'Aktuell {portalCount} Portale: die großen bundesweiten wie ImmobilienScout24, Immowelt, Kleinanzeigen und WG-Gesucht sowie regionale Anbieter und Wohnungsbaugesellschaften wie Howoge, Gewobag oder GAG Köln. In der App wählst du Portale einzeln an oder ab. Die vollständige Liste findest du oben in der Portale-Sektion.',
+            },
+            {
+              id: 'faq-stadt',
+              q: 'Funktioniert der Immobilien Bot auch in meiner Stadt?',
+              a: 'Ja. Die bundesweiten Portale decken ganz Deutschland ab — von der Großstadt bis aufs Land. Dazu kommen regionale Quellen, aktuell mit Schwerpunkt Berlin, Köln und Hessen. Deinen Suchbereich legst du frei auf der Karte fest.',
+            },
+            {
+              id: 'faq-wie-schnell',
+              q: 'Wie schnell werde ich benachrichtigt — auch wenn die App geschlossen ist?',
+              a: 'In Echtzeit: Sobald ein passendes Inserat online geht, bekommst du innerhalb von Sekunden eine Push-Nachricht. Die App muss dafür nicht geöffnet sein — der Bot arbeitet unabhängig von deinem Gerät weiter, auch nachts.',
+            },
+            {
+              id: 'faq-suchbereiche',
+              q: 'Kann ich mehrere Suchbereiche anlegen?',
+              a: 'Ja, bis zu drei gleichzeitig. Jeden Bereich zeichnest du frei auf der Karte ein oder wählst einen Radius — zum Beispiel dein Wunschkiez, der Kiez daneben und das Umfeld deiner Arbeit. Kombiniert mit Zimmern, Größe und Preis entsteht so ein präzises Suchprofil.',
+            },
+            {
+              id: 'faq-filter-kriterien',
+              q: 'Kann ich nach möblierten Wohnungen, WG-Zimmern oder mit WBS suchen?',
+              // TODO(Artem): IS24-Plus-Formulierung fachlich verifizieren
+              a: 'Ja. Neben Zimmern, Größe und Preis filterst du nach erweiterten Kriterien wie möbliert, WG-Zimmer, WBS, Tauschwohnung oder Zwischen- und Untermiete. Angebote, die bei ImmobilienScout24 nur mit „Plus" sichtbar sind, kannst du auf Wunsch ausschließen.',
+            },
+            {
+              id: 'faq-telegram',
+              q: 'Wie funktioniert die Telegram-Anbindung?',
+              // TODO(Artem): Ablauf der Verknüpfung ergänzen (1 Satz)
+              a: 'Zusätzlich zur Push-Benachrichtigung kannst du den Immobilien Bot mit Telegram verbinden — neue Angebote landen dann auch direkt in deinem Chat.',
+            },
+            {
+              id: 'faq-bewerbung',
+              q: 'Wie hilft mir der Bot bei der Bewerbung?',
+              a: 'Du hinterlegst dein Bewerbungsschreiben einmal in der App. In der Angebotsübersicht kopierst du es später mit einem Klick in die Zwischenablage — einfügen, absenden, fertig. So vergehen zwischen Push und Bewerbung oft nur Sekunden.',
+            },
+          ],
+        },
+        {
+          id: 'faq-preise',
+          label: 'Preise & Abo',
+          items: [
+            {
+              id: 'faq-preis',
+              q: 'Was kostet der Immobilien Bot?',
+              a: 'Du startest mit {trialDays} Tagen kostenlos und unverbindlich. Danach kostet der Immobilien Bot {price7d} für 7 Tage oder {price1m} für einen Monat — je nachdem, wie intensiv du gerade suchst.',
+            },
+            {
+              id: 'faq-testphase',
+              q: 'Wie funktioniert die kostenlose Testphase?',
+              // TODO(Artem): Übergang Testphase→Abo präzisieren, Wording an Billing-Timeline in Ablauf angleichen
+              a: '{trialDays} Tage lang nutzt du den vollen Funktionsumfang: alle Portale, Echtzeit-Push, alle Features. Wenn der Bot nichts für dich ist, kündigst du einfach innerhalb der Testphase — dann zahlst du nichts.',
+            },
+            {
+              id: 'faq-kuendigen',
+              q: 'Kann ich jederzeit kündigen?',
+              a: 'Ja. Das Abo läuft über deinen Apple App Store bzw. Google Play und lässt sich dort jederzeit mit wenigen Klicks beenden — ohne Kündigungsfrist, ohne Anruf, ohne Risiko.',
+            },
+            {
+              id: 'faq-versteckte-kosten',
+              q: 'Gibt es versteckte Kosten oder Premium-Stufen?',
+              a: 'Nein. Jedes Paket enthält alle Features — Echtzeit-Push, Telegram-Anbindung, Favoriten, Bewerbungsschreiben und sämtliche Portale. Es gibt keine Zusatzkosten und keine abgespeckte Basis-Version.',
+            },
+          ],
+        },
+        {
+          id: 'faq-technik',
+          label: 'App & Technik',
+          items: [
+            {
+              id: 'faq-geraete',
+              q: 'Für welche Geräte gibt es die App?',
+              a: 'Der Immobilien Bot ist für iOS im Apple App Store und für Android bei Google Play verfügbar — mit identischem Funktionsumfang auf beiden Plattformen.',
+            },
+            {
+              id: 'faq-sprachen',
+              q: 'Welche Sprachen unterstützt die App?',
+              a: 'Deutsch und Englisch. Die Sprache wechselst du direkt in der App — praktisch für internationale Wohnungssuchende und Expats.',
+            },
+            {
+              id: 'faq-dark-mode',
+              q: 'Gibt es einen Dark Mode?',
+              a: 'Ja. Du wechselst jederzeit zwischen Light- und Dark-Mode.',
+            },
+            {
+              id: 'faq-daten',
+              q: 'Was passiert mit meinen Daten?',
+              // TODO(Artem): final mit Rechtstexten abstimmen. [[…]] = Link auf die Datenschutz-Route.
+              a: 'Der Immobilien Bot braucht nur, was für deine Suche nötig ist: dein Suchprofil und eine Anmeldung per E-Mail, Apple oder Google. Alle Details regelt die [[Datenschutzerklärung]].',
+            },
+          ],
+        },
+      ],
+    },
     contact: { title: 'Kontakt' },
     finalCta: { title: 'Deine nächste Wohnung wartet nicht.' },
   },

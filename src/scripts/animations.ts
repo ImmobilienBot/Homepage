@@ -1489,6 +1489,42 @@ function initPreise() {
 }
 
 /**
+ * FAQ-Sektion: Entry-Reveal (once:true). Startzustände NUR per gsap.set (ohne JS /
+ * reduced-motion alles im Endzustand — die nativen <details> bleiben bedienbar). H2
+ * Mask-Reveal + Marker-Wipe → Sub → Rail/Chips/Kategorien gestaffelt. Nur transform/
+ * opacity; clearProps:'transform' NACH dem Reveal, sonst blockiert der Inline-
+ * Transform den Marker-Toggle-Tease (::before-Wipe des .faq-toggle).
+ */
+function initFaq() {
+  const section = document.querySelector<HTMLElement>('#faq');
+  if (!section) return;
+  // Late-Setup-Garde (Trigger 'top 80%'): schon an/über der Startlinie → keine
+  // Startzustände, kein Trigger; Sektion bleibt im natürlichen (sichtbaren) Endzustand.
+  if (isPastRevealStart(section, 0.8)) return;
+
+  const maskIns = gsap.utils.toArray<HTMLElement>('#faq .faq-mask-in');
+  const markHls = gsap.utils.toArray<HTMLElement>('#faq .marker__bg');
+  const sub = section.querySelector<HTMLElement>('[data-faq-sub]');
+  const items = gsap.utils.toArray<HTMLElement>('#faq [data-faq-reveal]');
+
+  if (maskIns.length) gsap.set(maskIns, { yPercent: 110 });
+  if (markHls.length) gsap.set(markHls, { scaleX: 0, skewX: -8, transformOrigin: 'left center' });
+  if (sub) gsap.set(sub, { autoAlpha: 0, y: 18 });
+  if (items.length) gsap.set(items, { autoAlpha: 0, y: 16 });
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: section, start: 'top 80%', once: true },
+    defaults: { ease: 'power2.out' },
+  });
+  if (maskIns.length) tl.to(maskIns, { yPercent: 0, duration: 0.7, ease: 'power4.out' }, 0);
+  if (markHls.length) tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4 }, 0.35);
+  if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.4);
+  // clearProps:'transform' → Inline-Transform weg, damit der Toggle-Tease frei ist.
+  if (items.length)
+    tl.to(items, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.06, clearProps: 'transform' }, 0.45);
+}
+
+/**
  * Sprach-Kachel: Globus als Lottie (dieselbe Player-Lösung wie die Problem-
  * Sektion → gemeinsamer lottie_light-Chunk, kein zweites Runtime-Bundle). Instanz
  * erst laden, wenn die Kachel den Viewport betritt (IntersectionObserver),
@@ -1952,6 +1988,7 @@ runIdle(() => {
     safeInit('Ablauf', () => initAblauf());
     safeInit('Bewertungen', () => initBewertungen());
     safeInit('Preise', () => initPreise());
+    safeInit('Faq', () => initFaq());
     safeInit('Reveals', () => initReveals());
   }
   safeInit('Features', () => initFeatures());

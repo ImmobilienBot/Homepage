@@ -332,15 +332,45 @@ function auditPage(file: string) {
     if (!anyPrice) add('S14', 'error', page, 'Preise sind im Roh-HTML nicht als Klartext vorhanden.');
   }
 
-  // --- S15: FAQ-Zukunftsregel ---
+  // --- S15: FAQ ↔ FAQPage-JSON-LD (Deckungsgleichheit) ---
   const faq = $('#faq');
   if (faq.length) {
     const faqHtml = faq.html() || '';
     const placeholder = /\[(?:antwort folgt|answer follows|answer|todo)[^\]]*\]/i.test(faqHtml);
     if (!placeholder) {
-      const hasFaqPage = ld.some((n) => typeOf(n).includes('FAQPage'));
-      if (!hasFaqPage)
+      const faqPage = ld.find((n) => typeOf(n).includes('FAQPage')) as Record<string, any> | undefined;
+      if (!faqPage) {
         add('S15', 'error', page, 'FAQ-Sektion mit echten Antworten, aber kein FAQPage-JSON-LD.');
+      } else {
+        // Anzahl + Wortlaut der FAQPage-Questions müssen exakt den gerenderten
+        // <summary>-Texten entsprechen (Whitespace normalisiert) — sonst laufen
+        // strukturierte Daten und sichtbarer Text auseinander.
+        const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
+        const summaries = faq
+          .find('summary')
+          .map((_, el) => norm($(el).text()))
+          .get();
+        const mainEntity = Array.isArray(faqPage.mainEntity) ? faqPage.mainEntity : [];
+        const questions = mainEntity.map((q: any) => norm(String(q?.name ?? '')));
+        if (questions.length !== summaries.length) {
+          add(
+            'S15',
+            'error',
+            page,
+            `FAQPage-Fragen (${questions.length}) ≠ gerenderte <summary> (${summaries.length}).`,
+          );
+        } else {
+          for (let i = 0; i < questions.length; i++) {
+            if (questions[i] !== summaries[i])
+              add(
+                'S15',
+                'error',
+                page,
+                `FAQPage-Frage #${i + 1} „${questions[i]}" ≠ <summary> „${summaries[i]}".`,
+              );
+          }
+        }
+      }
     }
     // Platzhalter-Antworten → FAQ noch nicht live → Regel schläft (kein Finding).
   }
