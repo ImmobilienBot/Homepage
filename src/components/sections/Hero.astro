@@ -17,7 +17,7 @@
  * Alles prefers-reduced-motion-fest (JS-Guard) und Performance-Budget
  * (nur transform/opacity). Store-Links aus site.ts, Texte aus i18n.
  */
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import type { Locale } from '../../data/site';
 import StoreBadges from '../StoreBadges.astro';
@@ -36,6 +36,11 @@ const { headlineLines, markKeyword, notification } = t.hero;
 // Höchstens 4 Karten im Stapel (i18n liefert mehr Meldungen als gezeigt werden).
 const notifItems = notification.items.slice(0, 4);
 
+// LCP-Bild (Front-Phone/Angebotsliste): exakte gehashte URL vorberechnen, damit sie
+// GANZ OBEN per <link rel=preload> gestartet werden kann (früher als der tief im DOM
+// sitzende <img>). Perf-Hebel: LCP war der einzige Grund für Lighthouse-Perf < 95.
+const frontImg = await getImage({ src: screenList });
+
 // Zeile in Segmente zerlegen; das Keyword bekommt den animierten Marker.
 function splitLine(line: string) {
   const idx = line.indexOf(markKeyword);
@@ -47,6 +52,10 @@ function splitLine(line: string) {
   ].filter((s) => s.mark || s.text.length > 0);
 }
 ---
+
+{/* LCP-Preload: startet den Download des Front-Phone-Screens früh (vor dem tief im
+    DOM liegenden <img>). Gleiche gehashte URL wie das <img> unten → ein Request. */}
+<link rel="preload" as="image" href={frontImg.src} fetchpriority="high" />
 
 <section id="hero" class="hero-section relative overflow-hidden px-inset py-section">
   {/* Canvas-Partikelfeld (Desktop-only, per JS): dichte gelbe Welle + Cursor-Repel.
@@ -106,11 +115,14 @@ function splitLine(line: string) {
         <div data-phone-choreo class="phone-choreo relative w-full">
             {/* Hinteres Phone links: Karte / Suchbereich zeichnen (mobil aus) */}
             <div class="phone phone--back phone--back-left hidden md:block" data-phone-back data-fan="left">
+              {/* lazy: mobil sind die hinteren Phones display:none → kein Download auf
+                  dem kritischen Pfad; Desktop lädt sie kurz vor der Fächer-Animation. */}
               <Image
                 src={screenMap}
                 alt={t.hero.mapAlt}
                 class="phone-screen"
-                loading="eager"
+                loading="lazy"
+                fetchpriority="low"
               />
               <PhoneFrame class="phone-frame" />
             </div>
@@ -121,19 +133,24 @@ function splitLine(line: string) {
                 src={screenConfig}
                 alt={t.hero.configAlt}
                 class="phone-screen"
-                loading="eager"
+                loading="lazy"
+                fetchpriority="low"
               />
               <PhoneFrame class="phone-frame" />
             </div>
 
-            {/* Front-Phone: Angebotsliste + Notification-Stapel */}
+            {/* Front-Phone: Angebotsliste + Notification-Stapel. LCP-Element — plain <img>
+                mit der VORBERECHNETEN URL (deckungsgleich mit dem Preload oben). */}
             <div class="phone phone--front" data-phone-front>
-              <Image
-                src={screenList}
+              <img
+                src={frontImg.src}
+                width={frontImg.attributes.width}
+                height={frontImg.attributes.height}
                 alt={t.hero.mockupAlt}
                 class="phone-screen"
                 loading="eager"
                 fetchpriority="high"
+                decoding="async"
               />
               <PhoneFrame class="phone-frame" />
 
