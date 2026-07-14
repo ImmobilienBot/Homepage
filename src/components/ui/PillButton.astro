@@ -312,8 +312,11 @@ const Tag = isButton ? 'button' : 'a';
 
   /* ---- Hover — AUSSCHLIESSLICH Desktop (echter Zeiger) ---- */
   @media (hover: hover) and (pointer: fine) {
+    /* Overscan ×1.2: die Füllung deckt die Kanten SICHER vor Transition-Ende (mit
+       ease-out wären sie sonst erst spät gedeckt). overflow:hidden clippt → optisch
+       unverändert, nur früher voll. */
     .pill-btn:hover::before {
-      transform: translate(-50%, -50%) scale(1);
+      transform: translate(-50%, -50%) scale(1.2);
     }
     .pill-btn:hover .pill-btn__dot {
       opacity: 0;
@@ -325,12 +328,12 @@ const Tag = isButton ? 'button' : 'a';
       opacity: 1;
       transform: none;
     }
-    /* BG-Swap gegen den 1px-AA-Saum an der Clip-Kante: Sobald die Füllung die Kante
-       erreicht (Delay = --fill-duration), IST der Button-Hintergrund die Füllfarbe →
-       der äußerste AA-Pixel besteht aus Füllfarbe-vs-Sektionshintergrund, kein zweiter
-       Layer schimmert durch. Gilt zentral für alle Surfaces (var(--fill)). */
+    /* BG-Swap gegen den 1px-AA-Saum an der Clip-Kante. Delay = 0.7×--fill-duration →
+       greift BEVOR die (ease-out-)Füllung „formal" endet, aber NACHDEM sie die Kanten
+       optisch (dank Overscan) schon deckt → kein Rest-Saum, kein sichtbarer Farbsprung.
+       Zentral für alle Surfaces (var(--fill)). */
     .pill-btn:hover {
-      --bg-delay: var(--fill-duration);
+      --bg-delay: calc(var(--fill-duration) * 0.7);
       background-color: var(--fill);
     }
     /* Hover: Puls stoppt, damit der Dot sauber zur Füll-Interaktion ausblendet. */

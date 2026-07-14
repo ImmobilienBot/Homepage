@@ -478,8 +478,10 @@ function initCursor() {
 
   document.documentElement.classList.add('has-custom-cursor');
   gsap.set([ring, dot, lupe], { xPercent: -50, yPercent: -50 });
-  // Punkt/Ring sind 2× gebaut → dauerhaft scale 0.5 (Downscale = scharf, nie > 0.5).
-  gsap.set([ring, dot], { scale: 0.5 });
+  // Downscale = scharf: Punkt 2× gebaut → dauerhaft scale 0.5; Ring 3× gebaut (90px)
+  // → dauerhaft scale 1/3 (nie darüber). setState/setTextField ändern nur autoAlpha.
+  gsap.set(dot, { scale: 0.5 });
+  gsap.set(ring, { scale: 1 / 3 });
   // Lupe ruht unsichtbar + geschrumpft (scale 0.3, Build 120px → nur runter).
   gsap.set(lupe, { autoAlpha: 0, scale: 0.3 });
   if (label) gsap.set(label, { xPercent: -50, yPercent: -50 });
@@ -512,7 +514,8 @@ function initCursor() {
   );
 
   // Hover: Lupe ein (scale 0.5 = Anzeigegröße, immer heruntergerechnet), Ring + Punkt
-  // aus (Scale 0.5 bleibt). Rest: umgekehrt. Nie über scale 0.5 → keine Unschärfe.
+  // blenden nur per autoAlpha aus (ihr Ruhe-Scale — Ring 1/3, Punkt 0.5 — bleibt). Rest
+  // umgekehrt. Kein Element geht je über seinen Downscale hinaus → keine Unschärfe.
   const setState = (interactive: boolean, labelText: string | null) => {
     if (interactive) {
       gsap.to([ring, dot], { autoAlpha: 0, duration: 0.2, ease: 'power3', overwrite: 'auto' });
@@ -1172,7 +1175,8 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
     pending: number;
   };
   const fliers: Flier[] = [];
-  for (let i = 0; i < 5; i++) {
+  // Pool-Cap 6 (≥ max. 4 gleichzeitige Flüge + Ticker/Hover-Puffer) → nie ein leerer Pool.
+  for (let i = 0; i < 6; i++) {
     const path = document.createElementNS(NS, 'path') as SVGPathElement;
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', 'none');
@@ -1271,8 +1275,8 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
   };
 
   const tick = () => {
-    // ~40 % mehr Präsenz: max. 3 statt 2 gleichzeitige Flüge (Pool-Cap 5 unverändert).
-    if (!running || activeCount >= 3) return;
+    // Häufiger: max. 4 gleichzeitige Flüge (Pool-Cap 6).
+    if (!running || activeCount >= 4) return;
     const pill = pills[Math.floor(Math.random() * pills.length)];
     if (pill) launchFlight(pill);
   };
@@ -1281,8 +1285,8 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
     if (running) return;
     running = true;
     rafId = requestAnimationFrame(frame);
-    // Spawn-Intervall ×0.7 (2900 → 2030 ms) → füttert den zusätzlichen Slot.
-    tickId = window.setInterval(tick, 2030);
+    // Spawn-Intervall ×0.75 (2030 → 1520 ms) → füttert die zusätzlichen Slots.
+    tickId = window.setInterval(tick, 1520);
   };
   const stop = () => {
     if (!running) return;
