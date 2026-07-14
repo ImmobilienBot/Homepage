@@ -51,23 +51,43 @@ const tiles = [
   { rating: ratings.googleMaps, href: googleMapsReviewsUrl },
 ];
 
-// 21 Reviews auf zwei Reihen verteilt (11/10, Plattformen + Längen gemischt; die zwei
-// Maps-Reviews in UNTERSCHIEDLICHE Reihen). Reihenfolge fest über IDs. Je Reihe ein
-// gelber „Störer" (CD) — rein visuell, keine Datenfahne.
-const byId = new Map(reviews.map((r) => [r.id, r]));
-const row1Ids = [
-  'sebastiansoftware', 'finndeg', 'markus-hahn', 'victoria', 'ergo5959', 'a-s',
-  'speed-design', 'julia-oertzen', 'maren-w', 'till-jacobi-von-wangelin', 'noyustmedia',
-];
-const row2Ids = [
-  'apfelkirscheis', 'stine-2309', 'oder', 'jonathan-jablonski', 'm', 'isommer-nacht',
-  'denis-koal', 'paul-hanlon', 'stolzheise', 'bianca-koch',
-];
-const featuredIds = new Set(['finndeg', 'paul-hanlon']);
-const pick = (ids: string[]) => ids.map((id) => byId.get(id)).filter((r): r is NonNullable<typeof r> => !!r);
+// Quellen-Durchmischung — DETERMINISTISCH zur Buildzeit (KEIN Math.random → stabile
+// Reihenfolge über Builds, kein Diff-Rauschen). Jede Quelle wird per „even spread"-
+// Schlüssel (i+0.5)/n gleichmäßig über die Sequenz verteilt (round-robin, gewichtet
+// nach Anzahl je Quelle) → höchstens 2 gleiche Quellen in Folge; ein Sicherheits-Pass
+// garantiert die Regel. Danach in zwei Reihen (11/10) geteilt — die zwei Maps-Reviews
+// landen durch die gleichmäßige Verteilung automatisch in verschiedenen Reihen.
+function interleaveBySource<T extends { platform: string }>(list: T[]): T[] {
+  const groups = new Map<string, T[]>();
+  for (const r of list) {
+    if (!groups.has(r.platform)) groups.set(r.platform, []);
+    groups.get(r.platform)!.push(r);
+  }
+  const scored: { r: T; key: number; plat: string }[] = [];
+  for (const [plat, items] of groups) {
+    items.forEach((r, i) => scored.push({ r, key: (i + 0.5) / items.length, plat }));
+  }
+  scored.sort((a, b) => a.key - b.key || a.plat.localeCompare(b.plat));
+  const seq = scored.map((s) => s.r);
+  // Sicherheits-Pass: 3 gleiche Quellen in Folge → das dritte mit dem nächsten
+  // andersartigen Eintrag tauschen (deterministisch, kein random).
+  for (let i = 2; i < seq.length; i++) {
+    if (seq[i].platform === seq[i - 1].platform && seq[i - 1].platform === seq[i - 2].platform) {
+      for (let j = i + 1; j < seq.length; j++) {
+        if (seq[j].platform !== seq[i].platform) {
+          [seq[i], seq[j]] = [seq[j], seq[i]];
+          break;
+        }
+      }
+    }
+  }
+  return seq;
+}
+const ordered = interleaveBySource(reviews);
+const splitAt = Math.ceil(ordered.length / 2); // 11 / 10
 const rows = [
-  { items: pick(row1Ids), mod: 'bw-row--1' },
-  { items: pick(row2Ids), mod: 'bw-row--2' },
+  { items: ordered.slice(0, splitAt), mod: 'bw-row--1' },
+  { items: ordered.slice(splitAt), mod: 'bw-row--2' },
 ];
 ---
 
@@ -106,7 +126,7 @@ const rows = [
             >
               <span class="bw-tpill">{r.label}</span>
               <span class="bw-score">{fmtScore(r.stars)}</span>
-              <StarRating score={r.stars} size={20} empty="#d9dada" sr={B.starsSr.replace('{n}', fmtScore(r.stars))} />
+              <StarRating score={r.stars} size={20} empty="#c0c0c1" sr={B.starsSr.replace('{n}', fmtScore(r.stars))} />
               <span class="bw-count">{B.tileLabel.replace('{count}', String(r.count))}</span>
             </a>
           </li>
@@ -127,7 +147,6 @@ const rows = [
                 author={r.author}
                 platform={reviewPlatformLabel[r.platform]}
                 stars={r.rating}
-                featured={featuredIds.has(r.id)}
                 srText={B.starsSr.replace('{n}', String(r.rating))}
               />
             ))}
@@ -139,7 +158,6 @@ const rows = [
                   author={r.author}
                   platform={reviewPlatformLabel[r.platform]}
                   stars={r.rating}
-                  featured={featuredIds.has(r.id)}
                   srText={B.starsSr.replace('{n}', String(r.rating))}
                 />
               ))}
@@ -206,7 +224,8 @@ const rows = [
   }
 
   /* =====================================================================
-     Rating-Kacheln — weiße Karten mit weicher großer Elevation (wie Bento/Tickets).
+     Rating-Kacheln (die 3 Gesamtbewertungen) — GELBE Karten (#fff03c), weiche große
+     Elevation. Die Testimonial-Bubbles darunter bleiben grau (keine gelben mehr).
      ===================================================================== */
   .bw-tiles {
     list-style: none;
@@ -227,9 +246,8 @@ const rows = [
     width: 100%;
     padding: 18px;
     border-radius: 16px;
-    background: var(--color-offwhite);
+    background: var(--color-yellow);
     box-shadow: 0 24px 50px -28px rgb(59 59 58 / 0.4);
-    border: 1px solid rgb(59 59 58 / 0.04);
     text-decoration: none;
     /* Hover-Lift wie die Ablauf-Tickets (nur transform/opacity + Schatten). */
     transition:

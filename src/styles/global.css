@@ -177,9 +177,11 @@
   Cursor). Kein background, kein border, KEIN mix-blend-mode. Dadurch auf jedem
   Hintergrund (Grau, Dunkelgrau, Gelb, Weiß) sichtbar.
 
-  SCHÄRFE: Jedes Element in seiner GRÖSSTEN Zustandsgröße gebaut, Zustände nur über
-  scale ≤ 1 (nie darüber). KEIN will-change auf den Linsen (verhindert Re-
-  Rasterisierung → Kanten bleiben nach der Transition pixelscharf).
+  SCHÄRFE: Jedes Element wird in DOPPELTER Anzeigegröße gebaut und immer NUR
+  HERUNTERSKALIERT (Punkt/Ring Ruhe scale 0.5, Lupe scale 0.3→0.5 im Hover — nie
+  über 0.5). Selbst wenn der `backdrop-filter`-Layer bei DPR 2 nur mit 1× rastert,
+  liefert das 2×-Downscaling genug Auflösung → Kanten pixelscharf. Border-/Ring-
+  Dicke ist entsprechend verdoppelt (4 px Build → 2 px sichtbar). KEIN will-change.
 */
 .cursor {
   opacity: 0;
@@ -211,23 +213,23 @@ html.has-custom-cursor textarea {
   backdrop-filter: grayscale(1) invert(1);
   /* KEIN will-change (Schärfe). */
 }
-/* Punkt (~10 px) — volle Linse. */
+/* Punkt — Build 20 px, per scale 0.5 auf ~10 px sichtbar (Downscale = scharf). */
 .cursor-dot {
-  width: 10px;
-  height: 10px;
+  width: 20px;
+  height: 20px;
 }
-/* Ring (~30 px) — nur ein ~2 px breiter Linsen-Streifen via Maske (innen/außen frei). */
+/* Ring — Build 60 px (Ring-Streifen 4 px), per scale 0.5 auf ~30 px / 2-px-Streifen. */
 .cursor-ring {
-  width: 30px;
-  height: 30px;
-  -webkit-mask: radial-gradient(circle 15px at center, transparent 0 13px, #000 13px 15px, transparent 15px);
-  mask: radial-gradient(circle 15px at center, transparent 0 13px, #000 13px 15px, transparent 15px);
+  width: 60px;
+  height: 60px;
+  -webkit-mask: radial-gradient(circle 30px at center, transparent 0 26px, #000 26px 30px, transparent 30px);
+  mask: radial-gradient(circle 30px at center, transparent 0 26px, #000 26px 30px, transparent 30px);
 }
-/* Lupe (Hover) — volle native Größe (68 px). Ruhezustand opacity 0 + scale 0.6
-   (per GSAP), Hover → opacity 1 + scale 1.0 (nie > 1). */
+/* Lupe (Hover) — Build 120 px; Ruhe scale 0.3, Hover scale 0.5 (~60 px sichtbar,
+   immer heruntergerechnet → scharf). Nie > 0.5. */
 .cursor-lupe {
-  width: 68px;
-  height: 68px;
+  width: 120px;
+  height: 120px;
 }
 /* Mitlaufendes Pill-Label (Osmo-Referenz): über Store-Badges läuft es NEBEN dem
    kleinen dunklen Cursor-Punkt mit (Ring/Lupe aus, Punkt bleibt sichtbar).

@@ -22,7 +22,6 @@
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import { portalCount } from '../../data/site';
 import type { Locale } from '../../data/site';
-import PillButton from '../ui/PillButton.astro';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -120,13 +119,29 @@ const ICONS = [
       }
     </ul>
 
-    {/* 5 · Features-Verweis — direkt unter der Vorteils-Reihe. Store-Badges/Trust
-        bewusst NICHT hier (CTA lebt im Header/Hero). Scrollt smooth zur nächsten Sektion.
-        Einheitliche PillButton (dunkle Fläche): Pfeil erscheint nur im Desktop-Hover. */}
+    {/* 5 · Features-Verweis — direkt unter der Vorteils-Reihe. Scrollt smooth zur
+        nächsten Sektion. BEWUSSTE PillButton-Ausnahme (dunkle Sektion): gelbe Pille,
+        schwarzer Text + PERMANENTER Pfeil ↓ (dunkle Dot-Füllung auf dunklem BG geht
+        nicht). Hover: Pille lifted, Pfeil tippt nach unten. */}
     <div class="p3-more-wrap" data-p3-reveal>
-      <PillButton href="#portale" size="md" surface="dark" icon="arrow-down">
-        {P.moreLink}
-      </PillButton>
+      <a class="p3-more" href="#portale">
+        <span class="p3-more-label">{P.moreLink}</span>
+        <svg
+          class="p3-more-arrow"
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#3b3b3a"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 4v16" />
+          <path d="m6 14 6 6 6-6" />
+        </svg>
+      </a>
     </div>
   </div>
 </section>
@@ -316,6 +331,65 @@ const ICONS = [
     margin-top: clamp(2rem, 5vh, 3.25rem);
     display: flex;
     justify-content: center;
+  }
+  /* Custom-CTA (gelbe Pille, schwarzer Text, permanenter Pfeil ↓). Kein Dot-Fill. */
+  .p3-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 54px;
+    padding: 0 26px;
+    border-radius: 999px;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 12px 34px -14px rgb(0 0 0 / 0.45);
+    transition:
+      transform 0.25s ease-out,
+      box-shadow 0.25s ease-out;
+  }
+  .p3-more-arrow {
+    display: block;
+    flex: none;
+    transition: transform 0.25s ease-out;
+  }
+  @media (max-width: 767.98px) {
+    .p3-more {
+      height: 50px;
+      font-size: 14px;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .p3-more:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 48px -16px rgb(0 0 0 / 0.55);
+    }
+    .p3-more:hover .p3-more-arrow {
+      transform: translateY(3px);
+    }
+  }
+  .p3-more:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-black),
+      0 0 0 4px var(--color-yellow);
+  }
+  /* reduced-motion: keine Transform-Transition (nur Schatten-Feedback). */
+  @media (prefers-reduced-motion: reduce) {
+    .p3-more {
+      transition: box-shadow 0.25s ease-out;
+    }
+    .p3-more-arrow {
+      transition: none;
+    }
+    .p3-more:hover {
+      transform: none;
+    }
   }
 
   /* Partikel-Canvas + Übergangs-Fläche nur mit JS + erlaubter Bewegung sichtbar. */

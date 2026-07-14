@@ -94,23 +94,28 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
           <sup class="pr2-fn"><a href="#quellen" aria-label={fnLabel}>2</a></sup>
         </p>
 
-        {/* App laden: QR (nur Desktop) + Store-Badges (immer). Mobile → nur Badges. */}
+        {/* App laden — Desktop: gemeinsame Floating-Karte (QR links · Hinweis + Badges
+            rechts). Mobile: KEINE Karte, nur die Store-Badges (QR + Hinweis ausgeblendet). */}
         <div class="pr2-getapp" data-pr2-reveal>
-          <div class="pr2-qr">
-            <QrCode
-              campaign="preise_cta"
-              caption={P.qrCaption}
-              size={88}
-              surface="white"
-              ariaLabel={
-                lang === 'en'
-                  ? 'QR code: get the app — takes you to the right app store'
-                  : 'QR-Code: App laden — führt zum passenden App-Store'
-              }
-            />
+          <div class="pr2-dlcard">
+            <div class="pr2-qr">
+              <QrCode
+                campaign="preise_cta"
+                size={116}
+                surface="white"
+                ariaLabel={
+                  lang === 'en'
+                    ? 'QR code: get the app — takes you to the right app store'
+                    : 'QR-Code: App laden — führt zum passenden App-Store'
+                }
+              />
+            </div>
+            <div class="pr2-dlcard-right">
+              <p class="pr2-dlhint">{P.qrCaption}</p>
+              {/* Tracking pro Platzierung: iOS ct=Homepage_Pricing · Android utm_content=pricing. */}
+              <StoreBadges position="Homepage_Pricing" androidPosition="pricing" class="pr2-badges" />
+            </div>
           </div>
-          {/* Tracking pro Platzierung: iOS ct=Homepage_Pricing · Android utm_content=pricing. */}
-          <StoreBadges position="Homepage_Pricing" androidPosition="pricing" class="pr2-badges" />
         </div>
       </div>
 
@@ -326,23 +331,46 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
   .pr2-fn a:focus-visible {
     text-decoration: underline;
   }
-  /* App-laden-Block: Badges immer, QR nur Desktop. */
+  /* App-laden-Block. Mobile: KEINE Karte — nur die Badges (QR + Hinweis aus). */
   .pr2-getapp {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
     margin-top: 4px;
   }
   .pr2-badges {
     --badge-h: 2.5rem;
   }
-  .pr2-qr {
+  .pr2-qr,
+  .pr2-dlhint {
     display: none;
   }
+  /* Desktop: gemeinsame Floating-Karte (Stil der Preis-Kacheln: off-white, Radius,
+     weiche Elevation). Grid: QR (auto) | rechte Spalte (1fr), zentriert. */
   @media (min-width: 960px) {
+    .pr2-dlcard {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 24px;
+      align-items: center;
+      background: var(--color-offwhite);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgb(59 59 58 / 0.18);
+    }
     .pr2-qr {
       display: block;
+    }
+    .pr2-dlcard-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .pr2-dlhint {
+      display: block;
+      margin: 0;
+      font-size: clamp(1rem, 1.4vw, 1.15rem);
+      line-height: 1.4;
+      text-align: left;
+      color: var(--color-black);
     }
   }
 

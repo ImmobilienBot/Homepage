@@ -62,7 +62,8 @@ export const en: Dict = {
       stat: 'applicants for 288 flats. After 30 minutes, it was over.',
       // Reversal headline (H2). Yellow marker ONLY on „you".
       headline: 'One of them gets there first: you.',
-      headlineMark: 'you',
+      // Marker includes word + directly following punctuation (no overlap).
+      headlineMark: 'you.',
       // Scannable benefits (no prose), each with an icon. {n} = portal count (site.ts).
       benefits: [
         { label: 'Real-time push' },
@@ -422,7 +423,8 @@ export const en: Dict = {
       title: 'Contact',
       kicker: 'Contact',
       headline: 'Questions? Feedback? Missing a feature?',
-      headlineMark: 'feature',
+      // Marker includes word + question mark (else "?" collides with the marker bg).
+      headlineMark: 'feature?',
       copy: "Just reach out – we're here for you and read every message personally. You decide how to get in touch.",
       channels: {
         email: 'Email',
@@ -434,7 +436,6 @@ export const en: Dict = {
       card: {
         app: 'Immobilien Bot',
         sub: 'Your message to us',
-        time: 'now',
         iconAlt: 'Immobilien Bot app icon',
       },
       form: {

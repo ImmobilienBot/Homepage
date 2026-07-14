@@ -24,7 +24,7 @@
 
 ## Kontakt
 
-- [mail@immobilien-bot.de](mailto:mail@immobilien-bot.de): E-Mail-Kontakt.
+- [support@immobilien-bot.de](mailto:support@immobilien-bot.de): E-Mail-Kontakt.
 - [Telegram-Support](https://t.me/ImmobilienBot_support): Support-Kanal der App.
 
 ## What the app does

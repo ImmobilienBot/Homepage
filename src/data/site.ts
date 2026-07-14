@@ -33,7 +33,7 @@ export type Locale = (typeof site.locales)[number];
  * öffentliche Fakten. Facts-Sync prüft `email` gegen HTML/JSON-LD/llms.txt.
  */
 export const contact = {
-  email: 'mail@immobilien-bot.de',
+  email: 'support@immobilien-bot.de',
   telegramSupport: 'https://t.me/ImmobilienBot_support',
   instagram: 'https://www.instagram.com/immobilienbot/',
 } as const;

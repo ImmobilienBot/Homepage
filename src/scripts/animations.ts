@@ -478,8 +478,10 @@ function initCursor() {
 
   document.documentElement.classList.add('has-custom-cursor');
   gsap.set([ring, dot, lupe], { xPercent: -50, yPercent: -50 });
-  // Lupe ruht unsichtbar + geschrumpft (nur via scale ≤ 1, nie darüber).
-  gsap.set(lupe, { autoAlpha: 0, scale: 0.6 });
+  // Punkt/Ring sind 2× gebaut → dauerhaft scale 0.5 (Downscale = scharf, nie > 0.5).
+  gsap.set([ring, dot], { scale: 0.5 });
+  // Lupe ruht unsichtbar + geschrumpft (scale 0.3, Build 120px → nur runter).
+  gsap.set(lupe, { autoAlpha: 0, scale: 0.3 });
   if (label) gsap.set(label, { xPercent: -50, yPercent: -50 });
 
   // Punkt quasi exakt; Ring + Lupe leicht verzögert (weiches Nachlaufen).
@@ -509,14 +511,15 @@ function initCursor() {
     { passive: true },
   );
 
-  // Hover: Lupe ein (scale exakt 1.0), Ring + Punkt aus. Rest: umgekehrt.
+  // Hover: Lupe ein (scale 0.5 = Anzeigegröße, immer heruntergerechnet), Ring + Punkt
+  // aus (Scale 0.5 bleibt). Rest: umgekehrt. Nie über scale 0.5 → keine Unschärfe.
   const setState = (interactive: boolean, labelText: string | null) => {
     if (interactive) {
       gsap.to([ring, dot], { autoAlpha: 0, duration: 0.2, ease: 'power3', overwrite: 'auto' });
-      gsap.to(lupe, { autoAlpha: 1, scale: 1, duration: 0.28, ease: 'power3', overwrite: 'auto' });
+      gsap.to(lupe, { autoAlpha: 1, scale: 0.5, duration: 0.28, ease: 'power3', overwrite: 'auto' });
     } else {
       gsap.to([ring, dot], { autoAlpha: 1, duration: 0.2, ease: 'power3', overwrite: 'auto' });
-      gsap.to(lupe, { autoAlpha: 0, scale: 0.6, duration: 0.25, ease: 'power3', overwrite: 'auto' });
+      gsap.to(lupe, { autoAlpha: 0, scale: 0.3, duration: 0.25, ease: 'power3', overwrite: 'auto' });
     }
     if (label) {
       if (labelText != null) {
@@ -532,7 +535,7 @@ function initCursor() {
   // Text-Caret zeigen (CSS: cursor:text) — sonst behindert die Linse die Caret-Setzung.
   const setTextField = (on: boolean) => {
     gsap.to([ring, dot], { autoAlpha: on ? 0 : 1, duration: 0.15, overwrite: 'auto' });
-    if (on) gsap.to(lupe, { autoAlpha: 0, scale: 0.6, duration: 0.15, overwrite: 'auto' });
+    if (on) gsap.to(lupe, { autoAlpha: 0, scale: 0.3, duration: 0.15, overwrite: 'auto' });
   };
 
   let hovering: Element | null = null;
@@ -1268,7 +1271,8 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
   };
 
   const tick = () => {
-    if (!running || activeCount >= 2) return; // max 2 gleichzeitige Flüge (Ticker)
+    // ~40 % mehr Präsenz: max. 3 statt 2 gleichzeitige Flüge (Pool-Cap 5 unverändert).
+    if (!running || activeCount >= 3) return;
     const pill = pills[Math.floor(Math.random() * pills.length)];
     if (pill) launchFlight(pill);
   };
@@ -1277,7 +1281,8 @@ function setupPortaleFlight(section: HTMLElement, pills: HTMLElement[], fine: bo
     if (running) return;
     running = true;
     rafId = requestAnimationFrame(frame);
-    tickId = window.setInterval(tick, 2900);
+    // Spawn-Intervall ×0.7 (2900 → 2030 ms) → füttert den zusätzlichen Slot.
+    tickId = window.setInterval(tick, 2030);
   };
   const stop = () => {
     if (!running) return;
@@ -1779,13 +1784,18 @@ function initFeatureAccordion(section: HTMLElement) {
     hovering = false;
   });
 
-  // Tastatur-Fokus im Accordion → pausieren; Fokusverlust → fortsetzen.
+  // NUR ECHTER Tastatur-Fokus (:focus-visible) pausiert — ein MAUS-Klick fokussiert
+  // zwar den Kopf, ist aber KEIN :focus-visible → kein Dauer-Pause mehr (Bug-Fix).
+  // Tastatur-Navigation bleibt geschützt (Panel wechselt nicht unter Tab-Nutzern weg).
   if (list) {
-    list.addEventListener('focusin', () => {
-      focusInside = true;
-    });
+    const evalFocus = (el: Element | null) => {
+      focusInside = !!(el && typeof el.matches === 'function' && el.matches(':focus-visible'));
+    };
+    list.addEventListener('focusin', (e) => evalFocus(e.target as Element));
     list.addEventListener('focusout', (e) => {
-      if (!list.contains(e.relatedTarget as Node | null)) focusInside = false;
+      const next = e.relatedTarget as Node | null;
+      if (!list.contains(next)) focusInside = false;
+      else evalFocus(next as Element); // Fokus zog innerhalb weiter → neu bewerten
     });
   }
 

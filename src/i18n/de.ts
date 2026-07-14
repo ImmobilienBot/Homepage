@@ -64,7 +64,8 @@ export const de = {
       stat: 'Bewerber auf 288 Wohnungen. Nach 30 Minuten war Schluss.',
       // Umkehr-Headline (H2). Gelber Marker NUR auf „du".
       headline: 'Einer davon ist zuerst da: du.',
-      headlineMark: 'du',
+      // Marker umschließt Wort + direkt anschließendes Satzzeichen (kein Overlap).
+      headlineMark: 'du.',
       // Scanbare Vorteile (kein Fließsatz), je mit Icon. {n} = Portalanzahl (site.ts).
       benefits: [
         { label: 'Echtzeit-Push' },
@@ -443,7 +444,8 @@ export const de = {
       title: 'Kontakt',
       kicker: 'Kontakt',
       headline: 'Fragen? Feedback? Dir fehlt eine Funktion?',
-      headlineMark: 'Funktion',
+      // Marker umschließt Wort + Fragezeichen (sonst kollidiert „?" mit dem Marker-BG).
+      headlineMark: 'Funktion?',
       copy: 'Melde dich einfach – wir sind für dich da und lesen jede Nachricht persönlich. Du entscheidest, wie du uns erreichst.',
       channels: {
         email: 'E-Mail',
@@ -455,7 +457,6 @@ export const de = {
       card: {
         app: 'Immobilien Bot',
         sub: 'Deine Nachricht an uns',
-        time: 'jetzt',
         iconAlt: 'App-Icon Immobilien Bot',
       },
       form: {
