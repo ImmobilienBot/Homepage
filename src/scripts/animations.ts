@@ -1385,7 +1385,10 @@ function initBewertungen() {
   if (maskIns.length) tl.to(maskIns, { yPercent: 0, duration: 0.7, ease: 'power4.out' }, 0);
   if (markHls.length) tl.to(markHls, { scaleX: 1, skewX: -8, duration: 0.4, ease: 'power2.out' }, 0.35);
   if (sub) tl.to(sub, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.4);
-  if (tiles.length) tl.to(tiles, { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.12 }, 0.45);
+  // clearProps:'transform' → Inline-Transform nach dem Reveal weg (sonst überschreibt
+  // er den CSS-Hover-Lift der jetzt verlinkten Rating-Badges).
+  if (tiles.length)
+    tl.to(tiles, { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.12, clearProps: 'transform' }, 0.45);
   if (rows.length) tl.to(rows, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.15 }, 0.7);
 }
 

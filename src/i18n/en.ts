@@ -268,7 +268,9 @@ export const en: Dict = {
       subline: '{total} reviews across three platforms · {downloads} downloads',
       tileLabel: '{count} reviews',
       starsSr: '{n} out of 5 stars',
-      footnote: 'Reviews translated from German.',
+      // Dezente Zeile unter der Subline — nur EN (die Zitate sind Übersetzungen).
+      transNote: 'All reviews translated from the German originals.',
+      footnote: '',
     },
     // FAQ section — structurally identical to de.ts. IDs are language-neutral and
     // identical across DE/EN (deep links). Same interpolations ({portalCount} etc.),

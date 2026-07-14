@@ -15,8 +15,8 @@ import {
   pricing,
   portals,
   portalCount,
-  testimonials,
 } from '../../data/site';
+import { reviews } from '../../data/reviews';
 import { getAlternates, hreflangCodes } from '../../i18n';
 import type { Locale } from '../../data/site';
 
@@ -81,16 +81,17 @@ const jsonLd = {
         bestRating: aggregateRating.bestRating,
         worstRating: aggregateRating.worstRating,
       },
-      // Einzelne Reviews = die featured-Testimonials (reviewBody = DE-Original).
-      review: testimonials
-        .filter((tm) => tm.featured)
-        .map((tm) => ({
+      // Einzelne Reviews = drei 5-Sterne-Rezensionen (reviewBody = DE-Original).
+      review: reviews
+        .filter((r) => r.rating === 5)
+        .slice(0, 3)
+        .map((r) => ({
           '@type': 'Review',
-          author: { '@type': 'Person', name: tm.author },
-          reviewBody: tm.quote.de,
+          author: { '@type': 'Person', name: r.author },
+          reviewBody: r.text.de,
           reviewRating: {
             '@type': 'Rating',
-            ratingValue: tm.stars,
+            ratingValue: r.rating,
             bestRating: 5,
             worstRating: 1,
           },

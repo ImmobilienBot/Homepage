@@ -10,7 +10,14 @@
  * identisch; nur Auftritts-Reveal per GSAP (transform/opacity). Keine Anbieter-Logos.
  */
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { ratings, downloads, totalReviewCount, testimonials, platformLabel } from '../../data/site';
+import {
+  ratings,
+  downloads,
+  totalReviewCount,
+  storeLinks,
+  googleMapsReviewsUrl,
+} from '../../data/site';
+import { reviews, reviewPlatformLabel } from '../../data/reviews';
 import StarRating from '../ui/StarRating.astro';
 import QuoteCard from '../ui/QuoteCard.astro';
 
@@ -37,12 +44,30 @@ const subline = B.subline
   .replace('{total}', String(totalReviewCount))
   .replace('{downloads}', downloads);
 
-const tiles = Object.values(ratings);
+// Rating-Kacheln → Links (App Store · Google Play · Google Maps). URLs aus site.ts.
+const tiles = [
+  { rating: ratings.appStore, href: storeLinks.ios },
+  { rating: ratings.playStore, href: storeLinks.android },
+  { rating: ratings.googleMaps, href: googleMapsReviewsUrl },
+];
 
-// Zwei Reihen à drei Testimonials (je genau ein featured). Reihe 1 = 1–3, Reihe 2 = 4–6.
+// 21 Reviews auf zwei Reihen verteilt (11/10, Plattformen + Längen gemischt; die zwei
+// Maps-Reviews in UNTERSCHIEDLICHE Reihen). Reihenfolge fest über IDs. Je Reihe ein
+// gelber „Störer" (CD) — rein visuell, keine Datenfahne.
+const byId = new Map(reviews.map((r) => [r.id, r]));
+const row1Ids = [
+  'sebastiansoftware', 'finndeg', 'markus-hahn', 'victoria', 'ergo5959', 'a-s',
+  'speed-design', 'julia-oertzen', 'maren-w', 'till-jacobi-von-wangelin', 'noyustmedia',
+];
+const row2Ids = [
+  'apfelkirscheis', 'stine-2309', 'oder', 'jonathan-jablonski', 'm', 'isommer-nacht',
+  'denis-koal', 'paul-hanlon', 'stolzheise', 'bianca-koch',
+];
+const featuredIds = new Set(['finndeg', 'paul-hanlon']);
+const pick = (ids: string[]) => ids.map((id) => byId.get(id)).filter((r): r is NonNullable<typeof r> => !!r);
 const rows = [
-  { items: testimonials.slice(0, 3), mod: 'bw-row--1' },
-  { items: testimonials.slice(3, 6), mod: 'bw-row--2' },
+  { items: pick(row1Ids), mod: 'bw-row--1' },
+  { items: pick(row2Ids), mod: 'bw-row--2' },
 ];
 ---
 
@@ -62,17 +87,28 @@ const rows = [
         >
       </h2>
       <p class="bw-sub" data-bw-sub>{subline}</p>
+      {B.transNote && <p class="bw-transnote" data-bw-sub>{B.transNote}</p>}
     </header>
 
-    {/* ---- Rating-Kacheln ---- */}
+    {/* ---- Rating-Kacheln (jetzt Links → Store/Maps) ---- */}
     <ul class="bw-tiles">
       {
-        tiles.map((r) => (
-          <li class="bw-tile" data-bw-tile>
-            <span class="bw-tpill">{r.label}</span>
-            <span class="bw-score">{fmtScore(r.stars)}</span>
-            <StarRating score={r.stars} size={20} empty="#d9dada" sr={B.starsSr.replace('{n}', fmtScore(r.stars))} />
-            <span class="bw-count">{B.tileLabel.replace('{count}', String(r.count))}</span>
+        tiles.map(({ rating: r, href }) => (
+          <li>
+            <a
+              class="bw-tile"
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor
+              data-bw-tile
+              aria-label={`${r.label}: ${fmtScore(r.stars)} — ${B.tileLabel.replace('{count}', String(r.count))}`}
+            >
+              <span class="bw-tpill">{r.label}</span>
+              <span class="bw-score">{fmtScore(r.stars)}</span>
+              <StarRating score={r.stars} size={20} empty="#d9dada" sr={B.starsSr.replace('{n}', fmtScore(r.stars))} />
+              <span class="bw-count">{B.tileLabel.replace('{count}', String(r.count))}</span>
+            </a>
           </li>
         ))
       }
@@ -83,39 +119,35 @@ const rows = [
   <div class="bw-marquee">
     {
       rows.map((row) => (
-        <div class:list={['bw-row', row.mod]} data-bw-marquee data-lenis-prevent>
+        <div class:list={['bw-row', row.mod]} data-bw-marquee>
           <div class="bw-track">
-            {row.items.map((tm) => (
+            {row.items.map((r) => (
               <QuoteCard
-                quote={tm.quote[lang]}
-                author={tm.author}
-                platform={platformLabel[tm.platform]}
-                stars={tm.stars}
-                featured={tm.featured}
-                srText={B.starsSr.replace('{n}', String(tm.stars))}
+                quote={r.text[lang]}
+                author={r.author}
+                platform={reviewPlatformLabel[r.platform]}
+                stars={r.rating}
+                featured={featuredIds.has(r.id)}
+                srText={B.starsSr.replace('{n}', String(r.rating))}
               />
             ))}
-            {/* Klone (Sets 2–4) — aus dem A11y-Baum genommen; nur der Loop braucht sie. */}
+            {/* Genau EIN Klon-Set (aria-hidden) → nahtloser -50%-Loop, halbe DOM-Last. */}
             <div class="bw-clones" aria-hidden="true">
-              {Array.from({ length: 3 }).flatMap(() =>
-                row.items.map((tm) => (
-                  <QuoteCard
-                    quote={tm.quote[lang]}
-                    author={tm.author}
-                    platform={platformLabel[tm.platform]}
-                    stars={tm.stars}
-                    featured={tm.featured}
-                    srText={B.starsSr.replace('{n}', String(tm.stars))}
-                  />
-                )),
-              )}
+              {row.items.map((r) => (
+                <QuoteCard
+                  quote={r.text[lang]}
+                  author={r.author}
+                  platform={reviewPlatformLabel[r.platform]}
+                  stars={r.rating}
+                  featured={featuredIds.has(r.id)}
+                  srText={B.starsSr.replace('{n}', String(r.rating))}
+                />
+              ))}
             </div>
           </div>
         </div>
       ))
     }
-
-    {B.footnote && <p class="bw-foot">{B.footnote}</p>}
   </div>
 </section>
 
@@ -167,6 +199,11 @@ const rows = [
     line-height: 1.5;
     color: rgb(59 59 58 / 0.78);
   }
+  .bw-transnote {
+    margin-top: 0.6rem;
+    font-size: 13px;
+    color: var(--color-grey-text);
+  }
 
   /* =====================================================================
      Rating-Kacheln — weiße Karten mit weicher großer Elevation (wie Bento/Tickets).
@@ -179,16 +216,35 @@ const rows = [
     grid-template-columns: repeat(3, 1fr);
     gap: clamp(0.75rem, 1.5vw, 1.25rem);
   }
+  .bw-tiles > li {
+    display: flex;
+  }
   .bw-tile {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    width: 100%;
     padding: 18px;
     border-radius: 16px;
     background: var(--color-offwhite);
     box-shadow: 0 24px 50px -28px rgb(59 59 58 / 0.4);
     border: 1px solid rgb(59 59 58 / 0.04);
+    text-decoration: none;
+    /* Hover-Lift wie die Ablauf-Tickets (nur transform/opacity + Schatten). */
+    transition:
+      transform 0.2s ease-out,
+      box-shadow 0.2s ease-out;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .bw-tile:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 32px 60px -24px rgb(59 59 58 / 0.5);
+    }
+  }
+  .bw-tile:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
   }
   .bw-tpill {
     padding: 4px 10px;
@@ -223,7 +279,13 @@ const rows = [
   }
   .bw-row {
     overflow: hidden;
-    padding-block: 10px; /* Platz für Schatten + Sprechblasen-Schwanz */
+    /* 4f: großzügiges Innen-Padding → overflow:hidden clippt NICHT die Karten-Schatten
+       und die Sprechblasen-Spitze. Die negative margin-block kompensiert exakt (Netto
+       ±10px wie zuvor) → Sektions-Rhythmus + Zeilenabstand bleiben identisch. */
+    padding-block: 40px;
+    margin-block: -30px;
+    /* Isoliert Layout/Paint der breiten Reihe vom Rest (kein Reflow-Ping-Pong). */
+    contain: layout paint;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
@@ -231,38 +293,29 @@ const rows = [
     display: flex;
     width: max-content;
     will-change: transform;
-    animation: bw-marquee var(--dur, 55s) linear infinite;
+    animation: bw-marquee var(--dur, 80s) linear infinite;
   }
   /* Klon-Wrapper ohne eigene Box → seine Karten werden direkte Flex-Items des Tracks
-     (uniformer Abstand via margin-right der Karte → nahtloser -25%-Loop über 4 Sets). */
+     (uniformer Abstand via margin-right der Karte → nahtloser -50%-Loop über 2 Sets). */
   .bw-clones {
     display: contents;
   }
   .bw-row--1 .bw-track {
-    --dur: 55s;
+    --dur: 80s;
   }
   .bw-row--2 .bw-track {
-    --dur: 62s;
+    --dur: 74s;
     animation-direction: reverse;
   }
   @keyframes bw-marquee {
     to {
-      transform: translateX(-25%);
+      transform: translateX(-50%);
     }
   }
   /* Hover UND Tastatur-Fokus in der Reihe pausieren die Bewegung. */
   .bw-row:hover .bw-track,
   .bw-row:focus-within .bw-track {
     animation-play-state: paused;
-  }
-
-  .bw-foot {
-    margin-top: 1rem;
-    max-width: 72rem;
-    margin-inline: auto;
-    padding-inline: var(--spacing-inset);
-    font-size: 13px;
-    color: var(--color-grey-text);
   }
 
   /* =====================================================================

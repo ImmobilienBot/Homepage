@@ -285,6 +285,8 @@ export const de = {
       subline: '{total} Bewertungen auf drei Plattformen · {downloads} Downloads',
       tileLabel: '{count} Bewertungen',
       starsSr: '{n} von 5 Sternen',
+      // DE ohne Zusatzzeile (Originale); EN trägt den Übersetzungshinweis.
+      transNote: '',
       footnote: '',
     },
     // FAQ-Sektion (#faq, zwischen Preise und Kontakt). Struktur: headline (+Marker),

@@ -123,87 +123,14 @@ export const aggregateRating = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Testimonials  (echte Store-Rezensionen — Wortlaut NICHT verändern)  */
+/* Reviews  (Rezensions-Links = Fakten; die Zitate selbst in reviews.ts)  */
 /* ------------------------------------------------------------------ */
-
-export type ReviewPlatform = 'appstore' | 'playstore' | 'gmaps';
-
-export interface Testimonial {
-  /** Zitat zweisprachig — Wortlaut verbatim aus dem Store (DE Original, EN Übersetzung). */
-  quote: { de: string; en: string };
-  /** Store-Username, verbatim. */
-  author: string;
-  platform: ReviewPlatform;
-  stars: 1 | 2 | 3 | 4 | 5;
-  /** Gelber „Störer" in der Marquee (je Reihe genau einer). */
-  featured?: boolean;
-}
-
-/** Anzeige-Label je Plattform (identisch zu den Rating-Kachel-Pills). */
-export const platformLabel: Record<ReviewPlatform, string> = {
-  appstore: ratings.appStore.label,
-  playstore: ratings.playStore.label,
-  gmaps: ratings.googleMaps.label,
-};
-
-export const testimonials: Testimonial[] = [
-  {
-    featured: true,
-    platform: 'playstore',
-    author: 'Markus Hahn',
-    stars: 4 /* TODO(Artem): stars verifizieren */,
-    quote: {
-      de: 'Die App ist super. Ich habe nach zwei Monaten Suche meine Traumwohnung gefunden, das war es wert.',
-      en: 'The app is great. After two months of searching I found my dream apartment — it was worth it.',
-    },
-  },
-  {
-    featured: true,
-    platform: 'appstore',
-    author: 'SebastianSoftware',
-    stars: 5 /* TODO(Artem): stars verifizieren */,
-    quote: {
-      de: 'Am Anfang war ich etwas skeptisch […] aber nach 3 Tagen Testen bin ich immer wieder erstaunt, wenn ich die erste Person auf der Anzeige bin.',
-      en: "I was a bit skeptical at first […] but after 3 days of testing I'm amazed again and again when I'm the first person on a listing.",
-    },
-  },
-  {
-    platform: 'playstore',
-    author: 'Jonathan Jablonski',
-    stars: 5 /* TODO(Artem): stars verifizieren */,
-    quote: {
-      de: 'Die App benachrichtigt einen immer etwas schneller als die Suchbenachrichtigungen der gängigen Immobilien-Apps. Das gibt einem oft einen Vorteil bei der Bewerbung.',
-      en: 'The app always notifies you a bit faster than the search alerts of the usual real-estate apps. That often gives you an edge when applying.',
-    },
-  },
-  {
-    platform: 'appstore',
-    author: 'NoyusTMedia',
-    stars: 5 /* TODO(Artem): stars verifizieren */,
-    quote: {
-      de: 'Ich bin begeistert, dass ich mit der App so viele Angebote bekomme — über 100 am Tag.',
-      en: "I'm thrilled at how many listings I get with the app — over 100 a day.",
-    },
-  },
-  {
-    platform: 'appstore',
-    author: 'Finndeg',
-    stars: 5 /* TODO(Artem): stars verifizieren */,
-    quote: {
-      de: 'Sehr schnell eine Wohnung gefunden. Sehr einfach und übersichtlich!',
-      en: 'Found an apartment really quickly. Very simple and clear!',
-    },
-  },
-  {
-    platform: 'appstore',
-    author: 'stolzheise',
-    stars: 5 /* TODO(Artem): stars verifizieren */,
-    quote: {
-      de: 'Übersichtlich, schnell, sehr hilfreich! Spart viel Zeit bei der Wohnungssuche in Berlin.',
-      en: 'Clear, fast, really helpful! Saves a lot of time searching for a flat in Berlin.',
-    },
-  },
-];
+/**
+ * Google-Maps-Rezensionslink (cid) — Ziel des Google-Maps-Rating-Badges. Store-
+ * Links siehe oben (`storeLinks`). Die einzelnen Review-TEXTE liegen (bewusst
+ * beidsprachig) in `src/data/reviews.ts`.
+ */
+export const googleMapsReviewsUrl = 'https://www.google.com/maps?cid=14734044907807723907';
 
 /* ------------------------------------------------------------------ */
 /* Preise                                                             */

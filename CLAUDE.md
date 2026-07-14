@@ -243,11 +243,15 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
    Tagespreise = Preis/30 bzw. /7, Spar-% = `round((1 − Monat/(4×Woche))×100)`) zur Buildzeit aus
    `site.ts`** — nichts hart, kein Zahl-JS. Default MONAT vorselektiert.
 8. **Bewertungen** — Proof-Header (H2 mit Keyword-Marker + abgeleitete Zahlen: `totalReviewCount`)
-   + 3 Rating-Kacheln (App Store · Google Play · Google Maps, StarRating-Komponente, keine Logos)
-   + zwei gegenläufige, **rein CSS-animierte** Marquee-Reihen mit Zitat-Sprechblasen (CD-Störer,
-   je Reihe ein gelber `featured`). **Sitzt zwischen Ablauf und Preise** (Proof vor Pricing). Alle
-   Zahlen/Zitate aus `site.ts` (`testimonials`); Marquee läuft ohne JS identisch, pausiert bei
-   Hover/Fokus, `prefers-reduced-motion` → nativ scrollbar.
+   + 3 Rating-**Kachel-Links** (App Store → iOS-Store, Google Play → Android-Store, Google Maps →
+   `googleMapsReviewsUrl`; StarRating, keine Logos; Hover-Lift wie die Ablauf-Tickets) + zwei
+   gegenläufige, **rein CSS-animierte** Marquee-Reihen mit **21 echten** Zitat-Sprechblasen
+   (11/10 verteilt, Maps-Reviews in verschiedenen Reihen, je Reihe ein gelber `featured`-Störer;
+   **1 statisches Klon-Set → -50%-Loop**). **Sitzt zwischen Ablauf und Preise**. Zahlen aus
+   `site.ts`, Zitate aus `reviews.ts`; EN trägt unter der Subline den Hinweis „All reviews
+   translated from the German originals." Marquee läuft ohne JS identisch, pausiert bei
+   Hover/Fokus, `prefers-reduced-motion` → nativ scrollbar. **Kein `data-lenis-prevent`** auf den
+   Reihen (bricht sonst den Lenis-Smooth-Scroll = Scroll-Sprung).
 9. **FAQ** (steht zwischen Preise und Kontakt) — Zwei-Spalten-Anlage: Desktop sticky
    Kategorie-Rail links (Scroll-Spy, Marker-Aktivpunkt) + Akkordeon-Liste rechts; Mobile statisch
    gestapelt mit horizontaler Kategorie-Chip-Zeile. 20 Fragen in 4 Kategorien (Allgemein · Suche &
@@ -313,8 +317,9 @@ Nicht als flache Liste — als **Ablauf einer Wohnungssuche** gruppieren:
 - Android: `https://play.google.com/store/apps/details?id=immobilien.bot&hl=de&referrer=utm_source%3Dwebsite%26utm_medium%3Dbutton%26utm_campaign%3Dhomepage%26utm_content%3Dhome_top`
 
 **Bewertungen:** App Store 4,6★ (86) · Google Play 4,3★ (48) · Google Maps 5,0★ (33) · **Gesamt 167**
-(abgeleitet als `totalReviewCount`, nie als Literal) · 5.000+ Downloads. Einzel-Reviews (verbatim) in
-`testimonials` (mit `featured`-Flag → gelbe Störer + schema.org/Review). [TODO(Artem): `stars` je Testimonial verifizieren]
+(abgeleitet als `totalReviewCount`, nie als Literal) · 5.000+ Downloads. **21 Einzel-Reviews (verbatim,
+beidsprachig) in `src/data/reviews.ts`** (`{ id, author, platform, rating, text:{de,en} }`); die drei
+5-Sterne-Ersten fließen als schema.org/Review ins JSON-LD. Maps-Rezensionslink: `googleMapsReviewsUrl`.
 
 **Preise:**
 - Gratis — „7 Tage kostenlos testen – kein Risiko" (0,00 €)
@@ -446,7 +451,10 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 ## Konventionen & Regeln
 
 - **Alle Texte** in i18n-Dateien (`src/i18n/de.ts` + `en.ts`), **nie** hart in Komponenten —
-  hält DE/EN synchron.
+  hält DE/EN synchron. **Bewusste Ausnahme:** die Review-Texte liegen beidsprachig in
+  `src/data/reviews.ts` (nicht in den i18n-Dateien), damit Zitat, Autor, Plattform und Sterne
+  eines Eintrags eine untrennbare Einheit bleiben und nie auseinanderlaufen. Der Google-Maps-
+  Rezensionslink ist ein Fakt und steht in `site.ts` (`googleMapsReviewsUrl`).
 - **Alle Produkt-Fakten** (Store-Links, Preise, Bewertungen, Portale) in `src/data/site.ts` —
   eine Quelle der Wahrheit.
 - **Bilder** immer über `astro:assets` / `<Image>` (WebP/AVIF, responsive).
@@ -487,7 +495,7 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - [x] Portal-Liste (10, mit Domains) in `site.ts` gepflegt; Anzahl wird abgeleitet
 - [x] Store-Badges DE + EN (`app-store-badge-{de,en}.svg` / `google-play-badge-{de,en}.svg`), sprachabhängig via `StoreBadges.astro`
 - [ ] Berliner-Zeitung-Quelle (Link) zur 43.000 / 30-Min / 288-Statistik
-- [x] Testimonials in `site.ts` (`testimonials`, 6 echte Store-Zitate, 2× `featured`) → Bewertungen-Sektion. Offen: `stars` je Eintrag von Artem verifizieren
+- [x] Reviews in `src/data/reviews.ts` (21 echte Store-/Maps-Zitate, DE/EN) → Bewertungen-Sektion
 - [ ] App-Icon (für die Hero-Notification-Karte)
 - [ ] GTM-Container-ID
 - [ ] Inhalte der Rechtsseiten (Impressum/Datenschutz/AGB)
