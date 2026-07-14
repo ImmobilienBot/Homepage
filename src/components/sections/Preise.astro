@@ -15,6 +15,7 @@ import { getLangFromUrl, useTranslations } from '../../i18n';
 import { pricing, firstMonthSuccessRate } from '../../data/site';
 import PillButton from '../ui/PillButton.astro';
 import QrCode from '../QrCode.astro';
+import StoreBadges from '../StoreBadges.astro';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -93,19 +94,23 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
           <sup class="pr2-fn"><a href="#quellen" aria-label={fnLabel}>2</a></sup>
         </p>
 
-        {/* QR nur Desktop (bestehende Desktop-only-Logik). */}
-        <div class="pr2-qr" data-pr2-reveal>
-          <QrCode
-            campaign="preise_cta"
-            caption={P.qrCaption}
-            size={88}
-            surface="white"
-            ariaLabel={
-              lang === 'en'
-                ? 'QR code: get the app — takes you to the right app store'
-                : 'QR-Code: App laden — führt zum passenden App-Store'
-            }
-          />
+        {/* App laden: QR (nur Desktop) + Store-Badges (immer). Mobile → nur Badges. */}
+        <div class="pr2-getapp" data-pr2-reveal>
+          <div class="pr2-qr">
+            <QrCode
+              campaign="preise_cta"
+              caption={P.qrCaption}
+              size={88}
+              surface="white"
+              ariaLabel={
+                lang === 'en'
+                  ? 'QR code: get the app — takes you to the right app store'
+                  : 'QR-Code: App laden — führt zum passenden App-Store'
+              }
+            />
+          </div>
+          {/* Tracking pro Platzierung: iOS ct=Homepage_Pricing · Android utm_content=pricing. */}
+          <StoreBadges position="Homepage_Pricing" androidPosition="pricing" class="pr2-badges" />
         </div>
       </div>
 
@@ -321,9 +326,19 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
   .pr2-fn a:focus-visible {
     text-decoration: underline;
   }
+  /* App-laden-Block: Badges immer, QR nur Desktop. */
+  .pr2-getapp {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 4px;
+  }
+  .pr2-badges {
+    --badge-h: 2.5rem;
+  }
   .pr2-qr {
     display: none;
-    margin-top: 4px;
   }
   @media (min-width: 960px) {
     .pr2-qr {

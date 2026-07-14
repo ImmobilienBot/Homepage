@@ -14,17 +14,19 @@ import AppStoreEn from '../assets/images/app-store-badge-en.svg';
 import GooglePlayEn from '../assets/images/google-play-badge-en.svg';
 
 interface Props {
-  /** CTA-Position für UTM/Tracking (site.ts → getStoreLinks). */
+  /** CTA-Position für UTM/Tracking (iOS `ct`; site.ts → getStoreLinks). */
   position?: string;
+  /** Abweichender Android-`utm_content` (sonst = position). */
+  androidPosition?: string;
   class?: string;
   /** Sprache überschreiben; sonst aus der URL. */
   lang?: Locale;
 }
 
-const { position = 'hero', class: cls = '', lang: langProp } = Astro.props;
+const { position = 'hero', androidPosition, class: cls = '', lang: langProp } = Astro.props;
 const lang: Locale = langProp ?? getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-const links = getStoreLinks(position);
+const links = getStoreLinks(position, androidPosition ?? position);
 
 const badgeByLang = {
   de: { apple: AppStoreDe, play: GooglePlayDe },

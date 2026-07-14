@@ -172,13 +172,16 @@ const Tag = isButton ? 'button' : 'a';
     pointer-events: none;
   }
 
-  /* Füll-Kreis — wächst exakt aus der Dot-Position (left:var(--dx)). */
+  /* Füll-Kreis — wächst exakt aus der Dot-Position (left:var(--dx)). Bewusst SEHR groß
+     (Radius weit über „Dot → fernste Ecke" hinaus), damit die geclippte Kreiskante weit
+     AUSSERHALB der Pille liegt → an den Enden bleiben KEINE schmalen Hintergrund-Säume
+     (Antialiasing). Nur transform (scale) animiert — kein clip-path (Guardrail). */
   .pill-btn::before {
     content: '';
     position: absolute;
     left: var(--dx);
     top: 50%;
-    width: 240%;
+    width: 340%;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     background: var(--fill);

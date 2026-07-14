@@ -65,13 +65,16 @@ export const storeLinks: StoreLinks = {
 /**
  * Store-Links für eine bestimmte CTA-Position erzeugen (steuert `ct` bei iOS
  * und `utm_content` bei Android). So bleibt das Tracking an einer Stelle.
+ * iOS und Android dürfen unterschiedliche Platzierungs-Keys tragen (Muster der
+ * Defaults: iOS „Homepage_Top", Android „home_top"); `androidPosition` fällt
+ * ansonsten auf `position` zurück.
  */
-export function getStoreLinks(position = 'home_top'): StoreLinks {
+export function getStoreLinks(position = 'home_top', androidPosition = position): StoreLinks {
   const ios = `https://apps.apple.com/de/app/apple-store/${IOS_APP_ID}?pt=${IOS_PT}&ct=${encodeURIComponent(
     position,
   )}&mt=8`;
   const androidReferrer = encodeURIComponent(
-    `utm_source=website&utm_medium=button&utm_campaign=homepage&utm_content=${position}`,
+    `utm_source=website&utm_medium=button&utm_campaign=homepage&utm_content=${androidPosition}`,
   );
   const android = `https://play.google.com/store/apps/details?id=${ANDROID_PACKAGE}&hl=de&referrer=${androidReferrer}`;
   return { ios, android };

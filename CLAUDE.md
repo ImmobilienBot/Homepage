@@ -96,6 +96,11 @@ Ordnung/Ruhe.
   Schrift). Markup: `.marker` › `.marker__bg` (aria-hidden) + `.marker__label`, sitzt IM `h1`/`h2`/`p`.
   Animierte Wipes fahren `.marker__bg` per GSAP herein (`scaleX 0→1`) und **führen `skewX:-8` in
   jedem `set`/`tween` mit**. Ohne JS / `prefers-reduced-motion` sofort voll sichtbar.
+  - **Marker-Overhang-Schutz (global):** Zeilenweise Headline-Reveals sitzen in
+    `overflow:hidden`-Mask-Wrappern; steht das markierte Wort am Zeilenrand, würde der seitliche
+    Skew-Overhang des `.marker__bg` geclippt. Fix an EINER Stelle (`global.css`): alle Zeilen-Mask-
+    Wrapper bekommen `padding-inline: .2em` mit kompensierender `margin-inline: -.2em` (Netto ±0).
+    Neue Mask-Wrapper dort in die Selektorliste aufnehmen.
 - **Nav-Links = „Marker-Nav"** (Header, `Header.astro`; CD S. 29 — der aktive Punkt trägt den
   Marker). Button-Typo: Roboto Black, `uppercase`, `.8rem`, Tracking `.05em`. Inaktiv `#666665`
   (≥ 4,5:1 auf `#f6f6f6` **und** `#eaebeb` — keine Opazität). Hover: dezenter grauer Marker-Wipe

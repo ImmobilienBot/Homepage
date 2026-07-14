@@ -147,6 +147,25 @@
 }
 
 /*
+  Marker-Overhang-Schutz (GLOBAL, eine Stelle): Zeilenweise Headline-Reveals sitzen in
+  `overflow:hidden`-Mask-Wrappern. Steht das markierte Wort am Zeilenrand, würde der
+  seitliche Skew-Overhang des `.marker__bg` (inset … -0.1em) vom Wrapper GECLIPPT.
+  Fix: horizontaler Einschub (padding-inline 0.2em) mit kompensierender negativer
+  margin-inline → Netto ±0 (Layout unverändert), der Overhang bleibt sichtbar. Gilt für
+  ALLE Zeilen-Masks der Seite. Sektionen mit eigenem (Astro-gescoptem, höher spezifischem)
+  Einschub — z. B. `.bw-mask`/`.faq-mask` mit 0.14em — behalten diesen; er reicht ebenso. */
+.line-mask,
+.pf-line-mask,
+.pr2-mask,
+.bw-mask,
+.ab-mask,
+.ft-mask,
+.faq-mask {
+  padding-inline: 0.2em;
+  margin-inline: -0.2em;
+}
+
+/*
   Eigener Cursor (Signature-Moment). Standardmäßig unsichtbar; erst wenn JS
   (nur bei pointer:fine + erlaubter Bewegung) die Klasse `has-custom-cursor`
   am <html> setzt, wird der native Cursor ausgeblendet und der Custom-Cursor

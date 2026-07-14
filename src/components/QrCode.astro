@@ -5,7 +5,8 @@
  * QR selbst kodiert die absolute URL (import.meta.env.SITE) → beim Domain-Launch
  * folgt er automatisch der site-Property in astro.config.
  *
- * ECC „H" (30 % Fehlerkorrektur) trägt das zentrale Bot-Icon (≤ 20 % der Breite).
+ * Exakt gerade (keine Rotation/kein Skew), OHNE eingebettetes Logo → ECC „M"
+ * (15 %) genügt für sauberes Scannen. Quiet-Zone = Padding der Kachel.
  * Nur Desktop einsetzen (Aufrufer gated hidden lg:block).
  */
 import QRCode from 'qrcode';
@@ -43,7 +44,7 @@ const encodeUrl = `${deployBaseUrl}${target}`;
 // keine Quiet-Zone im SVG (die gelbe Kachel liefert sie als padding).
 const qrSvg = await QRCode.toString(encodeUrl, {
   type: 'svg',
-  errorCorrectionLevel: 'H',
+  errorCorrectionLevel: 'M',
   margin: 0,
   color: { dark: '#3b3b3a', light: '#0000' },
 });
@@ -52,18 +53,6 @@ const qrSvg = await QRCode.toString(encodeUrl, {
 <a href={target} class:list={['qr', `qr--${surface}`, cls]} aria-label={ariaLabel} style={`--qr-size:${size}px`}>
   <span class="qr-tile">
     <span class="qr-svg" set:html={qrSvg}></span>
-    {/* Bot-Icon mittig auf gelbem Knockout-Quadrat (deckt die Module in der
-        Mitte; ECC H verkraftet das). Kopf #3b3b3a, Augen/Lächeln #fff03c. */}
-    <span class="qr-bot" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <line x1="12" y1="2.4" x2="12" y2="5.2" stroke="#3b3b3a" stroke-width="1.6" stroke-linecap="round" />
-        <circle cx="12" cy="2" r="1.7" fill="#3b3b3a" />
-        <rect x="4" y="5" width="16" height="15" rx="5" fill="#3b3b3a" />
-        <circle cx="9.2" cy="12" r="1.7" fill="#fff03c" />
-        <circle cx="14.8" cy="12" r="1.7" fill="#fff03c" />
-        <path d="M9 15.4c1 1.6 5 1.6 6 0" stroke="#fff03c" stroke-width="1.5" stroke-linecap="round" fill="none" />
-      </svg>
-    </span>
   </span>
   {caption && <span class="qr-caption">{caption}</span>}
 </a>
@@ -84,14 +73,10 @@ const qrSvg = await QRCode.toString(encodeUrl, {
     padding: clamp(8px, 11%, 12px); /* Quiet-Zone, skaliert mit der Kachelgröße */
     border-radius: 14px;
     background-color: var(--color-yellow);
-    transform: rotate(-3deg);
-    transition: transform 200ms ease-out;
+    /* Exakt gerade — keine Rotation/kein Skew (sauberes Scannen). */
   }
-  /* Weiße Variante (z. B. auf gelber Sektion): Kachel + Bot-Knockout in Off-White. */
+  /* Weiße Variante (z. B. auf gelber Sektion): Off-White-Kachel. */
   .qr--white .qr-tile {
-    background-color: var(--color-offwhite);
-  }
-  .qr--white .qr-bot {
     background-color: var(--color-offwhite);
   }
   .qr-svg {
@@ -102,41 +87,11 @@ const qrSvg = await QRCode.toString(encodeUrl, {
     width: 100%;
     height: auto;
   }
-  /* Bot-Icon: ≤ 20 % der QR-Breite, zentriert, auf gelbem Knockout-Quadrat. */
-  .qr-bot {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 22%;
-    aspect-ratio: 1;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    background-color: var(--color-yellow);
-  }
-  .qr-bot svg {
-    display: block;
-    width: 86%;
-    height: 86%;
-  }
   .qr-caption {
     max-width: 150px;
     font-size: 0.75rem;
     line-height: 1.4;
     text-align: center;
     color: rgb(59 59 58 / 0.7);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .qr:hover .qr-tile {
-      transform: rotate(0deg);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .qr-tile {
-      transition: none;
-    }
   }
 </style>
