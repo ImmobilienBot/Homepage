@@ -150,15 +150,17 @@
   Eigener Cursor (Signature-Moment). Standardmäßig unsichtbar; erst wenn JS
   (nur bei pointer:fine + erlaubter Bewegung) die Klasse `has-custom-cursor`
   am <html> setzt, wird der native Cursor ausgeblendet und der Custom-Cursor
-  sichtbar. Ring folgt verzögert, Punkt exakt (Ansteuerung in animations.ts).
+  sichtbar. Positionierung per gsap.quickTo (animations.ts).
 
-  KEIN mix-blend-mode (erzeugte über Gelb Farb-Artefakte).
-  Ruhezustand: Ring = dünne Kontur in CD-Schwarz (#3b3b3a), Punkt ebenfalls
-  in CD-Schwarz (#3b3b3a). Ring folgt leicht verzögert (quickTo ~0.15s), Punkt exakt.
-  Hover (a/button/[data-cursor]): Ring wird zu einer durchsichtigen Invert-Lupe
-  (~2×) — ohne Füllung, ohne Rand, ohne Punkt; backdrop-filter: invert(1)
-  grayscale(1) invertiert Button/Text darunter neutral (auch über Gelb).
-  Übergänge per GSAP (animations.ts).
+  KONZEPT: Alle drei Elemente (Punkt, Ring, Lupe) sind reine HELLIGKEITS-INVERT-
+  LINSEN — backdrop-filter: grayscale(1) invert(1) (erst grayscale, dann invert =
+  reine Luminanz-Inversion OHNE Farbstich; invert allein ergäbe auf Gelb einen blauen
+  Cursor). Kein background, kein border, KEIN mix-blend-mode. Dadurch auf jedem
+  Hintergrund (Grau, Dunkelgrau, Gelb, Weiß) sichtbar.
+
+  SCHÄRFE: Jedes Element in seiner GRÖSSTEN Zustandsgröße gebaut, Zustände nur über
+  scale ≤ 1 (nie darüber). KEIN will-change auf den Linsen (verhindert Re-
+  Rasterisierung → Kanten bleiben nach der Transition pixelscharf).
 */
 .cursor {
   opacity: 0;
@@ -177,36 +179,36 @@ html.has-custom-cursor textarea {
   cursor: text !important;
 }
 .cursor-ring,
-.cursor-dot {
+.cursor-dot,
+.cursor-lupe {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 9999;
   pointer-events: none;
-  border-radius: 9999px;
-  box-sizing: border-box;
-  will-change: transform;
+  border-radius: 50%;
+  /* Reine Luminanz-Invert-Linse (Reihenfolge zwingend: grayscale → invert). */
+  -webkit-backdrop-filter: grayscale(1) invert(1);
+  backdrop-filter: grayscale(1) invert(1);
+  /* KEIN will-change (Schärfe). */
 }
+/* Punkt (~10 px) — volle Linse. */
+.cursor-dot {
+  width: 10px;
+  height: 10px;
+}
+/* Ring (~30 px) — nur ein ~2 px breiter Linsen-Streifen via Maske (innen/außen frei). */
 .cursor-ring {
   width: 30px;
   height: 30px;
-  border: 2px solid #3b3b3a; /* dünne Kontur, CD-Schwarz */
-  background-color: rgb(59 59 58 / 0); /* Ruhezustand: keine Füllung */
+  -webkit-mask: radial-gradient(circle 15px at center, transparent 0 13px, #000 13px 15px, transparent 15px);
+  mask: radial-gradient(circle 15px at center, transparent 0 13px, #000 13px 15px, transparent 15px);
 }
-.cursor-dot {
-  width: 5px;
-  height: 5px;
-  background-color: #3b3b3a; /* CD-Schwarz — genauso dunkel wie der Ring */
-}
-/* In der dunklen Story-Sektion invertiert: Ring + Punkt auf Off-White, damit der
-   Custom-Cursor auf dem dunklen BG nicht untergeht. Toggle via `cursor-invert`
-   am <html> (animations.ts, pointerenter/leave der dunklen Sektion). `!important`
-   schlägt die inline-Farben, die GSAP im Ruhezustand setzt. */
-html.cursor-invert .cursor-ring {
-  border-color: #f6f6f6 !important;
-}
-html.cursor-invert .cursor-dot {
-  background-color: #f6f6f6 !important;
+/* Lupe (Hover) — volle native Größe (68 px). Ruhezustand opacity 0 + scale 0.6
+   (per GSAP), Hover → opacity 1 + scale 1.0 (nie > 1). */
+.cursor-lupe {
+  width: 68px;
+  height: 68px;
 }
 /* Mitlaufendes Pill-Label (Osmo-Referenz): über Store-Badges läuft es NEBEN dem
    kleinen dunklen Cursor-Punkt mit (Ring/Lupe aus, Punkt bleibt sichtbar).

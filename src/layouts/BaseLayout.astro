@@ -137,9 +137,12 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
         Nur aktiv bei (pointer:fine) und ohne prefers-reduced-motion — wird per
         JS in animations.ts angesteuert; sonst nativer Cursor. */}
     <div class="cursor" aria-hidden="true">
+      {/* Alle drei sind reine Helligkeits-Invert-Linsen (grayscale→invert), auf jedem
+          Hintergrund sichtbar. Lupe = Hover-Zustand in voller nativer Größe. */}
+      <div class="cursor-lupe" data-cursor-lupe></div>
       <div class="cursor-ring" data-cursor-ring></div>
       <div class="cursor-dot" data-cursor-dot></div>
-      {/* Mitlaufendes Pill-Label (z. B. über Store-Badges statt Invert-Lupe) */}
+      {/* Mitlaufendes gelbes Pill-Label (Store-Badges) — KEINE Linse, unverändert. */}
       <div class="cursor-label" data-cursor-label-el></div>
     </div>
 

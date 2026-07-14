@@ -459,30 +459,36 @@ function initHeroCanvas() {
 
 /**
  * Eigener Cursor (Signature-Moment) — nur bei pointer:fine.
- *  - Ruhezustand: dünne Kontur (#3b3b3a) folgt leicht verzögert (quickTo 0.15s),
- *    dunkler Punkt (#3b3b3a) exakt.
- *  - Über a/button/[data-cursor]: durchsichtige Invert-Lupe (~2×, backdrop-filter
- *    invert+grayscale, ohne Füllung/Rand/Punkt).
- *  - Über [data-cursor-label] (Store-Badges): Invert-Lupe UND zusätzlich das
- *    mitlaufende gelbe Pill-Label — GLEICHZEITIG.
- * Übergänge per GSAP. KEIN mix-blend.
+ *  - Punkt (~10 px) + Ring (~30 px, maskiert) sind durchgängig HELLIGKEITS-INVERT-
+ *    LINSEN (CSS: backdrop-filter grayscale→invert) → auf jedem Hintergrund sichtbar.
+ *  - Über a/button/[data-cursor]: die Lupe (volle native Größe 68 px, gleiche Linse)
+ *    blendet ein (opacity 0→1, scale 0.6→1.0), Ring + Punkt blenden aus.
+ *  - Über [data-cursor-label] (Store-Badges): zusätzlich das mitlaufende gelbe Pill-
+ *    Label (KEINE Linse). Übergänge per GSAP; KEIN mix-blend, KEINE Fremdfarben.
+ *  Schärfe: Elemente in größter Zustandsgröße gebaut, Zustände nur via scale ≤ 1;
+ *  kein will-change (CSS). Positionierung via gsap.quickTo.
  */
 function initCursor() {
   if (!window.matchMedia('(pointer: fine)').matches) return;
   const ring = document.querySelector<HTMLElement>('[data-cursor-ring]');
   const dot = document.querySelector<HTMLElement>('[data-cursor-dot]');
+  const lupe = document.querySelector<HTMLElement>('[data-cursor-lupe]');
   const label = document.querySelector<HTMLElement>('[data-cursor-label-el]');
-  if (!ring || !dot) return;
+  if (!ring || !dot || !lupe) return;
 
   document.documentElement.classList.add('has-custom-cursor');
-  gsap.set([ring, dot], { xPercent: -50, yPercent: -50 });
+  gsap.set([ring, dot, lupe], { xPercent: -50, yPercent: -50 });
+  // Lupe ruht unsichtbar + geschrumpft (nur via scale ≤ 1, nie darüber).
+  gsap.set(lupe, { autoAlpha: 0, scale: 0.6 });
   if (label) gsap.set(label, { xPercent: -50, yPercent: -50 });
 
-  // Ring: leichte, direkte Verzögerung. Punkt: quasi exakt. Label folgt wie der Ring.
-  const ringX = gsap.quickTo(ring, 'x', { duration: 0.15, ease: 'power3' });
-  const ringY = gsap.quickTo(ring, 'y', { duration: 0.15, ease: 'power3' });
+  // Punkt quasi exakt; Ring + Lupe leicht verzögert (weiches Nachlaufen).
   const dotX = gsap.quickTo(dot, 'x', { duration: 0.05, ease: 'power2' });
   const dotY = gsap.quickTo(dot, 'y', { duration: 0.05, ease: 'power2' });
+  const ringX = gsap.quickTo(ring, 'x', { duration: 0.15, ease: 'power3' });
+  const ringY = gsap.quickTo(ring, 'y', { duration: 0.15, ease: 'power3' });
+  const lupeX = gsap.quickTo(lupe, 'x', { duration: 0.15, ease: 'power3' });
+  const lupeY = gsap.quickTo(lupe, 'y', { duration: 0.15, ease: 'power3' });
   const labelX = label ? gsap.quickTo(label, 'x', { duration: 0.15, ease: 'power3' }) : null;
   const labelY = label ? gsap.quickTo(label, 'y', { duration: 0.15, ease: 'power3' }) : null;
 
@@ -493,6 +499,8 @@ function initCursor() {
       dotY(e.clientY);
       ringX(e.clientX);
       ringY(e.clientY);
+      lupeX(e.clientX);
+      lupeY(e.clientY);
       if (labelX && labelY) {
         labelX(e.clientX);
         labelY(e.clientY + 24); // Pille knapp unter dem Zeiger
@@ -501,27 +509,14 @@ function initCursor() {
     { passive: true },
   );
 
-  const LENS = 'invert(1) grayscale(1)';
-  const setFilter = (v: string) => {
-    ring.style.backdropFilter = v;
-    (ring.style as unknown as { webkitBackdropFilter: string }).webkitBackdropFilter = v;
-  };
-
-  let hovering: Element | null = null;
-
-  // Lupe für ALLE interaktiven Elemente; das gelbe Label zusätzlich, wenn das
-  // Element ein data-cursor-label trägt (Store-Badges). Beide gleichzeitig aktiv.
+  // Hover: Lupe ein (scale exakt 1.0), Ring + Punkt aus. Rest: umgekehrt.
   const setState = (interactive: boolean, labelText: string | null) => {
     if (interactive) {
-      setFilter(LENS);
-      gsap.to(ring, { autoAlpha: 1, scale: 2, borderColor: 'rgba(59,59,58,0)', backgroundColor: 'rgba(59,59,58,0)', duration: 0.25, ease: 'power3', overwrite: 'auto' });
-      gsap.to(dot, { autoAlpha: 0, duration: 0.15, overwrite: 'auto' });
+      gsap.to([ring, dot], { autoAlpha: 0, duration: 0.2, ease: 'power3', overwrite: 'auto' });
+      gsap.to(lupe, { autoAlpha: 1, scale: 1, duration: 0.28, ease: 'power3', overwrite: 'auto' });
     } else {
-      gsap.to(ring, {
-        autoAlpha: 1, scale: 1, borderColor: 'rgba(59,59,58,1)', duration: 0.25, ease: 'power3', overwrite: 'auto',
-        onComplete: () => { if (!hovering) setFilter('none'); }, // Lupe nach Ausklang entfernen
-      });
-      gsap.to(dot, { autoAlpha: 1, duration: 0.25, overwrite: 'auto' });
+      gsap.to([ring, dot], { autoAlpha: 1, duration: 0.2, ease: 'power3', overwrite: 'auto' });
+      gsap.to(lupe, { autoAlpha: 0, scale: 0.6, duration: 0.25, ease: 'power3', overwrite: 'auto' });
     }
     if (label) {
       if (labelText != null) {
@@ -534,10 +529,13 @@ function initCursor() {
   };
 
   // Über Textfeldern (Kontaktformular) den Custom-Cursor AUSblenden und den nativen
-  // Text-Caret zeigen (CSS: cursor:text) — sonst behindert die Lupe die Caret-Setzung.
+  // Text-Caret zeigen (CSS: cursor:text) — sonst behindert die Linse die Caret-Setzung.
   const setTextField = (on: boolean) => {
     gsap.to([ring, dot], { autoAlpha: on ? 0 : 1, duration: 0.15, overwrite: 'auto' });
+    if (on) gsap.to(lupe, { autoAlpha: 0, scale: 0.6, duration: 0.15, overwrite: 'auto' });
   };
+
+  let hovering: Element | null = null;
 
   const selLabel = '[data-cursor-label]';
   // Text-Eingaben: nativer Caret (Radios/Checkboxen/versteckte Felder ausgenommen).
@@ -569,18 +567,8 @@ function initCursor() {
     setState(false, null);
   });
 
-  // Invert-Zustand in dunklen Zonen (Problem-3c, Kontakt-Sektion, Danke-Seiten):
-  // Ring + Punkt auf Off-White, damit der Cursor auf dunklem BG nicht untergeht
-  // (CSS: html.cursor-invert). pointerenter/leave bubbeln nicht → sauberer Wechsel
-  // an der Zonengrenze.
-  document.querySelectorAll<HTMLElement>('.problem3c, [data-cursor-dark]').forEach((zone) => {
-    zone.addEventListener('pointerenter', () =>
-      document.documentElement.classList.add('cursor-invert'),
-    );
-    zone.addEventListener('pointerleave', () =>
-      document.documentElement.classList.remove('cursor-invert'),
-    );
-  });
+  // Hinweis: Die frühere „cursor-invert"-Umfärbung dunkler Zonen entfällt — die
+  // Linsen-Cursor sind auf jedem Hintergrund (auch Dunkelgrau/Gelb) sichtbar.
 }
 
 /**
