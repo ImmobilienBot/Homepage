@@ -10,11 +10,15 @@
  *   Header-Spans unverändert auf.
  * - Touch: durch @media(hover:hover) kein Hover-Effekt; :active gibt Feedback.
  * - prefers-reduced-motion: Füll-Kreis aus, Hover = harter Zustandswechsel.
- * - Custom-Cursor: rendert ein <a> → die Invert-Lupe dockt automatisch an
- *   (kein Extra-Hook nötig).
+ * - Custom-Cursor: rendert ein <a>/<button> → die Invert-Lupe dockt automatisch an
+ *   (kein Extra-Hook nötig; `button` ist im Cursor-Selektor enthalten).
+ * - Form-Submit: `type="submit"` (o. `"button"`/`"reset"`) rendert statt `<a>` ein
+ *   echtes `<button>` (href entfällt); alle Klassen/Slots/States bleiben identisch.
  */
 interface Props {
-  href: string;
+  href?: string;
+  /** Wird gesetzt → rendert <button type> statt <a> (Form-Submit). */
+  type?: 'submit' | 'button' | 'reset';
   size?: 'sm' | 'md';
   surface?: 'light' | 'dark' | 'yellow' | 'invert';
   icon?: 'bolt' | 'arrow-down' | 'arrow-right' | 'check';
@@ -28,6 +32,7 @@ interface Props {
 
 const {
   href,
+  type,
   size = 'md',
   surface = 'light',
   icon,
@@ -36,9 +41,12 @@ const {
   class: className = '',
   ...rest
 } = Astro.props;
+
+const isButton = !!type;
+const Tag = isButton ? 'button' : 'a';
 ---
 
-<a
+<Tag
   class:list={[
     'pill-btn',
     `pill-btn--${size}`,
@@ -47,7 +55,8 @@ const {
     pulse && 'pill-btn--pulse',
     className,
   ]}
-  href={href}
+  href={isButton ? undefined : href}
+  type={isButton ? type : undefined}
   {...rest}
 >
   <span class="pill-btn__dot" aria-hidden="true"></span>
@@ -129,7 +138,7 @@ const {
       )
     }
   </span>
-</a>
+</Tag>
 
 <style>
   .pill-btn {
@@ -139,17 +148,28 @@ const {
     display: inline-flex;
     align-items: center;
     gap: 12px;
+    border: 0; /* Reset für den <button>-Modus (Form-Submit) */
     border-radius: 999px;
     background: #fff03c;
     color: #3b3b3a;
     font-family: var(--font-sans);
+    font-size: 15px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     white-space: nowrap;
     text-decoration: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
     overflow: hidden;
     isolation: isolate; /* isolate = Safari-Clipping-Fix bei radius + transform */
+  }
+  /* Disabled (JS setzt es während des Sendens) — gedämpft, nicht klickbar. */
+  .pill-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+    pointer-events: none;
   }
 
   /* Füll-Kreis — wächst exakt aus der Dot-Position (left:var(--dx)). */

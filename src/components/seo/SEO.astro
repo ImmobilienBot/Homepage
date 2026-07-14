@@ -9,6 +9,7 @@
  */
 import {
   site,
+  contact,
   storeLinks,
   aggregateRating,
   pricing,
@@ -99,7 +100,13 @@ const jsonLd = {
       '@type': 'Organization',
       name: site.name,
       url: site.url,
-      email: site.email,
+      email: contact.email,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: contact.email,
+        availableLanguage: ['German', 'English'],
+      },
     },
     {
       '@type': 'WebSite',

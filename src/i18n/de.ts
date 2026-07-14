@@ -422,7 +422,62 @@ export const de = {
         },
       ],
     },
-    contact: { title: 'Kontakt' },
+    // Kontakt-Sektion (#kontakt, dunkel, geht in den Footer über). „Push-Karte"-
+    // Rollentausch: hier schickt der Nutzer uns eine Nachricht. Alle Texte hier —
+    // Fakten (E-Mail/Telegram/Instagram) kommen aus site.ts (contact). Der
+    // Datenschutz-Link steckt als {link} in der DSGVO-Zeile, {email} = Kontaktadresse.
+    contact: {
+      title: 'Kontakt',
+      kicker: 'Kontakt',
+      headline: 'Fragen? Feedback? Dir fehlt eine Funktion?',
+      headlineMark: 'Funktion',
+      copy: 'Melde dich einfach – wir sind für dich da und lesen jede Nachricht persönlich. Du entscheidest, wie du uns erreichst.',
+      channels: {
+        email: 'E-Mail',
+        telegram: 'Telegram',
+        telegramSub: 'Support-Kanal der App',
+        instagram: 'Instagram',
+        instagramSub: '@immobilienbot',
+      },
+      card: {
+        app: 'Immobilien Bot',
+        sub: 'Deine Nachricht an uns',
+        time: 'jetzt',
+        iconAlt: 'App-Icon Immobilien Bot',
+      },
+      form: {
+        topicLegend: 'Worum geht’s?',
+        topics: {
+          app: 'Frage zur App',
+          feedback: 'Feedback',
+          problem: 'Problem melden',
+          presse: 'Presse & Kooperation',
+          sonstiges: 'Sonstiges',
+        },
+        name: 'Name',
+        namePlaceholder: 'Max Mustermann',
+        email: 'E-Mail',
+        emailPlaceholder: 'max@mail.de',
+        message: 'Nachricht',
+        messagePlaceholder: 'Was können wir für dich tun?',
+        submit: 'Nachricht senden',
+        sending: 'Wird gesendet…',
+        privacy: 'Deine Angaben nutzen wir nur, um deine Anfrage zu beantworten. Mehr dazu in der {link}.',
+        privacyLink: 'Datenschutzerklärung',
+      },
+      success: {
+        title: 'Nachricht ist raus!',
+        copy: 'Wir melden uns so schnell wie möglich bei dir.',
+        again: 'Weitere Nachricht schreiben',
+      },
+      // {email} = site.contact.email (als mailto interpoliert).
+      error: 'Das hat leider nicht geklappt. Schreib uns direkt an {email}.',
+      thanks: {
+        metaTitle: 'Nachricht gesendet – Immobilien Bot',
+        metaDescription: 'Danke für deine Nachricht an Immobilien Bot. Wir melden uns so schnell wie möglich bei dir.',
+        back: 'Zurück zur Startseite',
+      },
+    },
     finalCta: { title: 'Deine nächste Wohnung wartet nicht.' },
   },
 

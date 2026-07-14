@@ -258,7 +258,17 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
    Downloads) — nichts hart in i18n. **FAQPage-JSON-LD** aus DERSELBEN i18n-Struktur (kein Duplikat-
    Text); der SEO-Audit (S15) prüft, dass Anzahl + Wortlaut der Questions exakt den `<summary>`-
    Texten entsprechen. (Conversion + SEO/GEO)
-10. **Kontakt** — kompakte Sektion unten.
+10. **Kontakt** (#kontakt, dunkle Sektion #3b3b3a, geht nahtlos in den Footer über) — Rollentausch:
+    die Seite über pusht der Bot dem Nutzer Angebote, hier schickt der Nutzer uns eine Nachricht,
+    gerahmt als „Push-Karte" (Sprache aus Hero/Portale). Links Kicker/H2 (Marker auf „Funktion")/
+    Copy + Kanalliste (E-Mail · Telegram · Instagram, aus `site.ts` `contact`). Rechts das Formular
+    (Themen-Chips als Radios, Name/E-Mail/Nachricht, Honeypot, Hidden `lang`) — **ohne JS voll
+    nutzbar** (natives `POST /api/contact` → Function antwortet 303 auf `/danke` bzw. `/en/thanks`).
+    Mit JS: fetch mit `Accept: application/json`, Pending-/Success-/Error-States (Success blendet den
+    Formularbereich aus; „Weitere Nachricht" setzt zurück). Endpoint: `functions/api/contact.ts`
+    (Resend). Cursor: Lupe über Interaktiven, Text-Caret über Feldern, Ring auf Dunkel via
+    `data-cursor-dark` → `html.cursor-invert`. Danke-Seiten (`src/pages/danke.astro`,
+    `src/pages/en/thanks.astro`) sind `noindex` + aus der Sitemap gefiltert.
 11. **Finaler CTA** — „Deine nächste Wohnung wartet nicht." Store-Badges + **QR-Code (nur Desktop)**.
 12. **Footer** — Impressum · Datenschutz · AGB · Kontakt · Sprachumschalter DE/EN · Store-Badges.
     Juris Bot-Seiten hier dezent verlinkbar.
@@ -446,8 +456,16 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - **Mobile-first**; mobiler Lighthouse-Score ~100 halten (Animationen mit Performance-Budget).
 - **`prefers-reduced-motion`** respektieren (Animationen reduzieren/abschalten).
 - **Secrets:** GTM-ID darf ins Repo (öffentlich). Echte Keys/Tokens **nie** ins Repo — in
-  Cloudflare-Environment-Variablen.
-- **Static bleiben** (SSG); kein Server-Runtime nötig (client-seitiges JS für `/go/app` ist ok).
+  Cloudflare-Environment-Variablen. Env-Variablen des Kontaktformulars (nur in Cloudflare):
+  - `RESEND_API_KEY` — **Secret**, Pflicht. Nur in Cloudflare, nie im Repo (auch kein Fragment).
+    Die Function liest ihn ausschließlich aus `env`.
+  - `CONTACT_TO` — Empfänger des Formulars. **Testphase:** per Code-Fallback
+    `socialmedia@immobilien-bot.de`. **Launch:** in Cloudflare auf `mail@immobilien-bot.de` setzen.
+  - `CONTACT_FROM` — Absender. Fallback = Resend-Sandbox `onboarding@resend.dev`. **Launch** (nach
+    Domain-Verifizierung bei Resend): `'Immobilien Bot <kontakt@immobilien-bot.de>'`.
+- **Static bleiben** (SSG). **Einzige Server-Ausnahme:** Cloudflare Pages Functions unter
+  `functions/` für den Formular-Endpoint `/api/contact` (Resend-REST-API per `fetch`, **keine**
+  weiteren Runtime-Abhängigkeiten). Client-seitiges JS für `/go/app` ist ok.
 - **Auto-Commit & -Push:** Nach jeder abgeschlossenen Aufgabe und **erfolgreichem `npm run build`**
   alle Änderungen mit kurzer, beschreibender Commit-Message committen und auf `main` pushen
   (Cloudflare deployt automatisch). **Nur bei grünem Build pushen** — schlägt der Build fehl, erst

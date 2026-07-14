@@ -1,0 +1,71 @@
+---
+/**
+ * /danke — No-JS-Erfolgspfad des Kontaktformulars (DE). Die Pages Function leitet
+ * nach erfolgreichem Versand per 303 hierher. noindex (Zustands-Seite, kein Inhalt
+ * für den Index) + aus der Sitemap gefiltert (astro.config).
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import { useTranslations } from '../i18n';
+import PillButton from '../components/ui/PillButton.astro';
+import appIcon from '../assets/images/immobilien-bot-app-icon.png';
+
+const t = useTranslations('de');
+const C = t.sections.contact;
+---
+
+<BaseLayout title={C.thanks.metaTitle} description={C.thanks.metaDescription} noindex>
+  <section class="danke" data-cursor-dark>
+    <span class="danke-badge" aria-hidden="true">
+      <Image src={appIcon} alt="" width={96} height={96} class="danke-icon" />
+    </span>
+    <h1 class="danke-title">{C.success.title}</h1>
+    <p class="danke-copy">{C.success.copy}</p>
+    <PillButton href="/" surface="dark" size="md" icon="arrow-right">{C.thanks.back}</PillButton>
+  </section>
+</BaseLayout>
+
+<style>
+  .danke {
+    background-color: var(--color-black);
+    color: var(--color-offwhite);
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+  }
+  .danke-badge {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 999px;
+    background: var(--color-yellow);
+    margin-bottom: 6px;
+  }
+  .danke-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+  }
+  .danke-title {
+    margin: 0;
+    font-weight: 900;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--color-offwhite);
+  }
+  .danke-copy {
+    margin: 0 0 8px;
+    max-width: 42ch;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    line-height: 1.5;
+    color: var(--color-darkgrey);
+  }
+</style>

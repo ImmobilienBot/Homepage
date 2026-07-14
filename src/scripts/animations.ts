@@ -533,14 +533,26 @@ function initCursor() {
     }
   };
 
+  // Über Textfeldern (Kontaktformular) den Custom-Cursor AUSblenden und den nativen
+  // Text-Caret zeigen (CSS: cursor:text) — sonst behindert die Lupe die Caret-Setzung.
+  const setTextField = (on: boolean) => {
+    gsap.to([ring, dot], { autoAlpha: on ? 0 : 1, duration: 0.15, overwrite: 'auto' });
+  };
+
   const selLabel = '[data-cursor-label]';
-  const selLens = 'a, button, [data-cursor], input, textarea, select, label, summary';
-  const selAll = `${selLabel}, ${selLens}`;
+  // Text-Eingaben: nativer Caret (Radios/Checkboxen/versteckte Felder ausgenommen).
+  const selText = 'input:not([type=radio]):not([type=checkbox]):not([type=hidden]), textarea';
+  const selLens = 'a, button, [data-cursor], select, label, summary';
+  const selAll = `${selLabel}, ${selText}, ${selLens}`;
 
   document.addEventListener('mouseover', (e) => {
     const el = (e.target as Element).closest?.(selAll);
     if (!el || el === hovering) return;
     hovering = el;
+    if (el.matches(selText)) {
+      setTextField(true);
+      return;
+    }
     const labelText = el.closest(selLabel)?.getAttribute('data-cursor-label') ?? null;
     setState(true, labelText);
   });
@@ -550,21 +562,25 @@ function initCursor() {
     const related = (e as MouseEvent).relatedTarget as Node | null;
     if (related && el.contains(related)) return; // noch im selben Element
     hovering = null;
+    if (el.matches(selText)) {
+      setTextField(false);
+      return;
+    }
     setState(false, null);
   });
 
-  // Invert-Zustand in der dunklen Problem-Sektion (3c): Ring + Punkt auf Off-White,
-  // damit der Cursor auf dunklem BG nicht untergeht (CSS: html.cursor-invert).
-  // pointerenter/leave bubbeln nicht → sauberer Wechsel an der Sektionsgrenze.
-  const darkSection = document.querySelector<HTMLElement>('.problem3c');
-  if (darkSection) {
-    darkSection.addEventListener('pointerenter', () =>
+  // Invert-Zustand in dunklen Zonen (Problem-3c, Kontakt-Sektion, Danke-Seiten):
+  // Ring + Punkt auf Off-White, damit der Cursor auf dunklem BG nicht untergeht
+  // (CSS: html.cursor-invert). pointerenter/leave bubbeln nicht → sauberer Wechsel
+  // an der Zonengrenze.
+  document.querySelectorAll<HTMLElement>('.problem3c, [data-cursor-dark]').forEach((zone) => {
+    zone.addEventListener('pointerenter', () =>
       document.documentElement.classList.add('cursor-invert'),
     );
-    darkSection.addEventListener('pointerleave', () =>
+    zone.addEventListener('pointerleave', () =>
       document.documentElement.classList.remove('cursor-invert'),
     );
-  }
+  });
 }
 
 /**
@@ -1525,6 +1541,36 @@ function initFaq() {
 }
 
 /**
+ * Kontakt-Sektion: ruhiger Entry-Reveal (once:true). Linke Spalte (Kicker → H2 →
+ * Copy → Kanäle) gestaffelt, Karte kurz danach. Startzustände NUR per gsap.set
+ * (ohne JS / reduced-motion alles im Endzustand — Formular bleibt bedienbar). Nur
+ * transform/opacity; clearProps:'transform' danach (Hover-/Fokus-Konflikte).
+ */
+function initKontakt() {
+  const section = document.querySelector<HTMLElement>('#kontakt');
+  if (!section) return;
+  // Late-Setup-Garde (Trigger 'top 82%'): schon an/über der Startlinie → keine
+  // Startzustände, kein Trigger; Sektion bleibt im natürlichen (sichtbaren) Endzustand.
+  if (isPastRevealStart(section, 0.82)) return;
+
+  const lefts = gsap.utils.toArray<HTMLElement>('#kontakt [data-k-reveal]');
+  const card = section.querySelector<HTMLElement>('[data-k-card]');
+  const clearTargets = [...lefts, ...(card ? [card] : [])];
+
+  if (lefts.length) gsap.set(lefts, { autoAlpha: 0, y: 24 });
+  if (card) gsap.set(card, { autoAlpha: 0, y: 32 });
+
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: section, start: 'top 82%', once: true },
+    defaults: { ease: 'power2.out' },
+  });
+  if (lefts.length) tl.to(lefts, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.08 }, 0);
+  if (card) tl.to(card, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.15);
+  // clearProps NACH dem Reveal → Inline-Transform weg (Hover-/Fokus-States frei).
+  if (clearTargets.length) tl.set(clearTargets, { clearProps: 'transform' });
+}
+
+/**
  * Sprach-Kachel: Globus als Lottie (dieselbe Player-Lösung wie die Problem-
  * Sektion → gemeinsamer lottie_light-Chunk, kein zweites Runtime-Bundle). Instanz
  * erst laden, wenn die Kachel den Viewport betritt (IntersectionObserver),
@@ -1989,6 +2035,7 @@ runIdle(() => {
     safeInit('Bewertungen', () => initBewertungen());
     safeInit('Preise', () => initPreise());
     safeInit('Faq', () => initFaq());
+    safeInit('Kontakt', () => initKontakt());
     safeInit('Reveals', () => initReveals());
   }
   safeInit('Features', () => initFeatures());

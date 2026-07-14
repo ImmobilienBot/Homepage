@@ -30,8 +30,10 @@ export default defineConfig({
 
   integrations: [
     sitemap({
-      // /go/app ist eine sprachneutrale Redirect-Weiche (noindex) → nicht in die Sitemap.
-      filter: (page) => !page.includes('/go/'),
+      // Aus der Sitemap ausschließen: /go/app (Redirect-Weiche) sowie die noindex-
+      // Danke-Seiten des Kontaktformulars (/danke, /en/thanks — Zustands-Seiten).
+      filter: (page) =>
+        !page.includes('/go/') && !page.includes('/danke') && !page.includes('/thanks'),
       i18n: {
         defaultLocale: 'de',
         locales: {

@@ -24,6 +24,21 @@ export const site = {
 export type Locale = (typeof site.locales)[number];
 
 /* ------------------------------------------------------------------ */
+/* Kontakt — ÖFFENTLICHE Kanäle (sichtbar, JSON-LD, llms.txt)          */
+/* ------------------------------------------------------------------ */
+/**
+ * Öffentliche Kontaktadresse + Social-Kanäle. Der Formular-EMPFÄNGER ist bewusst
+ * NICHT hier: er lebt (Testphase!) als Env-Variable `CONTACT_TO` bzw. Code-Fallback
+ * ausschließlich in der Pages Function `functions/api/contact.ts`. Hier stehen nur
+ * öffentliche Fakten. Facts-Sync prüft `email` gegen HTML/JSON-LD/llms.txt.
+ */
+export const contact = {
+  email: 'mail@immobilien-bot.de',
+  telegramSupport: 'https://t.me/ImmobilienBot_support',
+  instagram: 'https://www.instagram.com/immobilienbot/',
+} as const;
+
+/* ------------------------------------------------------------------ */
 /* Store-Links  (UTM/Tracking zentral — pro CTA-Position anpassbar)   */
 /* ------------------------------------------------------------------ */
 /**

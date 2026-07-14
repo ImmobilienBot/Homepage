@@ -170,6 +170,12 @@ html.has-custom-cursor,
 html.has-custom-cursor * {
   cursor: none !important;
 }
+/* Ausnahme: über Textfeldern nativen Text-Caret zeigen (Custom-Cursor wird per JS
+   ausgeblendet, animations.ts). Höhere Spezifität schlägt die none-Regel oben. */
+html.has-custom-cursor input:not([type='radio']):not([type='checkbox']):not([type='hidden']),
+html.has-custom-cursor textarea {
+  cursor: text !important;
+}
 .cursor-ring,
 .cursor-dot {
   position: fixed;
