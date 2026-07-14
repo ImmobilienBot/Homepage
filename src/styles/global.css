@@ -218,12 +218,14 @@ html.has-custom-cursor textarea {
   width: 20px;
   height: 20px;
 }
-/* Ring — Build 60 px (Ring-Streifen 4 px), per scale 0.5 auf ~30 px / 2-px-Streifen. */
+/* Ring — Build 60 px (Ring-Streifen ~3 px), per scale 0.5 auf ~30 px sichtbar. Jede
+   Streifen-Kante hat eine 1-px-Feather-Rampe (Build-Pixel) statt harter Stopps → der
+   Rasterizer glättet, der Kreis wirkt rund statt facettiert (bei scale 0.5 = 0.5px AA). */
 .cursor-ring {
   width: 60px;
   height: 60px;
-  -webkit-mask: radial-gradient(circle 30px at center, transparent 0 26px, #000 26px 30px, transparent 30px);
-  mask: radial-gradient(circle 30px at center, transparent 0 26px, #000 26px 30px, transparent 30px);
+  -webkit-mask: radial-gradient(circle 30px at center, transparent 0 25px, #000 26px 29px, transparent 30px);
+  mask: radial-gradient(circle 30px at center, transparent 0 25px, #000 26px 29px, transparent 30px);
 }
 /* Lupe (Hover) — Build 120 px; Ruhe scale 0.3, Hover scale 0.5 (~60 px sichtbar,
    immer heruntergerechnet → scharf). Nie > 0.5. */

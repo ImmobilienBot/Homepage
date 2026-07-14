@@ -144,6 +144,10 @@ const Tag = isButton ? 'button' : 'a';
   .pill-btn {
     --fill: #3b3b3a;
     --htx: #fff03c;
+    /* Dauer der Dot-Fill-Expansion — EINE Quelle für ::before UND den BG-Swap, damit
+       beide nie auseinanderlaufen. --bg-delay wird im Hover auf --fill-duration gesetzt. */
+    --fill-duration: 450ms;
+    --bg-delay: 0ms;
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -164,6 +168,13 @@ const Tag = isButton ? 'button' : 'a';
     appearance: none;
     overflow: hidden;
     isolation: isolate; /* isolate = Safari-Clipping-Fix bei radius + transform */
+    /* background-color: springt (0s), aber VERZÖGERT um --bg-delay → im Hover erst,
+       wenn die Füllung die Kante erreicht (kein zweiter Layer schimmert durch = kein
+       Saum); beim Unhover delay 0 → BG springt sofort zurück. box-shadow für --yellow-
+       Kontur + :focus-visible-Ring. */
+    transition:
+      background-color 0s linear var(--bg-delay),
+      box-shadow 250ms ease;
   }
   /* Disabled (JS setzt es während des Sendens) — gedämpft, nicht klickbar. */
   .pill-btn:disabled {
@@ -186,7 +197,7 @@ const Tag = isButton ? 'button' : 'a';
     border-radius: 50%;
     background: var(--fill);
     transform: translate(-50%, -50%) scale(0);
-    transition: transform 450ms cubic-bezier(0.65, 0, 0.35, 1);
+    transition: transform var(--fill-duration) cubic-bezier(0.65, 0, 0.35, 1);
   }
 
   .pill-btn__dot {
@@ -251,9 +262,10 @@ const Tag = isButton ? 'button' : 'a';
     --htx: #3b3b3a;
   }
   .pill-btn--yellow {
-    /* nur auf gelben Flächen: dünne Kontur im Ruhezustand, sonst unsichtbar */
+    /* nur auf gelben Flächen: dünne Kontur im Ruhezustand, sonst unsichtbar.
+       (Die box-shadow-Transition kommt aus der Basis — nicht erneut setzen, sonst
+       überschreibt sie die background-color-Transition des BG-Swaps.) */
     box-shadow: inset 0 0 0 1.5px #3b3b3a;
-    transition: box-shadow 250ms ease;
   }
   /* Invertiert: dunkle Pille, gelber Text/Dot; Hover flutet GELB, Text → #3b3b3a
      (für gelbe Flächen — der gelbe Standard-Button wäre dort unsichtbar). */
@@ -313,15 +325,13 @@ const Tag = isButton ? 'button' : 'a';
       opacity: 1;
       transform: none;
     }
-    /* Deckt den 1px-Antialiasing-Saum an der gerundeten Clip-Kante (der geclippte,
-       eigenständig komponierte Füll-Layer lässt sonst 1px des Button-Hintergrunds
-       durchschimmern — auf dunklen Flächen als grauer Haarstrich sichtbar). Ein
-       1.5px-Innenschimmer in der Füllfarbe deckt ihn ab; VERZÖGERT (0s @440ms), damit
-       während des Wachsens kein Ring aufblitzt — er erscheint erst, wenn die Füllung
-       die Kante erreicht hat. Gilt für alle Surfaces (Füllfarbe = var(--fill)). */
+    /* BG-Swap gegen den 1px-AA-Saum an der Clip-Kante: Sobald die Füllung die Kante
+       erreicht (Delay = --fill-duration), IST der Button-Hintergrund die Füllfarbe →
+       der äußerste AA-Pixel besteht aus Füllfarbe-vs-Sektionshintergrund, kein zweiter
+       Layer schimmert durch. Gilt zentral für alle Surfaces (var(--fill)). */
     .pill-btn:hover {
-      box-shadow: inset 0 0 0 1.5px var(--fill);
-      transition: box-shadow 0s linear 440ms;
+      --bg-delay: var(--fill-duration);
+      background-color: var(--fill);
     }
     /* Hover: Puls stoppt, damit der Dot sauber zur Füll-Interaktion ausblendet. */
     .pill-btn--pulse:hover .pill-btn__dot {
