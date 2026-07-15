@@ -695,6 +695,26 @@ const enHref = switchLangHref(path, 'en');
     border-radius: 2px;
   }
 
+  /* ---- Mobile-Pass (< 1024px): Touch-Targets ≥ 44px. Wirkt NICHT auf den
+     1024–1280px-Bereich (dort bleibt die Hamburger-Leiste pixelidentisch). ---- */
+  @media (max-width: 1023px) {
+    .nav-burger {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+    .m-link,
+    .m-sublink {
+      min-height: 44px;
+    }
+    .m-sublink {
+      display: flex;
+      align-items: center;
+    }
+    .m-lang-opt {
+      padding: 0.4rem 0.3rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .site-header,
     .nav-inner,
