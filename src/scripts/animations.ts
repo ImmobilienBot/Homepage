@@ -1057,8 +1057,10 @@ function initPortale() {
       tl.from(phoneStage, { autoAlpha: 0, xPercent: isDesktop ? 10 : 0, y: isDesktop ? 0 : 20, duration: 0.85 }, 0.45);
   }
 
-  // Flug-Choreografie nur am Desktop-Breakpoint (unabhängig vom Entry-Reveal).
-  if (isDesktop) setupPortaleFlight(section, pills, fine);
+  // Flug-Choreografie (rAF + SVG-Overlay + Ping) erst ab lg — Mobile-Pass: unterhalb
+  // 1024px GAR NICHT initialisieren (Phone zeigt die 2 statischen Pushes). Desktop
+  // ≥1024px unverändert; das Entry-Reveal oben bleibt an beiden Breakpoints.
+  if (window.matchMedia('(min-width: 1024px)').matches) setupPortaleFlight(section, pills, fine);
 }
 
 /**
