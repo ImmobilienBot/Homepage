@@ -166,7 +166,7 @@ export const onRequestPost = async ({ request, env, waitUntil }: Ctx): Promise<R
 
   // 8) Interne Benachrichtigung — AWAITED. Erfolg bestimmt die User-Response.
   //    Freitext der Nachricht erscheint AUSSCHLIESSLICH hier. Reply-To = Absender:in.
-  const internal = renderInternalEmail({ name, email, message, topicKey: topic, lang, sentAt });
+  const internal = renderInternalEmail({ name, email, message, topicKey: topic, lang, sentAt, origin: url.origin });
   let res: Response;
   try {
     res = await sendEmail(env.RESEND_API_KEY, {
@@ -190,7 +190,7 @@ export const onRequestPost = async ({ request, env, waitUntil }: Ctx): Promise<R
   // 8b) Bestätigungsmail an die Absender:in — NICHT blockierend, via waitUntil.
   //     Testmodus (Fallback-From) schlägt erwartbar fehl → try/catch schluckt das,
   //     die Formular-Response bleibt Erfolg (die Anfrage IST angekommen).
-  const confirm = renderConfirmationEmail({ name, topicKey: topic, lang });
+  const confirm = renderConfirmationEmail({ name, topicKey: topic, lang, origin: url.origin });
   waitUntil(
     (async () => {
       try {

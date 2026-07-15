@@ -52,9 +52,19 @@ export function topicLabel(key: string, lang: Lang): string {
   return TOPIC_LABELS[lang][key] ?? TOPIC_LABELS[lang].sonstiges;
 }
 
-/** Öffentliche Website (Anzeige/Link im Footer — kein Secret, Marken-Fakt). */
-const SITE_URL = 'https://immobilien-bot.de';
-const SITE_LABEL = 'immobilien-bot.de';
+/**
+ * Anzeige-Host aus dem Origin (z. B. „immobilien-bot.de" oder der Preview-Host).
+ * Der Origin wird von der Function aus der Request-URL durchgereicht — keine hart
+ * codierte Domain im Modul, Logo-URL und Footer-Link zeigen automatisch auf die
+ * Domain, auf der das Formular läuft.
+ */
+function siteHost(origin: string): string {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return origin.replace(/^https?:\/\//, '');
+  }
+}
 
 /* ---------------------------------------------------------------------------
    Sicherheits-Helfer.
@@ -84,14 +94,17 @@ export function sanitizeName(input: string): string {
    --------------------------------------------------------------------------- */
 
 /**
- * Rahmen beider Mails: Header-Balken + Wortmarke + Akzentlinie, graue Bühne,
- * Content-Karte, Footer. Tabellen-Layout, alles inline.
+ * Rahmen beider Mails: gelber Header-Balken mit der CD-Primär-Wortbildmarke
+ * (dunkles Logo-PNG auf Gelb), dunkle Akzentlinie, graue Bühne, Content-Karte,
+ * Footer. Tabellen-Layout, alles inline. Logo- und Footer-URL kommen aus dem
+ * durchgereichten `origin` (Preview heute, Domain nach Launch — ohne TODO/Env).
  *
  * TODO(Artem): Sobald Impressumsdaten vorliegen, den Footer um eine
  * rechtssichere Anbieterkennzeichnung ergänzen (Anbieter, ladungsfähige
  * Anschrift, Kontakt) — aktuell nur Wortmarke + Website.
  */
-function emailShell(title: string, contentHtml: string): string {
+function emailShell(title: string, contentHtml: string, origin: string): string {
+  const host = siteHost(origin);
   return `<!doctype html>
 <html lang="de">
 <head>
@@ -105,12 +118,12 @@ function emailShell(title: string, contentHtml: string): string {
 <tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
 
-<!-- Header-Balken + Wortmarke -->
-<tr><td style="background-color:#3b3b3a;border-radius:12px 12px 0 0;padding:22px 28px;text-align:center;font-family:Roboto,Helvetica,Arial,sans-serif;">
-<span style="font-weight:800;font-style:italic;letter-spacing:1.5px;font-size:20px;color:#f6f6f6;">IMMOBILIEN</span><span style="font-weight:800;font-style:italic;letter-spacing:1.5px;font-size:20px;color:#fff03c;">&nbsp;BOT</span>
+<!-- Gelber Header-Balken mit Logo (bgcolor-Attribut für Outlook) -->
+<tr><td bgcolor="#fff03c" style="background-color:#fff03c;border-radius:12px 12px 0 0;padding:24px 28px;text-align:center;">
+<img src="${origin}/email-assets/logo@2x.png" width="200" alt="Immobilien Bot" style="display:block;width:200px;max-width:200px;height:auto;margin:0 auto;border:0;color:#3b3b3a;">
 </td></tr>
-<!-- Akzentlinie -->
-<tr><td style="background-color:#fff03c;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
+<!-- Akzentlinie (dunkel, sonst gelb auf gelb unsichtbar) -->
+<tr><td style="background-color:#3b3b3a;height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
 
 <!-- Content-Karte -->
 <tr><td style="background-color:#f6f6f6;padding:32px 28px;font-family:Roboto,Helvetica,Arial,sans-serif;color:#3b3b3a;font-size:16px;line-height:1.5;">
@@ -119,7 +132,7 @@ ${contentHtml}
 
 <!-- Footer -->
 <tr><td style="padding:20px 28px 8px;text-align:center;font-family:Roboto,Helvetica,Arial,sans-serif;color:#8a8a88;font-size:12px;line-height:1.5;">
-Immobilien Bot · <a href="${SITE_URL}" style="color:#8a8a88;text-decoration:underline;">${SITE_LABEL}</a>
+Immobilien Bot · <a href="${origin}" style="color:#8a8a88;text-decoration:underline;">${escapeHtml(host)}</a>
 </td></tr>
 
 </table>
@@ -141,6 +154,7 @@ export interface InternalEmailInput {
   topicKey: string; // Whitelist-Key
   lang: Lang; // gewählte Formularsprache
   sentAt: string; // vorformatiert, Europe/Berlin
+  origin: string; // Request-Origin (Logo-/Footer-URL)
 }
 
 const LANG_LABEL_DE: Record<Lang, string> = {
@@ -190,7 +204,7 @@ ${fieldRow('Zeitpunkt', sentAtE)}
 <div style="background-color:#eaebeb;border-radius:12px;padding:16px 18px;color:#3b3b3a;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${messageE}</div>
 `;
 
-  const html = emailShell('Neue Kontaktanfrage', content);
+  const html = emailShell('Neue Kontaktanfrage', content, input.origin);
 
   const text =
     `Neue Kontaktanfrage\n\n` +
@@ -200,7 +214,7 @@ ${fieldRow('Zeitpunkt', sentAtE)}
     `Sprache:   ${langLabel}\n` +
     `Zeitpunkt: ${input.sentAt} (Europe/Berlin)\n\n` +
     `Nachricht:\n${input.message}\n\n` +
-    `— Immobilien Bot · ${SITE_LABEL}`;
+    `— Immobilien Bot · ${siteHost(input.origin)}`;
 
   return { subject: internalSubject(input), html, text };
 }
@@ -215,6 +229,7 @@ export interface ConfirmationEmailInput {
   name: string; // roh (wird hier bereinigt/escaped)
   topicKey: string; // Whitelist-Key
   lang: Lang;
+  origin: string; // Request-Origin (Logo-/Footer-URL)
 }
 
 /** Alle sichtbaren Strings der Bestätigungsmail, je Sprache. */
@@ -277,7 +292,7 @@ export function renderConfirmationEmail(input: ConfirmationEmailInput): {
 <p style="margin:0;color:#3b3b3a;">${escapeHtml(s.signoff)}</p>
 `;
 
-  const html = emailShell(s.subject, content);
+  const html = emailShell(s.subject, content, input.origin);
 
   const text =
     `${s.greeting(name)}\n\n` +
@@ -286,7 +301,7 @@ export function renderConfirmationEmail(input: ConfirmationEmailInput): {
     `${s.reassure}\n` +
     `${s.nothingToDo}\n\n` +
     `${s.signoff}\n\n` +
-    `— Immobilien Bot · ${SITE_LABEL}`;
+    `— Immobilien Bot · ${siteHost(input.origin)}`;
 
   return { subject: s.subject, html, text };
 }
