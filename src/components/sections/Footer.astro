@@ -30,7 +30,7 @@ const enHref = localizePath(Astro.url.pathname, 'en');
 
 <footer class="footer bg-grey px-inset pt-14 pb-8 text-black">
   <div class="mx-auto max-w-6xl">
-    <div class="grid grid-cols-1 gap-10 sm:grid-cols-4 sm:gap-8">
+    <div class="grid grid-cols-1 items-start gap-10 sm:grid-cols-4 sm:gap-8">
       {/* Spalte 1 — Rechtliches */}
       <nav class="footer-col" aria-label={F.colLegal}>
         <p class="footer-label">{F.colLegal}</p>
@@ -52,7 +52,7 @@ const enHref = localizePath(Astro.url.pathname, 'en');
       </nav>
 
       {/* Spalte 3 — Sprache */}
-      <nav class="footer-col footer-col--lang" aria-label={F.colLang}>
+      <nav class="footer-col" aria-label={F.colLang}>
         <p class="footer-label">{F.colLang}</p>
         <p class="footer-lang">
           <a
@@ -71,8 +71,9 @@ const enHref = localizePath(Astro.url.pathname, 'en');
         </p>
       </nav>
 
-      {/* Spalte 4 — Store-Badges + Copyright */}
-      <section class="footer-col footer-col--badges" aria-label={t.nav.cta}>
+      {/* Spalte 4 — App laden: Label + Store-Badges + Copyright */}
+      <section class="footer-col footer-col--badges" aria-label={F.colApp}>
+        <p class="footer-label">{F.colApp}</p>
         <StoreBadges position="footer" class="footer-badges" />
         <p class="footer-copy">
           {F.copyright}<br />
@@ -102,7 +103,7 @@ const enHref = localizePath(Astro.url.pathname, 'en');
   .footer-col {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px; /* Label → Inhalt in allen Spalten identisch (mt-4) */
   }
   /* kleines Spalten-Label (bewusst KEIN Heading) */
   .footer-label {
@@ -146,18 +147,9 @@ const enHref = localizePath(Astro.url.pathname, 'en');
   .footer-lang-sep {
     color: var(--color-grey-text);
   }
-  /* Sprache-Spalte auf Desktop vertikal zentriert. */
-  @media (min-width: 640px) {
-    .footer-col--lang {
-      justify-content: center;
-    }
-  }
 
-  /* Spalte 4 — Badges + Copyright. Badge-Höhe exakt 40px (wie Header-Format).
+  /* Spalte 4 — Badge-Höhe exakt 40px (wie Header-Format).
      !important schlägt die (höher spezifische, gescopte) Default-Var der Komponente. */
-  .footer-col--badges {
-    gap: 16px;
-  }
   :global(.footer-badges) {
     --badge-h: 2.5rem !important; /* 40px */
   }

@@ -492,7 +492,6 @@ export const de = {
         back: 'Zurück zur Startseite',
       },
     },
-    finalCta: { title: 'Deine nächste Wohnung wartet nicht.' },
   },
 
   cta: {
@@ -511,6 +510,7 @@ export const de = {
     colLegal: 'Rechtliches',
     colMore: 'Mehr',
     colLang: 'Sprache',
+    colApp: 'App laden',
     langSwitch: 'English',
     copyright: '© 2026 JS Immobilien Bot GmbH',
     signature: 'Das Original. Schneller als die anderen.',

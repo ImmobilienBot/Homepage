@@ -470,7 +470,6 @@ export const en: Dict = {
         back: 'Back to homepage',
       },
     },
-    finalCta: { title: "Your next flat won't wait." },
   },
 
   cta: {
@@ -489,6 +488,7 @@ export const en: Dict = {
     colLegal: 'Legal',
     colMore: 'More',
     colLang: 'Language',
+    colApp: 'Get the app',
     langSwitch: 'Deutsch',
     copyright: '© 2026 JS Immobilien Bot GmbH',
     signature: 'The original. Faster than the rest.',
