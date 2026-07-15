@@ -105,8 +105,10 @@ const emptyColor = featured ? '#c0c0c1' : '#d9dada';
   }
 
   @media (max-width: 767.98px) {
+    /* Mobile-Pass: Karten auf max ~80vw begrenzen (bei 320px sonst ~88vw) →
+       die nächste Karte lugt hervor, klarer Marquee-Charakter. Cap ≤ 280px. */
     .bw-quote {
-      width: 280px;
+      width: min(280px, 80vw);
     }
   }
 </style>
