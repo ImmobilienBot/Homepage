@@ -166,6 +166,21 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
     font-style: italic;
   }
 
+  /* Mobile-Pass (< 640px, gestapelt): Link-Zeilen auf volle 44px-Tap-Höhe. Greift
+     NUR im 1-spaltigen Stapel — die 4-spaltige Anlage ab sm (≥640px, inkl. ≥1024px)
+     bleibt kompakt/unverändert. */
+  @media (max-width: 639.98px) {
+    .footer-list {
+      gap: 2px;
+    }
+    .footer-list .footer-link,
+    .footer-lang .footer-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+  }
+
   /* Quellen-Fußnoten — dezent unter dem Grid, volle Breite. */
   .footer-sources {
     margin-top: 40px;
