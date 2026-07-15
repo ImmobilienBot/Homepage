@@ -628,6 +628,10 @@ async function initProblem3c() {
   // per gsap.set(autoAlpha:0) versteckt. Dann gar nicht erst verstecken/formen: das
   // statische Fallback (sichtbare DOM-„43.000" + Headline) steht wie bei reduced-motion.
   if (isPastRevealStart(section, 0.85)) return;
+  // Mobile-Pass: Partikel-Canvas unterhalb lg GAR NICHT initialisieren. Ohne die
+  // Formung bleibt die statische DOM-„43.000" + Headline/Statistik sofort sichtbar
+  // (identisch zum reduced-motion-/No-JS-Fallback). Desktop ≥1024px unverändert.
+  if (!window.matchMedia('(min-width: 1024px)').matches) return;
 
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
