@@ -14,6 +14,7 @@ module.exports = {
         'http://localhost:4321/en/',
         'http://localhost:4321/ueber-uns/',
         'http://localhost:4321/en/about/',
+        'http://localhost:4321/2025/09/19/bewerbungsschreiben-fur-wohnung-vorlage/',
       ],
       numberOfRuns: 3,
     },

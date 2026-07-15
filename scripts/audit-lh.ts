@@ -30,6 +30,7 @@ const PAGES: { label: string; path: string }[] = [
   { label: 'en', path: '/en/' },
   { label: 'about-de', path: '/ueber-uns/' },
   { label: 'about-en', path: '/en/about/' },
+  { label: 'ratgeber', path: '/2025/09/19/bewerbungsschreiben-fur-wohnung-vorlage/' },
 ];
 const CATS = ['performance', 'accessibility', 'best-practices', 'seo'] as const;
 type Cat = (typeof CATS)[number];

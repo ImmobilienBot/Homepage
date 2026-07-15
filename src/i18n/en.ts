@@ -612,4 +612,14 @@ export const en: Dict = {
     soon: 'Our blog is in the works — soon with tips on apartment hunting.',
     back: 'Back to homepage',
   },
+
+  // Guides (DE-only articles; EN strings only for type parity — not rendered).
+  ratgeber: {
+    publishedLabel: 'Published on',
+    cta: {
+      headline: 'Never too late to a flat again.',
+      body: 'Immobilien Bot scans every portal around the clock and pushes matching listings to you instantly — before anyone else sees them.',
+    },
+    moreTitle: 'More guides',
+  },
 };

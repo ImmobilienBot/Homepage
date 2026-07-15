@@ -1,0 +1,16 @@
+# Cloudflare Pages Redirects. Wird nach dist/ kopiert und VOR den statischen
+# Assets ausgewertet (die erste passende Regel gewinnt).
+
+# --- Alte WordPress-Blog-URLs → Startseite (301). Die Ratgeber liegen unter
+#     /2025/... und sind davon NICHT betroffen. Andere alte Artikel-URLs werden
+#     bewusst NICHT umgeleitet (laufen nach dem Umzug auf 404). ---
+/blog/*  /  301
+
+# --- Ratgeber (SEO-Migration): kanonisch ist die Form MIT Trailing Slash (wie die
+#     alte Live-Seite via <link rel=canonical>). Die Variante OHNE Slash 301 auf die
+#     kanonische. (Die Slash-Form wird direkt als /…/index.html ausgeliefert.) ---
+/2025/09/19/bewerbungsschreiben-fur-wohnung-vorlage  /2025/09/19/bewerbungsschreiben-fur-wohnung-vorlage/  301
+/2025/09/03/vertrag-ubernahme-mobel                  /2025/09/03/vertrag-ubernahme-mobel/                  301
+/2025/09/24/ablosevereinbarung-nachmieter-vorlage    /2025/09/24/ablosevereinbarung-nachmieter-vorlage/    301
+/2025/09/04/wie-lange-gilt-schufa-auskunft           /2025/09/04/wie-lange-gilt-schufa-auskunft/           301
+/2025/08/28/app-fur-wohnungssuche                    /2025/08/28/app-fur-wohnungssuche/                    301

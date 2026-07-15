@@ -1,0 +1,38 @@
+---
+/**
+ * [...ratgeber].astro — erzeugt aus der `ratgeber`-Collection exakt die alten
+ * URLs `/2025/MM/TT/slug` (kanonisch MIT Trailing Slash, Build-Format „directory").
+ * Nur die 5 in getStaticPaths zurückgegebenen Pfade werden gebaut (kein Catch-all
+ * für Fremdpfade). Andere alte Artikel laufen bewusst auf 404 (siehe _redirects).
+ */
+import { getCollection, render } from 'astro:content';
+import RatgeberLayout from '../layouts/RatgeberLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('ratgeber');
+  return posts.map((post) => {
+    const related = posts
+      .filter((p) => p.id !== post.id)
+      .map((p) => ({ title: p.data.title, path: p.data.path }));
+    return { params: { ratgeber: post.data.path }, props: { post, related } };
+  });
+}
+
+const { post, related } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+---
+
+<RatgeberLayout
+  title={d.title}
+  metaTitle={d.metaTitle}
+  description={d.description}
+  path={d.path}
+  pubDate={d.pubDate}
+  datetime={d.datetime}
+  heroImage={d.heroImage}
+  heroAlt={d.heroAlt}
+  related={related}
+>
+  <Content />
+</RatgeberLayout>

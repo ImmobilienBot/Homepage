@@ -65,6 +65,13 @@ export const translatedRoutes: { de: string; en: string }[] = [
  */
 export const standaloneRoutes = new Set(['/impressum', '/datenschutz', '/agb', '/contact']);
 
+/**
+ * DE-only-Ratgeber (`/YYYY/MM/DD/slug`) — ebenfalls kein Sprach-Pendant, aber
+ * per Muster erkannt (nicht enumeriert), damit neue/entfernte Artikel NICHT in
+ * i18n gepflegt werden müssen. Umschalter → Sprach-Root (wie standaloneRoutes).
+ */
+const isRatgeberPath = (p: string): boolean => /^\/\d{4}\/\d{2}\/\d{2}\//.test(p);
+
 const stripTrailing = (p: string): string => (p.length > 1 && p.endsWith('/') ? p.slice(0, -1) : p);
 const hasTrailing = (p: string): boolean => p.length > 1 && p.endsWith('/');
 /** `dest` an den Trailing-Slash-Stil von `like` angleichen (Self-Ref-Konsistenz). */
@@ -93,7 +100,7 @@ export function pathPendant(path: string, target: Locale): string {
  * Zielsprache (aktuelle Sprache bleibt auf der Seite).
  */
 export function switchLangHref(path: string, target: Locale): string {
-  if (standaloneRoutes.has(stripTrailing(path))) {
+  if (standaloneRoutes.has(stripTrailing(path)) || isRatgeberPath(path)) {
     return target === defaultLang ? path : '/en/';
   }
   return pathPendant(path, target);

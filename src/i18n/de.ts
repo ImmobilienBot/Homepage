@@ -637,6 +637,17 @@ export const de = {
     soon: 'Unser Blog ist in Arbeit — bald mit Tipps rund um die Wohnungssuche.',
     back: 'Zurück zur Startseite',
   },
+
+  // Ratgeber-Artikel (DE-only; Layout-UI, Artikelinhalte liegen als Markdown in
+  // src/content/ratgeber). Nicht in Nav/Footer verlinkt (nur intern untereinander).
+  ratgeber: {
+    publishedLabel: 'Veröffentlicht am',
+    cta: {
+      headline: 'Nie wieder zu spät zur Wohnung.',
+      body: 'Der Immobilien Bot scannt rund um die Uhr alle Portale und pusht dir passende Angebote sofort — bevor es andere sehen.',
+    },
+    moreTitle: 'Weitere Ratgeber',
+  },
 };
 
 // Kein `as const`: primitive Typen werden geweitet (string statt Literal),

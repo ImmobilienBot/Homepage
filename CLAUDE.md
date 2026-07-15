@@ -408,7 +408,35 @@ strukturierte Daten/JSON-LD.
 - **JSON-LD** (strukturierte Daten): `MobileApplication` / `SoftwareApplication` (mit Store-Links +
   `aggregateRating` aus den Bewertungszahlen), `Organization`, `WebSite`.
 - **`@astrojs/sitemap`** (auto sitemap.xml) + `public/robots.txt`.
-- **hreflang**: reziproke DE/EN-Verlinkung auf jeder Seite.
+- **hreflang**: reziproke DE/EN-Verlinkung auf jeder Seite. **Ausnahme:** DE-only-Seiten
+  (Rechtsseiten, Ratgeber) rendern via `standalone`-Prop **kein** hreflang-Paar (der SEO-Audit
+  behandelt Seiten mit 0 Alternates als self-standing).
+
+---
+
+## Ratgeber-Artikel (SEO-Migration, Blog)
+
+Fünf bei Google rankende Artikel der alten WordPress-Seite leben **unter identischer URL**
+weiter (`/2025/MM/TT/slug`, **kanonisch MIT Trailing Slash** — via `<link rel=canonical>` der
+Quelle bestätigt). DE-only, indexierbar, in der Sitemap, aber **NICHT** in Nav/Footer verlinkt
+(nur intern über den „Weitere Ratgeber"-Block).
+
+- **Format:** Astro Content Collection `ratgeber` (`src/content.config.ts`, `glob`-Loader) —
+  **Markdown** unter `src/content/ratgeber/<slug>.md`, damit Juri/Benni Artikel pflegen können.
+  Bilder co-located in `src/content/ratgeber/<slug>/…` (über `astro:assets` optimiert).
+  Frontmatter: `title` (H1), `metaTitle` (`<title>` 1:1), `description`, `path` (`2025/MM/TT/slug`,
+  ohne Slashes), `pubDate` (sichtbar), `datetime` (ISO), `heroImage`/`heroAlt` (optional).
+- **Route:** `src/pages/[...ratgeber].astro` erzeugt aus `path` exakt die URL. **Layout:**
+  `src/layouts/RatgeberLayout.astro` (Standard-Header/-Footer, ~72ch, eine H1 = `title`, Body
+  nur `##`/`###`, sichtbares Original-Datum, gelbe CTA-Box + „Weitere Ratgeber", Article-JSON-LD;
+  author/publisher = Organization aus `site.ts`). UI-Texte: `t.ratgeber` (i18n).
+- **`public/_redirects`** (Cloudflare): `/blog/* → / (301)`; je Artikel die **Nicht-Slash-Form →
+  Slash-Form (301)**. Andere alte Artikel-URLs bewusst **nicht** umgeleitet (→ 404).
+- **Einen Artikel ENTFERNEN:** (1) `src/content/ratgeber/<slug>.md` + den Bild-Unterordner löschen;
+  (2) in `public/_redirects` die Zeile des Artikels durch eine 301-Weiterleitung auf ein sinnvolles
+  Ziel ersetzen (z. B. `/2025/MM/TT/slug/ / 301`), damit die rankende URL nicht auf 404 fällt;
+  (3) den Link aus `public/llms.txt` (Abschnitt „Ratgeber") entfernen. **Neuen Artikel:** `.md` +
+  Bilder anlegen, `_redirects`-Slash-Regel + llms.txt-Link ergänzen.
 
 ---
 
