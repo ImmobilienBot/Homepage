@@ -450,6 +450,9 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 
 - **Impressum**, **Datenschutzerklärung**, **AGB** als eigene Seiten.
   [TODO: Inhalte von Artem/juristisch]. Primär DE; EN-Versionen optional.
+- **Datenschutzerklärung** muss zusätzlich das **Kontaktformular** samt automatischer
+  **Bestätigungsmail** an die Absender:in beschreiben und **Resend** (resend.com) als
+  **Auftragsverarbeiter** für den Mailversand benennen. [TODO: Artem]
 
 ---
 
@@ -474,8 +477,18 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
     Die Function liest ihn ausschließlich aus `env`.
   - `CONTACT_TO` — Empfänger des Formulars. **Testphase:** per Code-Fallback
     `socialmedia@immobilien-bot.de`. **Launch:** in Cloudflare auf `mail@immobilien-bot.de` setzen.
-  - `CONTACT_FROM` — Absender. Fallback = Resend-Sandbox `onboarding@resend.dev`. **Launch** (nach
-    Domain-Verifizierung bei Resend): `'Immobilien Bot <kontakt@immobilien-bot.de>'`.
+  - `CONTACT_FROM` — Absender **beider** Mails (interne Benachrichtigung + Bestätigung an die
+    Absender:in), Format `'Immobilien Bot <support@immobilien-bot.de>'`. **Ohne Variable** läuft
+    der **Testmodus-Fallback** `'Immobilien Bot <onboarding@resend.dev>'` (Resend-Sandbox) — der
+    Code bleibt lauffähig, aber **produktiver Versand erfordert eine in Resend verifizierte
+    Domain** (sonst wird die Absenderadresse abgelehnt; die Bestätigungsmail schlägt im Testmodus
+    erwartbar fehl, blockiert den Formular-Erfolg aber nicht). **Launch:** in Cloudflare auf die
+    verifizierte Absenderadresse setzen.
+- **Kontaktformular-Mails:** HTML-/Text-Templates (CD, DE/EN) in `functions/_lib/email-templates.ts`
+  (eigener Functions-Scope, **nicht** `src/i18n`). Zwei Resend-Calls: interne Benachrichtigung
+  (AWAITED, bestimmt die Response; enthält als einzige Mail den Freitext) + rein transaktionale
+  Bestätigung an die Absender:in (via `waitUntil`, Fehler nicht blockierend). Jede Nutzereingabe
+  wird HTML-escaped, Namen zusätzlich bereinigt/gekürzt.
 - **Static bleiben** (SSG). **Einzige Server-Ausnahme:** Cloudflare Pages Functions unter
   `functions/` für den Formular-Endpoint `/api/contact` (Resend-REST-API per `fetch`, **keine**
   weiteren Runtime-Abhängigkeiten). Client-seitiges JS für `/go/app` ist ok.

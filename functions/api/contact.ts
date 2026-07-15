@@ -7,12 +7,29 @@
  *
  * Env:
  *  - RESEND_API_KEY  (Secret, Pflicht)
- *  - CONTACT_TO      (Empfänger; Fallback = Testadresse im Code)
- *  - CONTACT_FROM    (Absender; Fallback = Resend-Sandbox onboarding@resend.dev)
+ *  - CONTACT_TO      (Empfänger der internen Mail; Fallback = Testadresse im Code)
+ *  - CONTACT_FROM    (Absender beider Mails; Fallback = Resend-Sandbox
+ *                     "Immobilien Bot <onboarding@resend.dev>" → Testmodus bleibt
+ *                     lauffähig; produktiver Versand braucht in Resend eine
+ *                     verifizierte Domain)
+ *
+ * Zwei Mails:
+ *  1) Interne Benachrichtigung an CONTACT_TO — wird AWAITED gesendet; ihr Erfolg
+ *     bestimmt die Response an den User (wie bisher).
+ *  2) Bestätigungsmail an die Absender:in — danach via `waitUntil` (kostet dem
+ *     User keine Latenz); Fehler sind NICHT blockierend (try/catch), die Anfrage
+ *     IST angekommen. Im Testmodus (Fallback-From) schlägt sie erwartbar fehl.
  *
  * Zwei Antwort-Modi: Accept: application/json → JSON ({ok:boolean}); sonst (No-JS-
  * Formular-POST) → 303-Redirect auf die Danke-Seite bzw. eine minimale Fehlerseite.
  */
+import {
+  isValidTopic,
+  renderInternalEmail,
+  renderConfirmationEmail,
+  type Lang,
+} from '../_lib/email-templates';
+
 interface Env {
   RESEND_API_KEY: string;
   CONTACT_TO?: string;
@@ -22,19 +39,18 @@ interface Env {
 interface Ctx {
   request: Request;
   env: Env;
+  waitUntil: (promise: Promise<unknown>) => void;
 }
 
-/** Themen-Key → deutsches Label (für Betreff/Body der Mail). */
-const TOPIC_LABELS: Record<string, string> = {
-  app: 'Frage zur App',
-  feedback: 'Feedback',
-  problem: 'Problem melden',
-  presse: 'Presse & Kooperation',
-  sonstiges: 'Sonstiges',
-};
+/** Absender-Fallback (Resend-Sandbox) → Testmodus bleibt ohne Env lauffähig. */
+const FROM_FALLBACK = 'Immobilien Bot <onboarding@resend.dev>';
+/** Empfänger-Fallback der internen Mail (Testphase). */
+const TO_FALLBACK = 'socialmedia@immobilien-bot.de';
 
 /** Öffentliche Kontaktadresse (nur für die No-JS-Fehlerseite; = site.ts contact.email). */
 const PUBLIC_EMAIL = 'mail@immobilien-bot.de';
+
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 const json = (obj: unknown, status: number): Response =>
   new Response(JSON.stringify(obj), {
@@ -56,6 +72,21 @@ async function safeText(res: Response): Promise<string> {
   }
 }
 
+/** Ein Resend-Call. Wirft bei Netzfehler; gibt sonst die (evtl. !ok) Response zurück. */
+function sendEmail(
+  apiKey: string,
+  payload: Record<string, unknown>,
+): Promise<Response> {
+  return fetch(RESEND_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 /** Minimale, i18n-freie Fehlerseite für den No-JS-Pfad (utf-8). */
 function errorHtml(): Response {
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Senden fehlgeschlagen</title></head><body style="font-family:Roboto,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:#3b3b3a;color:#f6f6f6;margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px;line-height:1.6"><div><p>Das Senden hat leider nicht geklappt.<br>Schreib uns direkt an <a href="mailto:${PUBLIC_EMAIL}" style="color:#fff03c">${PUBLIC_EMAIL}</a>.</p><p><a href="/" style="color:#fff03c">Zurück zur Startseite</a></p></div></body></html>`;
@@ -67,7 +98,7 @@ function errorHtml(): Response {
 
 const failure = (wantsJson: boolean): Response => (wantsJson ? json({ ok: false }, 502) : errorHtml());
 
-export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> => {
+export const onRequestPost = async ({ request, env, waitUntil }: Ctx): Promise<Response> => {
   const url = new URL(request.url);
   const wantsJson = (request.headers.get('accept') || '').includes('application/json');
 
@@ -96,13 +127,13 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
   const message = get('message');
   const website = get('website'); // Honeypot
   let topic = get('topic');
-  let lang = get('lang');
+  const langRaw = get('lang');
 
-  // 5a) lang + topic normalisieren (vor den Redirects gebraucht).
-  if (lang !== 'de' && lang !== 'en') lang = 'de';
-  if (!TOPIC_LABELS[topic]) topic = 'sonstiges';
+  // 5a) lang + topic serverseitig gegen Whitelist normalisieren.
+  const lang: Lang = langRaw === 'en' ? 'en' : 'de'; // Default „de"
+  if (!isValidTopic(topic)) topic = 'sonstiges';
 
-  // 4) Honeypot gefüllt → NICHT senden, aber Erfolg vortäuschen.
+  // 4) Honeypot gefüllt → NICHT senden (auch keine Bestätigung), Erfolg vortäuschen.
   if (website) {
     return wantsJson ? json({ ok: true }, 200) : redirect(thanksPath(lang), url);
   }
@@ -119,52 +150,69 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
     return wantsJson ? json({ ok: false }, 400) : redirect(backToContact(lang), url);
   }
 
-  const topicLabel = TOPIC_LABELS[topic];
-
   // 7) Key muss aus env kommen.
   if (!env.RESEND_API_KEY) {
     console.error('[contact] RESEND_API_KEY fehlt in der Umgebung.');
     return failure(wantsJson);
   }
 
-  // 8) Mail über die Resend-REST-API. KEINE Nachrichteninhalte loggen.
+  const from = env.CONTACT_FROM ?? FROM_FALLBACK;
+  const to = env.CONTACT_TO ?? TO_FALLBACK;
   const sentAt = new Intl.DateTimeFormat('de-DE', {
     dateStyle: 'long',
     timeStyle: 'short',
     timeZone: 'Europe/Berlin',
   }).format(new Date());
-  const text =
-    `Thema: ${topicLabel}\n` +
-    `Name: ${name}\n` +
-    `E-Mail: ${email}\n\n` +
-    `${message}\n\n` +
-    `— Gesendet über das Kontaktformular am ${sentAt} (Europe/Berlin)`;
 
+  // 8) Interne Benachrichtigung — AWAITED. Erfolg bestimmt die User-Response.
+  //    Freitext der Nachricht erscheint AUSSCHLIESSLICH hier. Reply-To = Absender:in.
+  const internal = renderInternalEmail({ name, email, message, topicKey: topic, lang, sentAt });
   let res: Response;
   try {
-    res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: env.CONTACT_FROM ?? 'Immobilien Bot Website <onboarding@resend.dev>',
-        to: [env.CONTACT_TO ?? 'socialmedia@immobilien-bot.de'],
-        reply_to: email,
-        subject: `Kontaktanfrage: ${topicLabel} – ${name}`,
-        text,
-      }),
+    res = await sendEmail(env.RESEND_API_KEY, {
+      from,
+      to: [to],
+      reply_to: email,
+      subject: internal.subject,
+      html: internal.html,
+      text: internal.text,
     });
   } catch (err) {
     console.error('[contact] Resend-Request fehlgeschlagen:', err instanceof Error ? err.message : String(err));
     return failure(wantsJson);
   }
 
-  // 9) Ergebnis.
-  if (res.ok) {
-    return wantsJson ? json({ ok: true }, 200) : redirect(thanksPath(lang), url);
+  if (!res.ok) {
+    console.error('[contact] Resend-Fehler:', res.status, await safeText(res));
+    return failure(wantsJson);
   }
-  console.error('[contact] Resend-Fehler:', res.status, await safeText(res));
-  return failure(wantsJson);
+
+  // 8b) Bestätigungsmail an die Absender:in — NICHT blockierend, via waitUntil.
+  //     Testmodus (Fallback-From) schlägt erwartbar fehl → try/catch schluckt das,
+  //     die Formular-Response bleibt Erfolg (die Anfrage IST angekommen).
+  const confirm = renderConfirmationEmail({ name, topicKey: topic, lang });
+  waitUntil(
+    (async () => {
+      try {
+        const cRes = await sendEmail(env.RESEND_API_KEY, {
+          from,
+          to: [email],
+          subject: confirm.subject,
+          html: confirm.html,
+          text: confirm.text,
+        });
+        if (!cRes.ok) {
+          console.error('[contact] Bestätigungsmail-Fehler:', cRes.status, await safeText(cRes));
+        }
+      } catch (err) {
+        console.error(
+          '[contact] Bestätigungsmail fehlgeschlagen:',
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    })(),
+  );
+
+  // 9) Erfolg.
+  return wantsJson ? json({ ok: true }, 200) : redirect(thanksPath(lang), url);
 };
