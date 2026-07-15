@@ -220,7 +220,11 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
   }
   .pr2-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    /* minmax(0,1fr): der einspaltige Track darf unter die Content-Min-Größe
+       schrumpfen. Sonst bläht der H2-Marker (nowrap) den Track auf < 960px auf
+       (v. a. EN „Everything included." als Phrasen-Marker) → horizontaler Overflow.
+       Ab 960px überschreibt der Zwei-Spalten-Query diese Deklaration. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 40px;
     align-items: center;
   }
@@ -538,6 +542,22 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
   @media (max-width: 767.98px) {
     .pr2-card {
       padding: 24px;
+    }
+    /* Backstop: H2 nie breiter als seine (einspaltige) Spalte — die Zeilen-Masks
+       klippen etwaigen Rest. Greift nur, falls ein Zeilen-Marker die Spalte
+       überragt (s. u. Font-Reduktion auf sehr schmalen Screens). */
+    .pr2-h2 {
+      max-width: 100%;
+    }
+  }
+  /* Sehr schmale Phones (≤360px): der Phrasen-Marker der H2-Zeile 2 ist nowrap
+     (Marker-Geometrie) — in EN „Everything included." ~297px bei 33,6px Schrift und
+     sprengt die 272px-Spalte bei 320px. Headline hier dezent kleiner setzen, damit
+     die längste Marker-Zeile in die Spalte passt (statt geklippt zu werden). DE
+     („Alles drin.") ist kurz und bleibt ohnehin unauffällig. Ab 361px volle Größe. */
+  @media (max-width: 360px) {
+    .pr2-h2 {
+      font-size: 1.75rem;
     }
   }
 
