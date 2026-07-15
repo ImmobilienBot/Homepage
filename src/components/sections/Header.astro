@@ -715,6 +715,43 @@ const enHref = switchLangHref(path, 'en');
     }
   }
 
+  /* ---- Mobile-Pass (≤ 480px): Header-Zeile passt ohne horizontalen Overflow.
+     Logo + persistenter CTA + Hamburger sollen bei 320px nebeneinander bleiben.
+     Greift NUR auf schmalen Phones (≤480px) → der 768–1280px-Bereich (inkl.
+     Hamburger-Leiste) bleibt pixelidentisch. Reine additive Verengung. ---- */
+  @media (max-width: 480px) {
+    /* Content-Inset auf px-4 (statt --spacing-inset 24px) → mehr Zeilenbreite. */
+    .nav-inner {
+      padding-inline: 1rem;
+      gap: 0.5rem;
+    }
+    .site-header[data-scrolled] .nav-inner {
+      padding-inline: 0.9rem;
+    }
+    /* Wortmarke dezent kleiner (30px → ~22px) — spart Breite, bleibt klar lesbar. */
+    .nav-logo {
+      height: 1.4rem;
+    }
+    .nav-right {
+      gap: 0.5rem;
+    }
+    /* CTA kompakter: das Blitz-Icon slidet ausschließlich per Hover ein (Desktop) →
+       auf Touch ist es dauerhaft unsichtbar, reserviert aber ~27px Breite. Hier
+       ausblenden reclaimt genau diese tote Breite. Zusätzlich engeres Padding,
+       kleinere Schrift und knapperer Dot-Abstand. */
+    .nav-right :global(.pill-btn--sm) {
+      padding-inline: 10px;
+      font-size: 12px;
+      gap: 8px;
+    }
+    .nav-right :global(.pill-btn__icon) {
+      display: none;
+    }
+    .nav-right :global(.pill-btn__label) {
+      gap: 0;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .site-header,
     .nav-inner,
