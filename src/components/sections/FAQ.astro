@@ -331,7 +331,12 @@ const PLUS_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" st
      ===================================================================== */
   .faq-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    /* minmax(0,1fr) statt 1fr: erlaubt dem einspaltigen Track, unter die
+       Content-Min-Größe zu schrumpfen. Sonst bläht die edge-bleed Chip-Zeile
+       (.faq-chips, overflow-x:auto + negative Ränder) den Track auf und erzeugt
+       horizontalen Overflow < lg. Ab lg überschreibt der 1024er-Query diese
+       Deklaration (210px 1fr) → Desktop unverändert. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 32px;
   }
   @media (min-width: 1024px) {
