@@ -302,8 +302,18 @@ const rows = [
        ±10px wie zuvor) → Sektions-Rhythmus + Zeilenabstand bleiben identisch. */
     padding-block: 40px;
     margin-block: -30px;
-    /* Isoliert Layout/Paint der breiten Reihe vom Rest (kein Reflow-Ping-Pong). */
-    contain: layout paint;
+    /* PERF (LCP-Render-Delay-Fix): Die zwei Marquee-Reihen sind ~49 % des gesamten
+       Homepage-DOM (21 Karten × Klon-Set je Reihe) und liegen IMMER below-the-fold.
+       `content-visibility: auto` überspringt Style/Layout/Paint der off-screen Reihe
+       bis sie in Viewport-Nähe kommt → kappt den größten Brocken der initialen
+       Style-&-Layout-Arbeit, die sonst den First Paint des LCP-Elements (Hero-Phone)
+       blockiert. Ersetzt das frühere `contain: layout paint` (impliziert es). Rein
+       CSS, kein JS; die Reihe hat KEINEN ScrollTrigger-Reveal (nur CSS-Marquee) →
+       keine „leere Sektion"-Gefahr. `contain-intrinsic-size: auto` reserviert einen
+       Platzhalter, merkt sich aber nach dem ersten Rendern die echte Höhe (self-
+       correcting) → CLS bleibt 0. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
