@@ -15,6 +15,8 @@
 - [Portale](https://immobilien-bot.de/#portale): überwachte Immobilienportale.
 - [Preise](https://immobilien-bot.de/#preise): Tarife und 7 Tage kostenlos testen.
 - [FAQ](https://immobilien-bot.de/#faq): häufige Fragen.
+- [Über uns](https://immobilien-bot.de/ueber-uns): Manifest (warum es die App gibt) und das Team.
+- [About (English)](https://immobilien-bot.de/en/about): Manifesto and the team.
 
 ## Rechtliches
 
@@ -64,6 +66,7 @@ user first, in real time, when a listing matches their criteria.
 - Google Maps: 5.0 stars (33 ratings)
 - 167 reviews across all platforms
 - 5.000+ downloads
+- As of July 2026 (store-page snapshot)
 
 ## Portals monitored (20)
 

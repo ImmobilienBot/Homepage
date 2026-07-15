@@ -4,11 +4,15 @@
  * scrollY < ~60px: volle Breite, transparent, kein Rand/Schatten.
  * Danach schrumpft die Nav weich zu einer zentrierten, schwebenden Pille
  * (offwhite/95 + backdrop-blur, weicher großer Schatten, deutlich vom Rand
- * abgesetzt — auch seitlich auf Mobile). Zitiert die App-Bottom-Bar.
- * Logo (echtes SVG), Links und der gelbe „Kostenlos testen"-CTA sind
- * durchgehend sichtbar/klickbar.
+ * abgesetzt). Zitiert die App-Bottom-Bar.
+ *
+ * Nav-Reihenfolge: Features · Portale · Preise · FAQ · Über uns (Seite +
+ * Dropdown) · Kontakt. Anchor-Links werden IMMER absolut gerendert
+ * (/#features bzw. /en/#features) → funktionieren auch von Unterseiten aus.
+ * Sprachumschalter „DE | EN" (statischer Link, kein JS) rechts vor dem CTA;
+ * mobil im aufklappbaren Menü (natives <details>, ohne JS bedienbar).
  */
-import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
+import { getLangFromUrl, useTranslations, localizePath, switchLangHref } from '../../i18n';
 import type { Locale } from '../../data/site';
 import Logo from '../../assets/images/immobilien-bot-logo.svg';
 import PillButton from '../ui/PillButton.astro';
@@ -17,13 +21,26 @@ const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const home = localizePath('/', lang);
 const base = home === '/' ? '' : home.replace(/\/$/, '');
+// Absolute In-Page-Anker (funktionieren auch von /ueber-uns, /impressum …).
+const anchor = (id: string) => `${base}/#${id}`;
 
-const navItems = [
-  { label: t.nav.bot, href: `${base}/#problem` },
-  { label: t.nav.features, href: `${base}/#features` },
-  { label: t.nav.pricing, href: `${base}/#preise` },
-  { label: t.nav.faq, href: `${base}/#faq` },
+// „Über uns" ist eine echte Seite mit übersetztem Slug (/ueber-uns ↔ /en/about).
+const aboutHref = lang === 'en' ? '/en/about' : '/ueber-uns';
+const path = Astro.url.pathname;
+const isAbout = path === aboutHref || path === `${aboutHref}/`;
+
+// Section-Anchors (Scroll-Spy). Reihenfolge im Markup: features, portale, preise,
+// faq, [Über uns], kontakt — „Über uns" ist ein Seitenlink (kein Scroll-Spy).
+const navBefore = [
+  { id: 'features', label: t.nav.features },
+  { id: 'portale', label: t.nav.portale },
+  { id: 'preise', label: t.nav.pricing },
+  { id: 'faq', label: t.nav.faq },
 ];
+
+// Sprachumschalter-Ziele (Sprach-Pendant der aktuellen Seite).
+const deHref = switchLangHref(path, 'de');
+const enHref = switchLangHref(path, 'en');
 ---
 
 <header class="site-header" data-header>
@@ -32,21 +49,144 @@ const navItems = [
       <Logo class="nav-logo" aria-hidden="true" />
     </a>
 
-    <nav class="hidden items-center gap-2.5 md:flex" aria-label="Hauptnavigation">
-      {navItems.map((item) => (
-        <a href={item.href} class="nav-link" data-nav-link>
+    {/* ---- Desktop-Nav (≥1280px) ---- */}
+    <nav class="nav-desktop" aria-label="Hauptnavigation">
+      {
+        navBefore.map((item) => (
+          <a href={anchor(item.id)} class="nav-link" data-nav-link>
+            <span class="nav-link__bg" aria-hidden="true" />
+            <span class="nav-link__label">{item.label}</span>
+          </a>
+        ))
+      }
+
+      {/* Über uns — Seitenlink mit Dropdown (Manifest · Das Team) */}
+      <div class="nav-dropdown" data-dropdown>
+        <a
+          href={aboutHref}
+          class:list={['nav-link', 'nav-link--about', { 'is-active': isAbout }]}
+          data-about-link
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
           <span class="nav-link__bg" aria-hidden="true"></span>
-          <span class="nav-link__label">{item.label}</span>
+          <span class="nav-link__label"
+            >{t.nav.about}<svg
+              class="nav-caret"
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg
+            ></span
+          >
         </a>
-      ))}
+        <div class="nav-submenu" data-submenu role="menu">
+          <a href={`${aboutHref}#manifest`} class="nav-subitem" role="menuitem">
+            {t.nav.aboutManifest}
+          </a>
+          <a href={`${aboutHref}#team`} class="nav-subitem" role="menuitem">
+            {t.nav.aboutTeam}
+          </a>
+        </div>
+      </div>
+
+      <a href={anchor('kontakt')} class="nav-link" data-nav-link>
+        <span class="nav-link__bg" aria-hidden="true"></span>
+        <span class="nav-link__label">{t.nav.contact}</span>
+      </a>
     </nav>
 
-    <PillButton href={`${base}/#preise`} size="sm" surface="light" icon="bolt">
-      {/* Desktop: volle Variante ab sm (640px). Mobile (<640px): kurze Variante.
-          Pille hat white-space:nowrap → bleibt immer einzeilig. */}
-      <span class="hidden sm:inline">{t.nav.ctaFree}</span>
-      <span class="sm:hidden">{t.nav.ctaShort}</span>
-    </PillButton>
+    {/* ---- Rechts: Sprachumschalter (Desktop) + CTA + Hamburger (Mobile) ---- */}
+    <div class="nav-right">
+      <div class="lang-switch" role="group" aria-label="Sprache / Language">
+        <a
+          href={deHref}
+          hreflang="de"
+          lang="de"
+          class:list={['lang-opt', { 'is-active': lang === 'de' }]}
+          aria-label={t.nav.langToDe}
+          aria-current={lang === 'de' ? 'true' : undefined}>DE</a
+        >
+        <span class="lang-sep" aria-hidden="true">|</span>
+        <a
+          href={enHref}
+          hreflang="en"
+          lang="en"
+          class:list={['lang-opt', { 'is-active': lang === 'en' }]}
+          aria-label={t.nav.langToEn}
+          aria-current={lang === 'en' ? 'true' : undefined}>EN</a
+        >
+      </div>
+
+      <PillButton href={`${base}/#preise`} size="sm" surface="light" icon="bolt">
+        <span class="hidden sm:inline">{t.nav.ctaFree}</span>
+        <span class="sm:hidden">{t.nav.ctaShort}</span>
+      </PillButton>
+
+      {/* Mobile-Menü — natives <details> (ohne JS auf-/zuklappbar). */}
+      <details class="nav-mobile" data-mobile>
+        <summary class="nav-burger" aria-label={t.nav.menuOpen} data-burger>
+          <span class="burger-box" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </summary>
+        <div class="nav-mobile-panel">
+          {
+            navBefore.map((item) => (
+              <a href={anchor(item.id)} class="m-link">
+                {item.label}
+              </a>
+            ))
+          }
+          <details class="m-sub">
+            <summary class="m-link m-sub-summary">
+              {t.nav.about}
+              <svg
+                class="m-caret"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg
+              >
+            </summary>
+            <a href={aboutHref} class="m-sublink">{t.nav.about}</a>
+            <a href={`${aboutHref}#manifest`} class="m-sublink">{t.nav.aboutManifest}</a>
+            <a href={`${aboutHref}#team`} class="m-sublink">{t.nav.aboutTeam}</a>
+          </details>
+          <a href={anchor('kontakt')} class="m-link">{t.nav.contact}</a>
+
+          <div class="m-lang" role="group" aria-label="Sprache / Language">
+            <a
+              href={deHref}
+              hreflang="de"
+              lang="de"
+              class:list={['m-lang-opt', { 'is-active': lang === 'de' }]}
+              aria-label={t.nav.langToDe}
+              aria-current={lang === 'de' ? 'true' : undefined}>DE</a
+            >
+            <span class="lang-sep" aria-hidden="true">|</span>
+            <a
+              href={enHref}
+              hreflang="en"
+              lang="en"
+              class:list={['m-lang-opt', { 'is-active': lang === 'en' }]}
+              aria-label={t.nav.langToEn}
+              aria-current={lang === 'en' ? 'true' : undefined}>EN</a
+            >
+          </div>
+        </div>
+      </details>
+    </div>
   </div>
 </header>
 
@@ -67,9 +207,9 @@ const navItems = [
   window.addEventListener('scroll', onScroll, { passive: true });
   update();
 
-  // Scroll-Spy: aktiver Menüpunkt je sichtbarer Sektion (gelber Unterstrich).
-  // Läuft unabhängig von prefers-reduced-motion (reiner Zustand, keine Bewegung)
-  // und in beiden Nav-Zuständen (voll/Pille). Ziel-Anchor aus dem href-Hash.
+  // Scroll-Spy: aktiver Menüpunkt je sichtbarer Sektion (gelber Marker). Nur die
+  // Section-Anchors tragen [data-nav-link]; auf Seiten ohne die Sektionen (z. B.
+  // /ueber-uns) findet der Spy keine Ziele und bleibt inaktiv.
   const navLinks = Array.from(
     document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'),
   );
@@ -94,7 +234,6 @@ const navItems = [
           if (e.isIntersecting) visible.add(e.target);
           else visible.delete(e.target);
         }
-        // Aktiv = die am weitesten oben liegende, aktuell im Mittelband sichtbare Sektion.
         let active: Element | null = null;
         let top = Infinity;
         for (const sec of visible) {
@@ -109,10 +248,45 @@ const navItems = [
           linkById.get(active.id)?.classList.add('is-active');
         }
       },
-      // schmales Mittelband → i. d. R. genau eine aktive Sektion
       { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
     );
     for (const s of sections) spy.observe(s);
+  }
+
+  // Über-uns-Dropdown (Desktop): CSS zeigt das Submenü bei :hover / :focus-within.
+  // JS pflegt nur aria-expanded (Screenreader) + Escape schließt (Fokus verlassen).
+  const dd = document.querySelector<HTMLElement>('[data-dropdown]');
+  const aboutLink = dd?.querySelector<HTMLElement>('[data-about-link]');
+  if (dd && aboutLink) {
+    const setExpanded = (v: boolean) => aboutLink.setAttribute('aria-expanded', v ? 'true' : 'false');
+    dd.addEventListener('mouseenter', () => setExpanded(true));
+    dd.addEventListener('mouseleave', () => setExpanded(false));
+    dd.addEventListener('focusin', () => setExpanded(true));
+    dd.addEventListener('focusout', (e) => {
+      if (!dd.contains(e.relatedTarget as Node | null)) setExpanded(false);
+    });
+    dd.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setExpanded(false);
+        (document.activeElement as HTMLElement | null)?.blur();
+      }
+    });
+  }
+
+  // Mobile-Menü: aria-label des Triggers spiegeln + bei Link-Klick schließen.
+  const mobile = document.querySelector<HTMLDetailsElement>('[data-mobile]');
+  const burger = mobile?.querySelector<HTMLElement>('[data-burger]');
+  if (mobile && burger) {
+    const openLabel = burger.getAttribute('aria-label') || 'Menü öffnen';
+    const closeLabel = mobile.dataset.closeLabel || openLabel;
+    mobile.addEventListener('toggle', () => {
+      burger.setAttribute('aria-label', mobile.open ? closeLabel : openLabel);
+    });
+    mobile.querySelectorAll('a').forEach((a) =>
+      a.addEventListener('click', () => {
+        mobile.open = false;
+      }),
+    );
   }
 </script>
 
@@ -125,7 +299,6 @@ const navItems = [
     transition: padding 0.4s ease;
   }
   .site-header[data-scrolled] {
-    /* schwebende Pille: vom oberen Rand UND (v. a. Mobile) von den Seiten abgesetzt */
     padding-top: 0.75rem;
     padding-inline: clamp(1.25rem, 6vw, 2.5rem);
   }
@@ -151,9 +324,8 @@ const navItems = [
       box-shadow 0.45s ease;
   }
   .site-header[data-scrolled] .nav-inner {
-    max-width: 46rem;
-    /* Feinschliff: etwas mehr horizontales Innen-Padding → Logo (links) und CTA
-       (rechts) lösen sich vom Pillen-Rand (je ~0.25rem mehr). */
+    /* Breit genug für 6 Links + DE|EN + CTA ab 1280px (kein Umbruch). */
+    max-width: 64rem;
     padding: 0.55rem 0.95rem 0.55rem 1.5rem;
     border-radius: 9999px;
     background-color: color-mix(in srgb, var(--color-offwhite) 95%, transparent);
@@ -163,7 +335,6 @@ const navItems = [
     backdrop-filter: blur(12px);
   }
 
-  /* Logo auf Nav-Höhe, sauber vertikal zentriert (flex align-items: center). */
   .nav-logo-link {
     display: inline-flex;
     align-items: center;
@@ -174,29 +345,41 @@ const navItems = [
     width: auto;
   }
 
-  /* ---- Menüpunkte — „Marker-Nav" (CD S. 29) ----
-     Button-Typo (Roboto Black, uppercase, .8rem, Tracking .05em). Inaktiv #666665
-     (≥4.5:1 auf #f6f6f6 UND #eaebeb — keine Opazität). Hover: dezenter grauer
-     Marker-Wipe (#d9dada) in Marker-Geometrie. Aktiv (Scroll-Spy): gelber Marker.
-     Rein CSS, nur transform/opacity; kein Layout-Shift (Marker absolut, skewX). */
+  /* ---- Desktop-Nav: erst ab 1280px (darunter Hamburger) ---- */
+  .nav-desktop {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  @media (min-width: 1280px) {
+    .nav-desktop {
+      display: flex;
+    }
+  }
+
+  /* ---- Menüpunkte — „Marker-Nav" (CD S. 29) ---- */
   .nav-link {
     position: relative;
     display: inline-block;
-    padding: 0.4em 0.55em;
+    padding: 0.4em 0.5em;
     font-weight: 900;
     font-size: 0.8rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #666665;
     text-decoration: none;
-    /* Immer einzeilig — sonst bricht „Der Bot" in der geschrumpften Pille um. */
     white-space: nowrap;
     transition: color 0.2s ease;
   }
   .nav-link__bg {
     position: absolute;
     inset: 0;
-    background: var(--color-darkgrey); /* #d9dada */
+    background: var(--color-darkgrey);
     border-radius: 0.35em;
     transform: skewX(-8deg) scaleX(0);
     transform-origin: left center;
@@ -206,9 +389,15 @@ const navItems = [
   }
   .nav-link__label {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+  }
+  .nav-caret {
+    opacity: 0.7;
+    transition: transform 0.2s ease;
   }
 
-  /* Hover NUR auf echten Zeigergeräten (kein Sticky-Hover auf Touch). */
   @media (hover: hover) and (pointer: fine) {
     .nav-link:hover {
       color: var(--color-black);
@@ -217,15 +406,10 @@ const navItems = [
       transform: skewX(-8deg) scaleX(1);
     }
   }
-
-  /* Fokus-Indikator — Pflicht, da der Unterstrich als Indikator wegfällt. */
   .nav-link:focus-visible {
     outline: 2px solid var(--color-black);
     outline-offset: 2px;
   }
-
-  /* Aktiv (Scroll-Spy) NACH den Hover-Regeln → schlägt Hover: der aktive Punkt
-     bleibt beim Hover GELB. Marker-Geometrie (skewX −8°) in jedem Zustand mitführen. */
   .nav-link.is-active {
     color: var(--color-black);
   }
@@ -234,11 +418,293 @@ const navItems = [
     background: var(--color-yellow);
   }
 
+  /* ---- Über-uns-Dropdown ---- */
+  .nav-dropdown {
+    position: relative;
+    display: inline-flex;
+  }
+  .nav-submenu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    min-width: 11rem;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-offwhite);
+    border: 1px solid rgb(59 59 58 / 0.08);
+    border-radius: 0.9rem;
+    box-shadow: 0 18px 40px -16px rgb(59 59 58 / 0.4);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease,
+      visibility 0.2s;
+  }
+  /* Öffnet bei Hover UND Tastatur-Fokus. Kleine Brücke (::before) verhindert, dass
+     der Hover beim Weg zum Submenü abreißt. */
+  .nav-dropdown::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+  }
+  .nav-dropdown:hover .nav-submenu,
+  .nav-dropdown:focus-within .nav-submenu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(2px);
+  }
+  .nav-dropdown:hover .nav-caret,
+  .nav-dropdown:focus-within .nav-caret {
+    transform: rotate(180deg);
+  }
+  .nav-subitem {
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.55rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--color-black);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .nav-subitem:hover {
+      background: var(--color-grey);
+    }
+  }
+  .nav-subitem:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 1px;
+  }
+
+  /* ---- Sprachumschalter „DE | EN" (Nav-Variante B) ---- */
+  .lang-switch {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  @media (min-width: 1280px) {
+    .lang-switch {
+      display: inline-flex;
+    }
+  }
+  .lang-opt {
+    position: relative;
+    padding: 0.15rem 0.05rem 0.2rem;
+    font-weight: 400;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    color: #666665;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  /* Dünne Linie (Hover) — Nav-Variante B. */
+  .lang-opt::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.2s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .lang-opt:hover {
+      color: var(--color-black);
+    }
+    .lang-opt:hover::after {
+      transform: scaleX(1);
+    }
+  }
+  /* Aktive Sprache: Roboto Black + gelber Unterstrich (wie aktiver Nav-Punkt). */
+  .lang-opt.is-active {
+    font-weight: 900;
+    color: var(--color-black);
+  }
+  .lang-opt.is-active::after {
+    background: var(--color-yellow);
+    transform: scaleX(1);
+  }
+  .lang-opt:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  .lang-sep {
+    color: var(--color-darkgrey);
+    font-size: 0.8rem;
+  }
+
+  /* ---- Mobile-Menü (Hamburger + natives <details>) ---- */
+  .nav-mobile {
+    position: relative;
+  }
+  @media (min-width: 1280px) {
+    .nav-mobile {
+      display: none;
+    }
+  }
+  .nav-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-burger::-webkit-details-marker {
+    display: none;
+  }
+  .burger-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 22px;
+    height: 16px;
+  }
+  .burger-box span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: var(--color-black);
+    border-radius: 2px;
+    transition:
+      transform 0.28s ease,
+      opacity 0.2s ease;
+  }
+  .nav-mobile[open] .burger-box span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .nav-mobile[open] .burger-box span:nth-child(2) {
+    opacity: 0;
+  }
+  .nav-mobile[open] .burger-box span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+  .nav-burger:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  .nav-mobile-panel {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    width: min(78vw, 20rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.8rem;
+    background: color-mix(in srgb, var(--color-offwhite) 98%, transparent);
+    border: 1px solid rgb(59 59 58 / 0.08);
+    border-radius: 1.1rem;
+    box-shadow: 0 26px 60px -22px rgb(59 59 58 / 0.5);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .m-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 0.65rem;
+    border-radius: 0.7rem;
+    font-weight: 900;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-black);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+  }
+  .m-link::-webkit-details-marker {
+    display: none;
+  }
+  .m-link:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 1px;
+  }
+  .m-sub {
+    display: flex;
+    flex-direction: column;
+  }
+  .m-sub-summary {
+    justify-content: space-between;
+  }
+  .m-caret {
+    transition: transform 0.25s ease;
+    color: #666665;
+  }
+  .m-sub[open] .m-caret {
+    transform: rotate(180deg);
+  }
+  .m-sublink {
+    padding: 0.55rem 0.65rem 0.55rem 1.3rem;
+    border-radius: 0.6rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #4a4a49;
+    text-decoration: none;
+  }
+  .m-sublink:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 1px;
+  }
+  .m-lang {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    padding: 0.7rem 0.65rem 0.3rem;
+    border-top: 1px solid var(--color-darkgrey);
+  }
+  .m-lang-opt {
+    font-weight: 400;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    color: #666665;
+    text-decoration: none;
+  }
+  .m-lang-opt.is-active {
+    font-weight: 900;
+    color: var(--color-black);
+    text-decoration: underline;
+    text-decoration-color: var(--color-yellow);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .m-lang-opt:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .site-header,
     .nav-inner,
     .nav-link,
-    .nav-link__bg {
+    .nav-link__bg,
+    .nav-submenu,
+    .nav-caret,
+    .m-caret,
+    .lang-opt::after,
+    .burger-box span {
       transition: none;
     }
   }

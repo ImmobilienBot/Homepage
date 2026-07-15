@@ -9,7 +9,12 @@ module.exports = {
       startServerCommand: 'npm run preview',
       // `astro preview` gibt „http://localhost:4321/" auf stdout aus.
       startServerReadyPattern: 'localhost:4321',
-      url: ['http://localhost:4321/', 'http://localhost:4321/en/'],
+      url: [
+        'http://localhost:4321/',
+        'http://localhost:4321/en/',
+        'http://localhost:4321/ueber-uns/',
+        'http://localhost:4321/en/about/',
+      ],
       numberOfRuns: 3,
     },
     assert: {

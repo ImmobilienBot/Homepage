@@ -8,7 +8,7 @@
  * ct=footer. Der Quellen-Fußnotenblock (#quellen / #quelle-statistik) MUSS erhalten
  * bleiben — Problem-, Ablauf- und Preise-Sektion verankern dorthin.
  */
-import { getLangFromUrl, useTranslations, localizePath, languages } from '../../i18n';
+import { getLangFromUrl, useTranslations, switchLangHref, languages } from '../../i18n';
 import type { Locale } from '../../data/site';
 import StoreBadges from '../StoreBadges.astro';
 
@@ -16,16 +16,19 @@ const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const F = t.footer;
 
-// Rechtliches (Routen werden noch gebaut, Links existieren bereits).
+// Rechtliches — DE-only (kein EN-Pendant). Der EN-Footer verlinkt dieselben
+// DE-Seiten mit dem Zusatz „(German)".
+const legalSuffix = lang === 'en' ? ' (German)' : '';
 const legalLinks = [
-  { label: F.imprint, href: localizePath('/impressum', lang) },
-  { label: F.privacy, href: localizePath('/datenschutz', lang) },
-  { label: F.terms, href: localizePath('/agb', lang) },
+  { label: F.imprint + legalSuffix, href: '/impressum' },
+  { label: F.privacy + legalSuffix, href: '/datenschutz' },
+  { label: F.terms + legalSuffix, href: '/agb' },
 ];
 
-// Sprachumschalter: beide Sprachen als Links (aktuelle Seite je Sprache).
-const deHref = localizePath(Astro.url.pathname, 'de');
-const enHref = localizePath(Astro.url.pathname, 'en');
+// Sprachumschalter: beide Sprachen als Links (Sprach-Pendant der aktuellen Seite;
+// übersetzte Slugs + DE-only-Seiten via switchLangHref).
+const deHref = switchLangHref(Astro.url.pathname, 'de');
+const enHref = switchLangHref(Astro.url.pathname, 'en');
 ---
 
 <footer class="footer bg-grey px-inset pt-14 pb-8 text-black">

@@ -172,19 +172,25 @@ function auditPage(file: string) {
   else if (!/^https:\/\//.test(canonical)) add('S5', 'error', page, `canonical ist keine absolute https-URL: ${canonical}`);
 
   // --- S6: hreflang (de, en, x-default, reziprok, self-ref) ---
+  // Ausnahme: DE-only-Seiten (Rechtsseiten) rendern BEWUSST keine Alternates
+  // (standalone). Eine Seite deklariert also entweder das vollständige reziproke
+  // hreflang-Set ODER gar keins — 0 Alternates ⇒ standalone, Check schläft.
   const alts = new Map<string, string>();
   $('link[rel="alternate"][hreflang]').each((_, el) => {
     alts.set(($(el).attr('hreflang') || '').toLowerCase(), $(el).attr('href') || '');
   });
+  const isStandalone = alts.size === 0;
   const deKey = [...alts.keys()].find((k) => k === 'de' || k.startsWith('de-'));
   const enKey = [...alts.keys()].find((k) => k === 'en' || k.startsWith('en-'));
-  if (!deKey) add('S6', 'error', page, 'hreflang-Alternate für „de" fehlt.');
-  if (!enKey) add('S6', 'error', page, 'hreflang-Alternate für „en" fehlt.');
-  if (!alts.has('x-default')) add('S6', 'error', page, 'hreflang „x-default" fehlt.');
-  if (deKey && alts.has('x-default') && alts.get('x-default') !== alts.get(deKey))
-    add('S6', 'error', page, 'x-default zeigt nicht auf die DE-URL.');
-  if (canonical && ![...alts.values()].includes(canonical))
-    add('S6', 'error', page, 'Self-Referencing hreflang fehlt (canonical nicht unter den Alternates).');
+  if (!isStandalone) {
+    if (!deKey) add('S6', 'error', page, 'hreflang-Alternate für „de" fehlt.');
+    if (!enKey) add('S6', 'error', page, 'hreflang-Alternate für „en" fehlt.');
+    if (!alts.has('x-default')) add('S6', 'error', page, 'hreflang „x-default" fehlt.');
+    if (deKey && alts.has('x-default') && alts.get('x-default') !== alts.get(deKey))
+      add('S6', 'error', page, 'x-default zeigt nicht auf die DE-URL.');
+    if (canonical && ![...alts.values()].includes(canonical))
+      add('S6', 'error', page, 'Self-Referencing hreflang fehlt (canonical nicht unter den Alternates).');
+  }
 
   // --- S7: html[lang] ---
   const htmlLang = ($('html').attr('lang') || '').toLowerCase();

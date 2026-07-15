@@ -620,11 +620,11 @@ async function initProblem3c() {
   if (!section || !stage || !canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  // Late-Setup-Garde (Formungs-Trigger 'top 65%'): liegt die Sektion beim Setup schon
+  // Late-Setup-Garde (Formungs-Trigger 'top 85%'): liegt die Sektion beim Setup schon
   // an/über der Startlinie, feuert der Trigger nicht mehr → Headline/Statistik blieben
   // per gsap.set(autoAlpha:0) versteckt. Dann gar nicht erst verstecken/formen: das
   // statische Fallback (sichtbare DOM-„43.000" + Headline) steht wie bei reduced-motion.
-  if (isPastRevealStart(section, 0.65)) return;
+  if (isPastRevealStart(section, 0.85)) return;
 
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
@@ -655,7 +655,17 @@ async function initProblem3c() {
     if (revealed) return;
     revealed = true;
     if (reveals.length) {
-      gsap.to(reveals, { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.08 });
+      // Straffer Gesamtauftritt des UNTEREN Blocks (Statistik-Satz, H2, Vorteile, CTA):
+      // Dauer + Stagger so kurz, dass der ganze Block in < ~0,8 s steht (kein „Nachladen"-
+      // Gefühl). clearProps:'transform' danach → kein Inline-Transform bleibt kleben.
+      gsap.to(reveals, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.5,
+        ease: 'power2.out',
+        stagger: 0.06,
+        clearProps: 'transform',
+      });
     }
   };
 
@@ -912,11 +922,12 @@ async function initProblem3c() {
     rafId = requestAnimationFrame(loop);
   };
 
-  // TRIGGER: EINMAL beim Eintritt (Oberkante ~65% der Viewporthöhe). Kein Pin/Scrub/Reverse.
+  // TRIGGER: EINMAL beim Eintritt (Oberkante ~85% der Viewporthöhe → früh, damit der
+  // untere Block nicht wie „nachgeladen" wirkt). Kein Pin/Scrub/Reverse.
   let triggered = false;
   ScrollTrigger.create({
     trigger: section,
-    start: 'top 65%',
+    start: 'top 85%',
     once: true,
     onEnter: () => {
       if (triggered) return;
@@ -939,9 +950,12 @@ async function initProblem3c() {
         startT = performance.now();
         canvas.style.opacity = '1'; // Fade kommt aus der Per-Partikel-Alpha
       });
-      // 3) Headline-Gruppe nach der Formung einblenden (+ Safety-Net).
-      gsap.delayedCall(startForm + 2.0, doReveal);
-      gsap.delayedCall(startForm + 2.8, doReveal);
+      // 3) Unteren Block (Statistik-Satz, H2, Vorteile, CTA) PROMPT einblenden —
+      //    entkoppelt von der ~2 s dauernden Partikel-Formung (die als reine
+      //    Visual-Zugabe darüber weiterläuft). Erscheint, während die graue Fläche
+      //    wegwischt (startForm ≈ 0,42 s). Safety-Net kurz danach.
+      gsap.delayedCall(startForm, doReveal);
+      gsap.delayedCall(startForm + 1.2, doReveal);
     },
   });
 
@@ -1363,6 +1377,55 @@ function initReveals() {
 }
 
 /**
+ * Scroll-Text-Fill (Signature-Moment 4, CLAUDE.md) — WIEDERVERWENDBAR: großer Text
+ * mit [data-textfill] startet ausgegraut und wird beim Scrollen Wort für Wort
+ * (.tf-w) auf volle Farbe „geflutet" (ScrollTrigger scrub). Emphasis-Wörter
+ * (.tf-em) tragen den gelben Marker (Styling in der Sektion). NUR opacity. Ohne
+ * JS / reduced-motion: kein Startzustand gesetzt → sofort voll sichtbar.
+ * (Erstverwendung: Pull-Quote der Über-uns-Seite. Die Problem-Sektion nutzt
+ * stattdessen die Partikel-„43.000".)
+ */
+function initScrollTextFill() {
+  const blocks = gsap.utils.toArray<HTMLElement>('[data-textfill]');
+  blocks.forEach((block) => {
+    const words = gsap.utils.toArray<HTMLElement>('.tf-w', block);
+    if (!words.length) return;
+    // Late-Setup-Garde: liegt der Block beim (verzögerten) Setup schon über seiner
+    // End-Linie ('top 32%'), NICHT ausgrauen → sofort im vollen Endzustand.
+    if (isPastRevealStart(block, 0.32)) return;
+    gsap.set(words, { opacity: 0.18 });
+    gsap.to(words, {
+      opacity: 1,
+      ease: 'none',
+      stagger: 0.5,
+      scrollTrigger: { trigger: block, start: 'top 80%', end: 'top 32%', scrub: true },
+    });
+  });
+}
+
+/**
+ * Über-uns-Seite: Marker-Wipes (H1 „Warum" + „Alle."/„Everyone."). Die Blöcke
+ * selbst laufen über [data-reveal] (initReveals). Nur transform; ohne JS /
+ * reduced-motion sind die Marker per CSS sofort voll sichtbar.
+ */
+function initAbout() {
+  const root = document.querySelector<HTMLElement>('[data-about]');
+  if (!root) return;
+  const marks = gsap.utils.toArray<HTMLElement>('[data-about-mark]', root);
+  marks.forEach((m) => {
+    if (isPastRevealStart(m, 0.9)) return;
+    gsap.from(m, {
+      scaleX: 0,
+      skewX: -8,
+      transformOrigin: 'left center',
+      duration: 0.5,
+      ease: 'power2.out',
+      scrollTrigger: { trigger: m, start: 'top 90%', once: true },
+    });
+  });
+}
+
+/**
  * Bewertungen-Sektion: eine Timeline (once:true). Startzustände NUR per gsap.set
  * (ohne JS / reduced-motion alles im Endzustand). H2 Mask-Reveal + Marker-Wipe →
  * Subline → Rating-Kacheln gestaffelt → Marquee-Reihen weich einfaden. Nur
@@ -1702,6 +1765,85 @@ function initFeatureAccordion(section: HTMLElement) {
   const fills = blocks.map((b) => b.querySelector<HTMLElement>('[data-ft-progress-fill]'));
   const heads = blocks.map((b) => b.querySelector<HTMLButtonElement>('[data-ft-acc-head]'));
   const list = section.querySelector<HTMLElement>('.ft-blocks');
+  const push = section.querySelector<HTMLElement>('[data-ft-push]');
+
+  // ---- Slide-Transition „App-Push" (ersetzt die Screen-Blende) ----
+  // Eingehend: translateY(103%)→0 (oben im Stack, leichtes Überschwingen).
+  // Ausgehend: translateY(-7%) + scale(0.94) + opacity 0 (dahinter). Nur
+  // transform/opacity. Interrupt-fest: laufende Tweens killen, State konsistent.
+  const animateShots = !prefersReducedMotion;
+  // Richtwert-Kurve cubic-bezier(0.3,1.18,0.36,1) ≈ leichtes Überschwingen →
+  // back.out (GSAP-Core; CustomEase ist nicht eingebunden). Push stärker federnd
+  // (cubic-bezier(0.3,1.45,0.45,1) ≈ back.out(1.7)).
+  const SLIDE_EASE = 'back.out(1.2)';
+  const PUSH_EASE = 'back.out(1.7)';
+  // Die Features-Säulen haben KEINEN eigenen „Sofort benachrichtigt"-Slide
+  // (01 Finden · 02 Kriterien · 03 Feed/Angebotsliste · 04 Bewerbung). Die
+  // Push-Karte („Neues Angebot …") sitzt daher auf dem Angebotslisten-Slide
+  // (Index 2, Nicht-Default → federt beim Autoplay IM Viewport herein).
+  const NOTIF_STEP = 2;
+  let prevIdx = -1;
+  let pushDelay: ReturnType<typeof gsap.delayedCall> | null = null;
+
+  const resetPush = () => {
+    if (pushDelay) {
+      pushDelay.kill();
+      pushDelay = null;
+    }
+    if (push) {
+      gsap.killTweensOf(push);
+      gsap.set(push, { autoAlpha: 0, yPercent: -190 });
+    }
+  };
+
+  const slideShots = (n: number) => {
+    shots.forEach((shot, i) => {
+      gsap.killTweensOf(shot);
+      if (i === n) {
+        if (animateShots && prevIdx !== -1 && prevIdx !== n) {
+          gsap.set(shot, { zIndex: 2 });
+          gsap.fromTo(
+            shot,
+            { yPercent: 103, scale: 1, autoAlpha: 1 },
+            { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.6, ease: SLIDE_EASE, overwrite: 'auto' },
+          );
+        } else {
+          gsap.set(shot, { yPercent: 0, scale: 1, autoAlpha: 1, zIndex: 2 });
+        }
+      } else if (i === prevIdx && animateShots) {
+        gsap.set(shot, { zIndex: 1 });
+        gsap.to(shot, {
+          yPercent: -7,
+          scale: 0.94,
+          autoAlpha: 0,
+          duration: 0.6,
+          ease: 'power2.out',
+          overwrite: 'auto',
+          onComplete: () => gsap.set(shot, { yPercent: 103, scale: 1, zIndex: 0 }),
+        });
+      } else {
+        gsap.set(shot, { autoAlpha: 0, yPercent: 103, scale: 1, zIndex: 0 });
+      }
+    });
+
+    // Push-Karte NUR auf dem Notif-Slide: ~0,7 s nach dem Settle hereinfedern;
+    // beim Verlassen zurücksetzen. Schnelle Klicks stapeln nichts (resetPush + kill).
+    resetPush();
+    if (push && n === NOTIF_STEP) {
+      if (animateShots) {
+        pushDelay = gsap.delayedCall(0.7, () => {
+          gsap.fromTo(
+            push,
+            { autoAlpha: 0, yPercent: -190 },
+            { autoAlpha: 1, yPercent: 0, duration: 0.7, ease: PUSH_EASE, overwrite: 'auto' },
+          );
+        });
+      } else {
+        gsap.set(push, { autoAlpha: 1, yPercent: 0 }); // reduced-motion: statisch sichtbar
+      }
+    }
+    prevIdx = n;
+  };
 
   const STEP_MS = 8000; // Autoplay-Takt (zentral, leicht tunebar)
 
@@ -1727,7 +1869,7 @@ function initFeatureAccordion(section: HTMLElement) {
       heads[i]?.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (!open) setFill(i, 0);
     });
-    shots.forEach((s, i) => s.classList.toggle('is-active', i === n));
+    slideShots(n);
     accum = 0;
     setFill(n, 0);
   };
@@ -2047,6 +2189,8 @@ runIdle(() => {
     safeInit('Faq', () => initFaq());
     safeInit('Kontakt', () => initKontakt());
     safeInit('Reveals', () => initReveals());
+    safeInit('ScrollTextFill', () => initScrollTextFill());
+    safeInit('About', () => initAbout());
   }
   safeInit('Features', () => initFeatures());
 

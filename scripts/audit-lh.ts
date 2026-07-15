@@ -28,6 +28,8 @@ const READY = `localhost:${PORT}`;
 const PAGES: { label: string; path: string }[] = [
   { label: 'de', path: '/' },
   { label: 'en', path: '/en/' },
+  { label: 'about-de', path: '/ueber-uns/' },
+  { label: 'about-en', path: '/en/about/' },
 ];
 const CATS = ['performance', 'accessibility', 'best-practices', 'seo'] as const;
 type Cat = (typeof CATS)[number];

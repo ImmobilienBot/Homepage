@@ -183,9 +183,12 @@ Vier feste „Signature-Moments" tragen den Awwwards-Charakter durch die ganze S
    ease-in-out-Loop: leichtes translate + scale + Opacity). Nur Gelb, dezent. Parallaxt beim
    Scrollen **langsamer** als der Vordergrund (Tiefe). `prefers-reduced-motion`: statisch.
 4. **Scroll-Text-Fill (Emphasis-Sektionen).** Großer Text (Roboto Black) startet **ausgegraut**
-   und wird beim Scrollen **Wort für Wort** auf volle CD-Farbe „geflutet" (ScrollTrigger `scrub`).
-   Emphasis-Wörter (z. B. Zahlen) leuchten **gelb** bzw. kräftig schwarz auf. Fallback: bei
-   `prefers-reduced-motion`/ohne JS sofort in voller Farbe. Erstverwendung: Problem-Sektion.
+   und wird beim Scrollen **Wort für Wort** auf volle CD-Farbe „geflutet" (ScrollTrigger `scrub`,
+   nur `opacity`). Emphasis-Wörter tragen den **gelben Marker** (dunkle Schrift auf Gelb →
+   barrierefrei auf hellem Grund). Fallback: bei `prefers-reduced-motion`/ohne JS sofort voll.
+   Wiederverwendbar via `[data-textfill]` + `.tf-w`/`.tf-em` (`initScrollTextFill`,
+   `src/scripts/animations.ts`). **Erstverwendung: Pull-Quote der Über-uns-Seite** (die
+   Problem-Sektion nutzt stattdessen die Partikel-„43.000", nicht diesen Effekt).
 
 ### Farbwelt
 Bleibt strikt **Gelb / Schwarz / Grau** (die CD-Tokens). Der „Awwwards-Look" kommt aus
@@ -228,10 +231,25 @@ bliebe kleben = **leere Sektion**. Vier Regeln, nicht verhandelbar:
 
 ## Seitenstruktur
 
-One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
+One-Pager (DE auf `/`, EN auf `/en/`). **Zusätzliche Seiten:** **Über uns** (`/ueber-uns` DE ·
+`/en/about` EN — reziprokes hreflang-Paar; Manifest + Team; Signature = Scroll-Text-Fill der
+Pull-Quote). **Rechtsseiten** (`/impressum`, `/datenschutz`, `/agb`, `/contact` — 1:1 aus der alten
+Live-Seite migriert, **DE-only** über `LegalLayout.astro`, `standalone` = kein hreflang-Paar; der
+EN-Footer verlinkt sie mit Zusatz „(German)". `/contact` = Account-Löschen-Info, **Pfad nicht
+ändern** — Play-Console-Delete-URL). Übersetzte Slugs (`/ueber-uns` ↔ `/en/about`) + DE-only-Seiten
+laufen zentral über `src/i18n` (`translatedRoutes`/`standaloneRoutes`, speist hreflang **und**
+Sprachumschalter). Sektionen der Startseite in dieser Reihenfolge:
 
-1. **Header** — sticky, minimal. Logo, Anchor-Nav (Der Bot · Features · Preise · FAQ), persistenter
-   Store-CTA. Kein Blog.
+1. **Header** — sticky, minimal → Scroll-Pille. Logo, Anchor-Nav **Features · Portale · Preise ·
+   FAQ · Über uns · Kontakt** (Anchors werden IMMER absolut gerendert, `/#…` bzw. `/en/#…`, damit
+   sie auch von Unterseiten wie `/ueber-uns` oder `/impressum` funktionieren). „Über uns" ist ein
+   **Seitenlink mit Dropdown** (Manifest → `/ueber-uns#manifest`, Das Team → `/ueber-uns#team`;
+   Desktop Hover+Fokus, `aria-expanded`, Escape schließt). **Sprachumschalter „DE | EN"** rechts vor
+   dem CTA (statischer Link, kein JS; aktive Sprache Roboto Black + gelber Unterstrich; Helper
+   `src/utils/i18nPaths.ts` → `switchLangHref`, DE-only-Seiten führen auf die Sprach-Root). Desktop-
+   Nav + Switcher erst **ab 1280px** (`xl`); darunter ein **Hamburger-Menü** (natives `<details>`,
+   ohne JS bedienbar; enthält Nav, aufklappbares „Über uns" und den Switcher). Persistenter
+   Store-CTA. Scroll-Spy nur auf Seiten mit den Sektionen. Kein Blog.
 2. **Hero** — siehe unten.
 3. **Problem** — stärkster Aufhänger: **43.000 Bewerber · 30 Minuten · 288 Wohnungen**
    (Berliner Zeitung). Kurz, hart. [TODO: Quelle verlinken]
@@ -278,9 +296,11 @@ One-Pager (DE auf `/`, EN auf `/en/`), Sektionen in dieser Reihenfolge:
     (Resend). Cursor: Lupe über Interaktiven, Text-Caret über Feldern, Ring auf Dunkel via
     `data-cursor-dark` → `html.cursor-invert`. Danke-Seiten (`src/pages/danke.astro`,
     `src/pages/en/thanks.astro`) sind `noindex` + aus der Sitemap gefiltert.
-11. **Finaler CTA** — „Deine nächste Wohnung wartet nicht." Store-Badges + **QR-Code (nur Desktop)**.
-12. **Footer** — Impressum · Datenschutz · AGB · Kontakt · Sprachumschalter DE/EN · Store-Badges.
-    Juris Bot-Seiten hier dezent verlinkbar.
+11. **Footer** — 4 Spalten (top-aligned): Rechtliches (Impressum · Datenschutz · AGB, im EN-Footer
+    mit „(German)") · Mehr (Blog) · Sprache (DE/EN) · App laden (Store-Badges) + Copyright.
+    Quellen-Fußnoten darunter. Juris Bot-Seiten hier dezent verlinkbar.
+    (Der frühere „Finaler CTA"-Block wurde entfernt — die dunkle Kontakt-Sektion geht direkt in den
+    Footer über.)
 
 ### Hero
 - **Ein** Phone-Mockup (frameless PNG in schlankem Geräterahmen), groß und sauber (mobil-optimiert).
@@ -365,7 +385,11 @@ strukturierte Daten/JSON-LD.
 ## Tracking & Consent
 
 - **Google Tag Manager** (ein Container) verwaltet **Meta Pixel + GA4 + Google Ads**.
-  [TODO: GTM-Container-ID]
+  GTM-Container-ID: **`GTM-W5JK6C5M`** (auf der alten Live-Seite bestätigt; noch NICHT in `site.ts`
+  eingebaut). Auf der alten WordPress-Seite gefundener Mess-Stack (Referenz für die Tracking-Runde,
+  hier noch nichts eingebaut): GA4 `G-NG6R9YFH56`, Google-Tag `GT-WFFL385H` (Site Kit), Meta Pixel
+  `1427080288999856`, CookieYes-Client `f435a33bffe3027b5995f424`. Kein UA, kein Google-Ads-`AW-`,
+  keine `google-site-verification`-Meta.
 - **Google Consent Mode v2** ist **Pflicht** (EU/DE). Default auf „denied"; Tags feuern erst nach
   Einwilligung.
 - **Cookie-Banner:** CookieYes im `<head>` (Start: Free-Tier), mit Consent Mode v2 verknüpft.
@@ -515,5 +539,10 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - [ ] Berliner-Zeitung-Quelle (Link) zur 43.000 / 30-Min / 288-Statistik
 - [x] Reviews in `src/data/reviews.ts` (21 echte Store-/Maps-Zitate, DE/EN) → Bewertungen-Sektion
 - [ ] App-Icon (für die Hero-Notification-Karte)
-- [ ] GTM-Container-ID
-- [ ] Inhalte der Rechtsseiten (Impressum/Datenschutz/AGB)
+- [x] GTM-Container-ID entdeckt (`GTM-W5JK6C5M`) — Einbau folgt in der Tracking-Runde
+- [~] Rechtsseiten aus der alten Live-Seite migriert (`/impressum` · `/datenschutz` · `/agb` ·
+  `/contact`, DE-only). **Juristische Prüfung offen:** alle mit `<!-- TODO(Legal): prüfen -->`
+  markierten Datenschutz-Anpassungen (Cloudflare-Hosting, Resend, lokale Roboto-Fonts, veraltete
+  CookieYes-/Plugin-Passagen) + Impressum/AGB-Freigabe. **Fakten-Konflikt:** die Rechtstexte nennen
+  verbatim `mail@immobilien-bot.de`, `site.ts` nutzt `support@immobilien-bot.de` (nicht angeglichen —
+  Artem/juristisch klären)

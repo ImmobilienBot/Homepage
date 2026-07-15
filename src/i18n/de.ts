@@ -14,13 +14,23 @@ export const de = {
   nav: {
     bot: 'Der Bot',
     features: 'Features',
+    portale: 'Portale',
     pricing: 'Preise',
     faq: 'FAQ',
+    about: 'Über uns',
+    aboutManifest: 'Manifest',
+    aboutTeam: 'Das Team',
+    contact: 'Kontakt',
     cta: 'App laden',
     // Header-CTA: volle Variante (Desktop) + kurze Variante (Mobile <640px).
     ctaFree: 'Kostenlos testen',
     ctaShort: '7 Tage gratis',
     skipToContent: 'Zum Inhalt springen',
+    // Sprachumschalter (aria-label je Ziel-Sprache).
+    langToDe: 'Zu Deutsch wechseln',
+    langToEn: 'Switch to English',
+    menuOpen: 'Menü öffnen',
+    menuClose: 'Menü schließen',
   },
 
   hero: {
@@ -85,6 +95,12 @@ export const de = {
       h2: 'Alles, um der Erste zu sein.',
       h2Mark: 'der Erste',
       subline: 'Von der Suche bis zur Bewerbung — alles in einer App.',
+      // Push-Karte auf dem „Sofort benachrichtigt"-Slide (federt oben herein).
+      notif: {
+        app: 'Immobilien Bot',
+        time: 'jetzt',
+        body: 'Neues Angebot: 3-Zimmer in Berlin – gerade online',
+      },
       // Tier 1 — die vier Schritte (Reihenfolge: Karte, Kriterien, Angebotsliste, Bewerbung).
       steps: [
         {
@@ -492,6 +508,90 @@ export const de = {
         back: 'Zurück zur Startseite',
       },
     },
+  },
+
+  // Über uns (/ueber-uns) — Manifest + Team. Wortlaut 1:1; Portalanzahl/Ratings/Stand
+  // werden aus site.ts interpoliert (nie hart). Emphasis-Markup (<em>) für die
+  // wenigen kursiven Betonungen der Vorlage; Marker/Scroll-Text-Fill in der Komponente.
+  about: {
+    meta: {
+      title: 'Über uns – Immobilien Bot',
+      description:
+        'Warum es den Immobilien Bot gibt: aus Berlin gebaut, damit du bei der Wohnungssuche überall gleichzeitig suchst und als Erster von passenden Angeboten erfährst.',
+    },
+    kicker: 'Manifest',
+    headline: 'Warum es den Immobilien Bot gibt.',
+    headlineMark: 'Warum',
+    intro: {
+      lead: 'Du kennst diesen Moment.',
+      p1: 'Die perfekte Wohnung. Du tippst auf „Anfragen“ — „Diese Anzeige ist nicht mehr verfügbar.“ Schon wieder zu spät.',
+      p2: 'Aber das ist noch der gute Fall. Diese Wohnung hast du wenigstens <em>gesehen</em>. Viele siehst du nie: Sie gehen mittags online, während du arbeitest — und sind wieder weg, bevor du das nächste Mal suchst. Der Markt passiert. Ohne dich.',
+    },
+    unfair: {
+      h2: 'Ein unfaires Spiel',
+      p1: 'Der Wohnungsmarkt war nie fair. Wer die richtigen Kontakte hat, bekommt die Wohnung — oft, bevor sie überhaupt online geht. Aber es geht nicht nur darum, <em>wen</em> du kennst. Es geht darum, <em>wo</em> und <em>wann</em> du suchst. Und beides läuft gegen dich.',
+    },
+    reasons: {
+      h2: 'Zwei Gründe, warum du verlierst',
+      tempoLabel: 'Tempo.',
+      tempoBody:
+        'Auf die gefragtesten Mietwohnungen bewerben sich im Schnitt hunderte Menschen pro Tag — 373 in Berlin, 277 in Hamburg, 237 in München.¹ Und eine kostenlose Anzeige nimmt ImmoScout24 automatisch offline, sobald 10 Kontaktanfragen da sind.² Die gute, bezahlbare Wohnung ist also oft nach Minuten weg — verschwunden, bevor du sie überhaupt gesehen hast. Kein Mensch, der arbeitet und schläft, kann daneben sitzen und im richtigen Moment neu laden. Und ein Teil deiner Konkurrenz sucht längst automatisiert.',
+      reachLabel: 'Reichweite.',
+      reachBody:
+        'Du suchst auf zwei, drei Portalen. Aber in den Großstädten liegt die Angebotsmiete oft weit über dem, was Suchende zahlen können — in Berlin um 89 %, in Hamburg um 56 %.¹ Die bezahlbaren Wohnungen gibt es — sie stehen nur woanders: bei den kommunalen Wohnungsbaugesellschaften, von der Degewo in Berlin bis zur GAG in Köln. Auf Portalen, von denen die meisten nicht mal wissen, dass es sie gibt.',
+      close:
+        'Schnell sein bringt nichts auf den falschen Seiten. Alle Portale kennen bringt nichts, wenn du zu langsam bist. Du müsstest beides sein: überall — und als Erster. Kein Mensch schafft das.',
+    },
+    stats: {
+      heading: 'Der Wohnungsmarkt in Zahlen',
+      tiles: [
+        { value: '54,4 %', label: 'suchen länger als ein Jahr', note: 3 },
+        { value: '373', label: 'Kontaktanfragen pro Tag im Schnitt auf die gefragtesten Wohnungen Berlins', note: 1 },
+        { value: '10', label: 'Anfragen, dann ist eine kostenlose Anzeige automatisch offline', note: 2 },
+      ],
+    },
+    // Scroll-Text-Fill: Segmente; em=true → Emphasis-Wörter leuchten gelb auf.
+    quote: [
+      { t: 'Die Wohnung bekommt nicht, wer am meisten verdient. Sondern wer sie ' },
+      { t: 'als Erster', em: true },
+      { t: ' sieht — auf dem Portal, auf das sonst ' },
+      { t: 'keiner schaut', em: true },
+      { t: '.' },
+    ],
+    origin: {
+      h2: 'Deshalb gibt es den Immobilien Bot',
+      p1: 'Ende 2021 begann für Juri und seine Familie die Wohnungssuche in Berlin. Der Grund: Nachwuchs. Schnell wurde klar: Die manuelle Suche ist viel zu zeitintensiv und mit dem Alltag kaum vereinbar. Und irgendwann die Erkenntnis: Die Wohnungen sind ja da. Du erfährst nur zu spät davon — und viele stehen auf Portalen, die du nie öffnest.',
+      p2: 'Also hat Juri ein Tool gebaut, das rund um die Uhr für ihn suchte. Angefangen hat das Ganze als einfache Telegram-Benachrichtigung für Kleinanzeigen. Doch bald fragten Freunde und Bekannte nach etwas Ähnlichem.',
+      p3pre: 'Mittlerweile erfasst die Immobilien Bot App rund um die Uhr ',
+      p3bold: '{n} Immobilienportale gleichzeitig',
+      p3post:
+        ' — in ganz Deutschland. Die großen bundesweiten — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. Und die, die sonst kaum jemand prüft — die kommunalen Wohnungsbaugesellschaften in Berlin, Köln und Hessen.',
+      p4: 'Aus Berlin — für dich.',
+      p5: 'Sobald eine Wohnung erscheint, die zu dir passt, bekommst du sie sofort — per Push, in genau den Minuten, in denen sie überhaupt zu sehen ist. Nicht als Nummer 200. Als einer der Ersten.',
+    },
+    believe: {
+      h2: 'Woran wir glauben',
+      p1: 'Jeder Mensch verdient ein Zuhause. Nicht nur die mit den richtigen Kontakten. Nicht nur die, die den ganzen Tag Portale aktualisieren. Nicht nur die, die zufällig das richtige Portal kennen. ',
+      p1Mark: 'Alle.',
+      p2: 'Der Immobilien Bot ist dein Vorteil — schnell genug, um Erster zu sein, und weit genug, um überall zu suchen. Egal, ob du Vollzeit arbeitest, Kinder hast oder neu in der Stadt bist.',
+      p3: 'Du hast lange genug gewartet. Zeit, dass die Wohnung zu dir kommt.',
+    },
+    team: {
+      h2: 'Das Team',
+      members: [
+        { name: 'Juri Schmidt', role: 'Gründer & App-Entwickler' },
+        { name: 'Benjamin Reiter', role: 'Grafiker' },
+        { name: 'Artem Simov', role: 'Marketing' },
+      ],
+    },
+    // Abschluss-Microline: {rating}/{downloads}/{asOf} aus site.ts.
+    ratingsLine: '{rating}★ im App Store · {downloads} Downloads · Stand {asOf}',
+    footnotesTitle: 'Quellen',
+    footnotes: [
+      'ImmoScout24-Auswertung „Die meistgesuchte Mietwohnung Deutschlands“, Q1 2024, oberste 10 % der Inserate je Region: im Schnitt 373 Kontaktanfragen pro Inserat und Tag in Berlin, 277 in Hamburg, 237 in München; Angebotsmiete rund 89 % (Berlin) bzw. 56 % (Hamburg) über dem Miet-Budget der Suchenden.',
+      'ImmoScout24, kostenlose Basis-Anzeige (private Vermietung): Laufzeit 14 Tage, maximal 10 Kontaktanfragen; die Anzeige endet automatisch.',
+      'ImmoScout24-Umfrage unter 1.183 Menschen mit aktivem Suchauftrag (Wohnung oder Haus, Miete oder Kauf), März–April 2024: 54,4 % suchen länger als ein Jahr.',
+    ],
   },
 
   cta: {

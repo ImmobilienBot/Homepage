@@ -15,7 +15,7 @@
  * Entry-Reveal + Toggle-/Body-Animation nur transform/opacity bzw. grid-rows
  * (dokumentierte Ausnahme); reduced-motion / ohne JS = alles sofort im Endzustand.
  */
-import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
+import { getLangFromUrl, useTranslations } from '../../i18n';
 import { portals, portalCount, ratings, downloads, trialDays, pricing } from '../../data/site';
 import PillButton from '../ui/PillButton.astro';
 
@@ -51,7 +51,8 @@ const interpolate = (s: string): string =>
     .replaceAll('{price1m}', monthPrice);
 
 // Datenschutz-Route (sprachabhängig) — Ziel des [[…]]-Links in der Antwort.
-const privacyHref = localizePath('/datenschutz', lang);
+// Rechtsseiten sind DE-only (kein /en-Pendant) → immer die DE-Route verlinken.
+const privacyHref = '/datenschutz';
 
 type AnswerPart =
   | { kind: 'text'; text: string }

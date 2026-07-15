@@ -29,6 +29,7 @@ import screenMap from '../../assets/images/immobilien-bot-suchbereich-karte-zeic
 import screenConfig from '../../assets/images/immobilien-bot-suche-konfigurieren.png';
 import screenList from '../../assets/images/immobilien-bot-app-angebotsliste.png';
 import screenLetter from '../../assets/images/immobilien-bot-bewerbungsschreiben.png';
+import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
 
 // Sprach-Kachel: Globus als Lottie (lazy via animations.ts). ?url → bleibt aus
 // dem Main-Bundle; JS fetcht + spielt die Instanz. Die JSON-Farben sind bereits
@@ -85,13 +86,29 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
         <div class="ft-phone-stage">
           <div class="ft-glow" aria-hidden="true"></div>
           <div class="ft-phone">
-            {
-              shots.map((src, i) => (
-                <div class:list={['ft-shot', i === 0 && 'is-active']} data-ft-shot={i}>
-                  <Image src={src} alt="" class="ft-shot-img" loading="lazy" />
+            {/* Screen-Maske: die Screens sliden HIER hinein (overflow:hidden) →
+                der Slide (translateY 103% → 0) bleibt aufs Display beschränkt. */}
+            <div class="ft-screen" data-ft-screen>
+              {
+                shots.map((src, i) => (
+                  <div class="ft-shot" data-ft-shot={i}>
+                    <Image src={src} alt="" class="ft-shot-img" loading="lazy" />
+                  </div>
+                ))
+              }
+              {/* Signature: Push-Karte auf dem „Sofort benachrichtigt"-Slide.
+                  Federt ~0,7 s nach dem Settle oben herein (JS). */}
+              <div class="ft-push" data-ft-push>
+                <Image src={appIcon} alt="" width={96} height={96} class="ft-push-icon" />
+                <div class="ft-push-txt">
+                  <p class="ft-push-head">
+                    <span class="truncate">{F.notif.app}</span>
+                    <span class="ft-push-time">{F.notif.time}</span>
+                  </p>
+                  <p class="ft-push-body">{F.notif.body}</p>
                 </div>
-              ))
-            }
+              </div>
+            </div>
             <PhoneFrame class="ft-frame" />
           </div>
         </div>
@@ -510,7 +527,8 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
     width: 100%;
     height: auto;
   }
-  /* Screenshots absolut übereinander (Crossfade). Geometrie = exakt Hero/Portale. */
+  /* Screenshots absolut übereinander (Crossfade). Geometrie = exakt Hero/Portale.
+     Gilt für die BASIS-Block-Phones (jeweils ein statischer Screen). */
   .ft-shot {
     position: absolute;
     left: 2.4%;
@@ -525,6 +543,90 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   }
   .ft-shot.is-active {
     opacity: 1;
+  }
+
+  /* ---- Shared-Phone: Screen-Maske + Slide-Transition (Desktop-Enhancement) ---- */
+  .ft-screen {
+    position: absolute;
+    left: 2.4%;
+    top: 0.6%;
+    width: 95.4%;
+    height: 98.9%;
+    border-radius: 11.5% / 5.3%;
+    overflow: hidden;
+    z-index: 0;
+  }
+  /* Screens füllen die Maske; Position/Opacity steuert GSAP (Slide). KEINE
+     CSS-Transition (GSAP setzt inline). Ohne JS ist das Shared-Phone ohnehin
+     versteckt (nur .is-enhanced zeigt es) → kein Vorverstecken sichtbarer Inhalte. */
+  .ft-screen .ft-shot {
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    transition: none;
+  }
+
+  /* Push-Karte (Signature auf dem „Sofort benachrichtigt"-Slide). Sitzt oben im
+     Screen; JS federt sie herein (translateY -190% → 0) und setzt sie zurück. */
+  .ft-push {
+    position: absolute;
+    top: 6%;
+    left: 5%;
+    right: 5%;
+    z-index: 5;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 11px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-offwhite) 92%, transparent);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 12px 30px -10px rgb(59 59 58 / 0.45);
+    opacity: 0;
+    visibility: hidden;
+  }
+  .ft-push-icon {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+  }
+  .ft-push-txt {
+    min-width: 0;
+    flex: 1;
+  }
+  .ft-push-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 0 0 1px;
+    font-weight: 900;
+    font-size: 11px;
+    color: var(--color-black);
+  }
+  .ft-push-time {
+    flex: none;
+    font-weight: 500;
+    font-size: 10px;
+    color: #8a8a88;
+  }
+  .ft-push-body {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: #4a4a49;
+  }
+  /* Ohne JS / reduced-motion: falls das Shared-Phone je sichtbar wäre, Karte statisch. */
+  @media (prefers-reduced-motion: reduce) {
+    .ft-push {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
   }
   .ft-shot-img {
     width: 100%;

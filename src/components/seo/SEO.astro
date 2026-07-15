@@ -27,6 +27,10 @@ interface Props {
   ogImage?: string;
   noindex?: boolean;
   lang?: Locale;
+  /** DE-only-Seite (Rechtsseiten): KEIN hreflang-Paar rendern (self-standing). */
+  standalone?: boolean;
+  /** Zusätzliche JSON-LD-Knoten, die an den @graph angehängt werden (z. B. AboutPage). */
+  extraJsonLd?: unknown[];
 }
 
 const {
@@ -36,11 +40,14 @@ const {
   ogImage = '/og-default.png',
   noindex = false,
   lang = 'de',
+  standalone = false,
+  extraJsonLd = [],
 } = Astro.props;
 
 const canonicalURL = new URL(canonical ?? Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(ogImage, Astro.site);
-const alternates = getAlternates(Astro.url, Astro.site);
+// Standalone-Seiten (DE-only) tragen bewusst KEINE hreflang-Alternates.
+const alternates = standalone ? [] : getAlternates(Astro.url, Astro.site);
 
 // ---- JSON-LD Grundgerüst -------------------------------------------------
 // MobileApplication mit Store-Links + aggregateRating aus site.ts.
@@ -99,6 +106,7 @@ const jsonLd = {
     },
     {
       '@type': 'Organization',
+      '@id': `${site.url}/#organization`,
       name: site.name,
       url: site.url,
       email: contact.email,
@@ -115,6 +123,8 @@ const jsonLd = {
       url: site.url,
       inLanguage: hreflangCodes[lang],
     },
+    // Seiten-spezifische Zusatzknoten (z. B. AboutPage + Person-Einträge).
+    ...extraJsonLd,
   ],
 };
 ---

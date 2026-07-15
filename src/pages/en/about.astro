@@ -1,0 +1,18 @@
+---
+/**
+ * About (EN, /en/about) — Manifesto + Team.
+ * Reciprocal hreflang pendant: /ueber-uns (via getAlternates → pathPendant).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import UeberUns from '../../components/sections/UeberUns.astro';
+import { useTranslations } from '../../i18n';
+import { buildAboutJsonLd } from '../../utils/aboutJsonLd';
+
+const t = useTranslations('en');
+const A = t.about;
+const jsonLd = buildAboutJsonLd('en', A.meta.title, A.meta.description, A.team.members);
+---
+
+<BaseLayout title={A.meta.title} description={A.meta.description} extraJsonLd={jsonLd}>
+  <UeberUns />
+</BaseLayout>

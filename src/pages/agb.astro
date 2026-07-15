@@ -1,12 +1,195 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Section from '../components/Section.astro';
-import { useTranslations } from '../i18n';
-const t = useTranslations('de');
+/**
+ * Allgemeine Geschäftsbedingungen (AGB) — verbatim aus der alten WordPress-Seite
+ * migriert. DE-only Rechtsseite. Inhalt unverändert (keine Content-Anpassungen).
+ */
+import LegalLayout from '../layouts/LegalLayout.astro';
 ---
 
-<BaseLayout title={`${t.legal.terms.title} · Immobilien Bot`} description={t.legal.terms.title} noindex>
-  <Section title={t.legal.terms.title}>
-    <p class="text-body opacity-70">{t.legal.placeholder}</p>
-  </Section>
-</BaseLayout>
+<LegalLayout
+  title="Allgemeine Geschäftsbedingungen"
+  description="Allgemeine Geschäftsbedingungen für die Nutzung der App Immobilien Bot der JS Immobilien Bot GmbH: Leistungen, Preise, Widerruf, Haftung und Kündigung."
+  updated="14.04.2026"
+>
+  <h2>1. Geltungsbereich</h2>
+  <p>
+    Diese Allgemeinen Geschäftsbedingungen (nachfolgend „AGB“) gelten für die Nutzung der mobilen
+    Anwendung „Immobilien Bot“ (nachfolgend „App“), angeboten von der JS Immobilien Bot GmbH,
+    Schönfließer Str. 1, 10439 Berlin, eingetragen im Handelsregister des Amtsgerichts Charlottenburg
+    unter HRB 285832, vertreten durch den Geschäftsführer Dr. Juri Schmidt (nachfolgend „Anbieter“).
+    Mit dem Download, der Installation oder der Nutzung der App erkennen Sie diese AGB als verbindlich
+    an.
+  </p>
+
+  <h2>2. Vertragsschluss</h2>
+  <p>
+    Der Vertrag über die Nutzung der App kommt durch das Herunterladen und die Installation der App
+    zustande. Mit der ersten Nutzung der App akzeptieren Sie diese AGB.
+  </p>
+
+  <h2>3. Leistungsbeschreibung</h2>
+  <p>
+    Die App ermöglicht es Nutzern, Immobilienangebote verschiedener Immobilienportale zu durchsuchen
+    und direkt zu den entsprechenden Angeboten auf den externen Plattformen weitergeleitet zu werden.
+    Die App fungiert dabei ausschließlich als Suchmaschine und Verweisdienst. Der Anbieter ist nicht
+    als Immobilienmakler tätig und vermittelt keine Immobiliengeschäfte im Sinne von §34c GewO,
+    sondern stellt lediglich einen technischen Zugriff auf öffentlich auffindbare Immobilienangebote
+    bereit. Ein Anspruch auf bestimmte Funktionen oder Inhalte besteht nicht. Die Nutzung der App
+    erfolgt „wie gesehen“. Der Anbieter behält sich das Recht vor, Inhalte jederzeit ohne
+    Vorankündigung zu ändern, zu entfernen oder den Dienst<br />einzustellen.
+  </p>
+
+  <h2>4. Preise und Zahlungsbedingungen</h2>
+  <p>
+    Kostenlose Testphase: Die ersten 7 Tage der Nutzung sind kostenlos. Die Testphase beginnt mit
+    Start der ersten Suche in der App. Kostenpflichtiges Abonnement: Nach Ablauf der kostenlosen
+    Testphase entstehen Kosten gemäß der zum Zeitpunkt des Vertragsschlusses gültigen Preisliste. Die
+    aktuellen Preise werden in der App angezeigt und können aufgrund von Ländereinstellungen
+    variieren. Zahlungsweise: Die Zahlungsabwicklung erfolgt ausschließlich über die vom jeweiligen
+    App Store (Google Play Store, Apple App Store) bereitgestellten Zahlungsmethoden. Der Anbieter hat
+    keinen Einfluss auf die dortigen Abrechnungsmodalitäten und übernimmt für deren technische oder
+    kaufmännische Abwicklung keine Verantwortung. Laufzeit: Das Abonnement verlängert sich automatisch
+    um den gewählten Zeitraum, sofern es nicht fristgerecht gekündigt wird.
+  </p>
+
+  <h2>5. Widerrufsrecht</h2>
+  <p>
+    Mit dem Kauf eines kostenpflichtigen Abonnements willigen Sie ausdrücklich ein, dass wir mit der
+    Ausführung der Dienstleistung sofort beginnen. Sie bestätigen zur Kenntnis zu nehmen, dass Sie
+    durch diese Zustimmung Ihr gesetzliches Widerrufsrecht gemäß § 356 Abs. 4 BGB mit vollständiger
+    Vertragserfüllung verlieren. Die kostenlose Testphase ist hiervon nicht betroffen.
+  </p>
+
+  <h2>6. Nutzungsrechte</h2>
+  <p>
+    Der Anbieter gewährt Ihnen ein einfaches, nicht übertragbares und widerrufliches Recht zur Nutzung
+    der App für private Zwecke. Eine kommerzielle Nutzung bedarf der ausdrücklichen schriftlichen
+    Zustimmung des Anbieters.
+  </p>
+
+  <h2>7. Nutzungsbeschränkungen</h2>
+  <p>
+    Es ist untersagt:<br />
+    – Die App zu dekompilieren, zu disassemblieren oder anderweitig zu reverse engineeren<br />
+    – Die App oder Teile davon zu kopieren, zu modifizieren oder zu verbreiten<br />
+    – Die App für rechtswidrige Zwecke zu nutzen<br />
+    – Schädliche Software über die App zu verbreiten<br />
+    – Die Sicherheitsmaßnahmen der App zu umgehen
+  </p>
+
+  <h2>8. Externe Inhalte und Verlinkungen</h2>
+  <p>
+    Die App enthält Verlinkungen zu externen Immobilienportalen und deren Inhalten. Für diese externen
+    Inhalte ist ausschließlich der jeweilige Anbieter verantwortlich. Die Verlinkungen erfolgen
+    automatisiert anhand öffentlich zugänglicher Informationen. Der Anbieter prüft diese Inhalte nicht
+    auf rechtliche Zulässigkeit, Aktualität oder inhaltliche Richtigkeit. Es handelt sich um eine rein
+    technische Verknüpfung ohne redaktionelle Kontrolle. Der Anbieter der App übernimmt keine
+    Verantwortung für:<br />
+    • Die Richtigkeit, Vollständigkeit oder Aktualität der Immobilienangebote<br />
+    • Die Verfügbarkeit der verlinkten Immobilien<br />
+    • Preisangaben und Konditionen der Immobilienangebote<br />
+    • Die Bonität oder Seriosität der Immobilienanbieter<br />
+    • Schäden, die durch die Nutzung externer Portale entstehen
+  </p>
+
+  <h2>9. Keine Maklerleistungen</h2>
+  <p>
+    Der Anbieter erbringt keine Maklerleistungen im Sinne des § 34c GewO. Es erfolgt keine Vermittlung
+    von Immobiliengeschäften. Die App dient ausschließlich der Informationsbereitstellung und
+    Weiterleitung zu externen Anbietern.
+  </p>
+
+  <h2>10. Urheberrechte</h2>
+  <p>
+    Alle in der App angezeigten Immobilienfotos, -beschreibungen und sonstigen Inhalte sind
+    urheberrechtlich geschützt und Eigentum der jeweiligen Immobilienportale oder deren Nutzer. Eine
+    Weiterverwendung ist ohne Zustimmung der Rechteinhaber untersagt. Der Anbieter übernimmt keine
+    Verantwortung für mögliche Urheberrechtsverletzungen durch verlinkte Inhalte. Nutzer sind
+    verpflichtet, etwaige Rechteverletzungen direkt mit dem jeweiligen Anbieter zu klären.
+  </p>
+
+  <h2>11. Verfügbarkeit</h2>
+  <p>
+    Der Anbieter bemüht sich um eine möglichst hohe Verfügbarkeit der App. Ein Anspruch auf ständige
+    Verfügbarkeit besteht nicht. Wartungsarbeiten können zu temporären Einschränkungen führen. Der
+    Anbieter haftet nicht für Datenverluste, Fehlfunktionen oder Schäden, die durch die Nutzung der
+    App, durch fehlerhafte oder nicht erreichbare externe Dienste oder durch technische Störungen
+    entstehen, es sei denn, diese beruhen auf vorsätzlichem oder grob fahrlässigem Verhalten.
+  </p>
+
+  <h2>12. Datenschutz</h2>
+  <p>
+    Der Anbieter erhebt und verarbeitet nur personenbezogene Daten, die für die Bereitstellung des
+    Services unbedingt erforderlich sind. Es erfolgt keine Sammlung von Daten, die über das notwendige
+    Maß hinausgehen. Für die Erhebung, Verarbeitung und Nutzung personenbezogener Daten gilt unsere
+    Datenschutzerklärung, die unter
+    <a href="https://immobilien-bot.de/datenschutz">https://immobilien-bot.de/datenschutz</a>
+    abrufbar ist. Beim Weiterleiten zu externen Immobilienportalen können personenbezogene Daten (wie
+    IP-Adresse, Suchpräferenzen) an diese Drittanbieter übertragen werden. Hierfür gelten die
+    Datenschutzbestimmungen der jeweiligen externen Anbieter.
+  </p>
+
+  <h2>13. Haftung</h2>
+  <p>
+    Der Anbieter haftet nur für Schäden, die auf vorsätzlichem oder grob fahrlässigem Verhalten
+    beruhen. Die Haftung für leichte Fahrlässigkeit ist ausgeschlossen, soweit nicht Schäden aus der
+    Verletzung des Lebens, des Körpers oder der Gesundheit oder wesentliche Vertragspflichten betroffen
+    sind. Bei der Verletzung wesentlicher Vertragspflichten durch leichte Fahrlässigkeit ist die
+    Haftung auf den vorhersehbaren, vertragstypischen Schaden begrenzt.
+  </p>
+
+  <h2>14. Gewährleistung</h2>
+  <p>
+    Der Anbieter übernimmt keine Gewähr dafür, dass die App fehlerfrei funktioniert oder den
+    individuellen Anforderungen des Nutzers entspricht. Insbesondere wird keine Gewähr für die
+    Aktualität, Richtigkeit oder Vollständigkeit der angezeigten Immobilienangebote übernommen. Soweit
+    gesetzlich zulässig, sind alle Gewährleistungsansprüche ausgeschlossen.
+  </p>
+
+  <h2>15. Kündigung und Beendigung</h2>
+  <p>
+    Kostenlose Testphase: Die kostenlose Testphase konvertiert nach 7 Tagen in ein kostenpflichtiges
+    Abonnement, wenn dieses nicht vorher storniert wurde. Die Stornierung erfolgt im jeweiligen Store
+    beziehungsweise in den Einstellungen des Endgeräts. Die App stellt Verlinkungen hierfür bereit.<br />
+    Kostenpflichtiges Abonnement: Sie können Ihr Abonnement jederzeit über die Einstellungen des
+    jeweiligen App Stores (Google Play Store, Apple App Store) kündigen. Die Kündigung wird zum Ende
+    der bereits bezahlten Laufzeit wirksam.<br />
+    Außerordentliche Kündigung: Der Anbieter kann das Vertragsverhältnis außerordentlich kündigen, wenn
+    Sie gegen diese AGB verstoßen oder die App missbräuchlich nutzen.<br />
+    Deinstallation: Sie können die App jederzeit deinstallieren. Dies beendet jedoch nicht automatisch
+    ein kostenpflichtiges Abonnement.
+  </p>
+
+  <h2>16. Änderungen der AGB</h2>
+  <p>
+    Der Anbieter behält sich vor, diese AGB jederzeit zu ändern. Über Änderungen werden Sie in
+    geeigneter Form informiert. Widersprechen Sie nicht innerhalb von vier Wochen nach Bekanntgabe,
+    gelten die Änderungen als angenommen.
+  </p>
+
+  <h2>17. Salvatorische Klausel</h2>
+  <p>
+    Sollten einzelne Bestimmungen dieser AGB unwirksam sein oder werden, berührt dies die Wirksamkeit
+    der übrigen Bestimmungen nicht.
+  </p>
+
+  <h2>18. Anwendbares Recht</h2>
+  <p>Es gilt deutsches Recht unter Ausschluss des UN-Kaufrechts.</p>
+
+  <h2>19. Haftungsausschluss bei Nutzung durch Dritte</h2>
+  <p>
+    Nutzer sind verpflichtet, ihre Zugangsdaten sicher aufzubewahren und Dritten keinen Zugriff auf
+    die App zu gewähren. Der Anbieter übernimmt keine Haftung für Schäden oder Ansprüche, die durch die
+    Nutzung der App durch Dritte oder durch missbräuchliche Nutzung entstehen.
+  </p>
+
+  <h2>Kontakt:</h2>
+  <p>
+    JS Immobilien Bot GmbH<br />
+    Schönfließer Str. 1<br />
+    10439 Berlin<br />
+    E-Mail: <a href="mailto:mail@immobilien-bot.de">mail@immobilien-bot.de</a>
+  </p>
+
+  <p><em><strong>Stand</strong>: 14.04.2026</em></p>
+</LegalLayout>

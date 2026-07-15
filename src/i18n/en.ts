@@ -14,13 +14,23 @@ export const en: Dict = {
   nav: {
     bot: 'The Bot',
     features: 'Features',
+    portale: 'Portals',
     pricing: 'Pricing',
     faq: 'FAQ',
+    about: 'About',
+    aboutManifest: 'Manifesto',
+    aboutTeam: 'The team',
+    contact: 'Contact',
     cta: 'Get the app',
     // Header CTA: full variant (desktop) + short variant (mobile <640px).
     ctaFree: 'Try for free',
     ctaShort: '7 days free',
     skipToContent: 'Skip to content',
+    // Language switcher (aria-label per target language).
+    langToDe: 'Zu Deutsch wechseln',
+    langToEn: 'Switch to English',
+    menuOpen: 'Open menu',
+    menuClose: 'Close menu',
   },
 
   hero: {
@@ -83,6 +93,12 @@ export const en: Dict = {
       h2: 'Everything you need to be first.',
       h2Mark: 'first',
       subline: 'From search to application — all in one app.',
+      // Push card on the „instantly notified" slide (springs in from the top).
+      notif: {
+        app: 'Immobilien Bot',
+        time: 'now',
+        body: 'New listing: 3-room flat in Berlin – just went online',
+      },
       // Tier 1 — the three steps (order: map, listings, cover letter).
       steps: [
         {
@@ -470,6 +486,87 @@ export const en: Dict = {
         back: 'Back to homepage',
       },
     },
+  },
+
+  // About (/en/about) — Manifesto + Team. Same structure as DE; facts/footnotes
+  // identical, portal count / ratings / date interpolated from site.ts.
+  about: {
+    meta: {
+      title: 'About – Immobilien Bot',
+      description:
+        'Why Immobilien Bot exists: built in Berlin so you can search every portal at once and be the first to hear about the flats that fit you.',
+    },
+    kicker: 'Manifesto',
+    headline: 'Why Immobilien Bot exists.',
+    headlineMark: 'Why',
+    intro: {
+      lead: 'You know the moment.',
+      p1: 'The perfect flat. You tap “Enquire” — “This listing is no longer available.” Too late again.',
+      p2: "And that's the good case. At least you <em>saw</em> this one. Many you never see: they go online at midday while you're at work — and they're gone before you next look. The market happens. Without you.",
+    },
+    unfair: {
+      h2: 'An unfair game',
+      p1: "The housing market was never fair. Those with the right contacts get the flat — often before it even goes online. But it's not only about <em>who</em> you know. It's about <em>where</em> and <em>when</em> you search. And both work against you.",
+    },
+    reasons: {
+      h2: 'Two reasons you lose',
+      tempoLabel: 'Speed.',
+      tempoBody:
+        'Hundreds of people apply to the most sought-after rental flats every day on average — 373 in Berlin, 277 in Hamburg, 237 in Munich.¹ And ImmoScout24 automatically takes a free listing offline as soon as 10 enquiries come in.² So the good, affordable flat is often gone within minutes — vanished before you even saw it. No one who works and sleeps can sit there and refresh at exactly the right moment. And part of your competition has long been searching automatically.',
+      reachLabel: 'Reach.',
+      reachBody:
+        "You search on two or three portals. But in the big cities the asking rent is often far above what searchers can pay — around 89 % higher in Berlin, 56 % in Hamburg.¹ The affordable flats do exist — they're just elsewhere: with the municipal housing associations, from Degewo in Berlin to GAG in Cologne. On portals most people don't even know exist.",
+      close:
+        "Being fast is useless on the wrong sites. Knowing every portal is useless if you're too slow. You'd have to be both: everywhere — and first. No human can do that.",
+    },
+    stats: {
+      heading: 'The housing market in numbers',
+      tiles: [
+        { value: '54.4 %', label: 'search for longer than a year', note: 3 },
+        { value: '373', label: "contact enquiries per day on average for Berlin's most sought-after flats", note: 1 },
+        { value: '10', label: 'enquiries, then a free listing goes offline automatically', note: 2 },
+      ],
+    },
+    quote: [
+      { t: "The flat doesn't go to whoever earns the most. It goes to whoever sees it " },
+      { t: 'first', em: true },
+      { t: ' — on the portal ' },
+      { t: 'nobody else checks', em: true },
+      { t: '.' },
+    ],
+    origin: {
+      h2: 'That’s why Immobilien Bot exists',
+      p1: 'At the end of 2021, Juri and his family started looking for a flat in Berlin. The reason: a baby on the way. It quickly became clear: searching manually takes far too much time and barely fits into everyday life. And at some point the realisation: the flats are there. You just hear about them too late — and many sit on portals you never open.',
+      p2: 'So Juri built a tool that searched around the clock for him. It started as a simple Telegram notification for Kleinanzeigen. But soon friends and acquaintances asked for something similar.',
+      p3pre: 'Today the Immobilien Bot app scans ',
+      p3bold: '{n} property portals at once',
+      p3post:
+        ', around the clock — across all of Germany. The big nationwide ones — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. And the ones hardly anyone checks — the municipal housing associations in Berlin, Cologne and Hesse.',
+      p4: 'From Berlin — for you.',
+      p5: "The moment a flat appears that fits you, you get it straight away — by push, in the very minutes it's even visible. Not as number 200. As one of the first.",
+    },
+    believe: {
+      h2: 'What we believe',
+      p1: 'Everyone deserves a home. Not just those with the right contacts. Not just those who refresh portals all day. Not just those who happen to know the right portal. ',
+      p1Mark: 'Everyone.',
+      p2: 'Immobilien Bot is your edge — fast enough to be first, and wide enough to search everywhere. Whether you work full-time, have kids or are new to the city.',
+      p3: "You've waited long enough. Time for the flat to come to you.",
+    },
+    team: {
+      h2: 'The team',
+      members: [
+        { name: 'Juri Schmidt', role: 'Founder & app developer' },
+        { name: 'Benjamin Reiter', role: 'Graphic designer' },
+        { name: 'Artem Simov', role: 'Marketing' },
+      ],
+    },
+    ratingsLine: '{rating}★ on the App Store · {downloads} downloads · as of {asOf}',
+    footnotesTitle: 'Sources',
+    footnotes: [
+      'ImmoScout24 analysis “Germany’s most-searched rental flat”, Q1 2024, top 10 % of listings per region: on average 373 contact enquiries per listing per day in Berlin, 277 in Hamburg, 237 in Munich; asking rent around 89 % (Berlin) and 56 % (Hamburg) above searchers’ rent budget.',
+      'ImmoScout24, free basic listing (private landlords): runs for 14 days, maximum 10 contact enquiries; the listing ends automatically.',
+      'ImmoScout24 survey of 1,183 people with an active search request (flat or house, rent or buy), March–April 2024: 54.4 % search for longer than a year.',
+    ],
   },
 
   cta: {

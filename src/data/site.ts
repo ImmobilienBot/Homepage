@@ -106,6 +106,16 @@ export const ratings: Record<'appStore' | 'playStore' | 'googleMaps', Rating> = 
   googleMaps: { stars: 5.0, count: 33, label: 'Google Maps' },
 };
 
+/**
+ * Stand der Store-Bewertungen (Anzeige „Stand: …"). EINE Quelle, je Sprache
+ * formuliert — nie als Literal in Komponenten/i18n wiederholen. Beim Aktualisieren
+ * der `ratings` mitpflegen.
+ */
+export const ratingsAsOf: Record<Locale, string> = {
+  de: 'Juli 2026',
+  en: 'July 2026',
+};
+
 /** Nicht als Live-Zähler behandeln — statischer, belegbarer Wert. */
 export const downloads = '5.000+';
 

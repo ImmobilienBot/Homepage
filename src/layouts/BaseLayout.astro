@@ -29,11 +29,15 @@ interface Props {
   canonical?: string;
   ogImage?: string;
   noindex?: boolean;
+  /** DE-only-Seite (Rechtsseiten): kein hreflang-Paar. */
+  standalone?: boolean;
+  /** Zusätzliche JSON-LD-Knoten (z. B. AboutPage) → an den @graph. */
+  extraJsonLd?: unknown[];
 }
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-const { title, description, canonical, ogImage, noindex } = Astro.props;
+const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd } = Astro.props;
 ---
 
 <!doctype html>
@@ -104,6 +108,8 @@ const { title, description, canonical, ogImage, noindex } = Astro.props;
       ogImage={ogImage}
       noindex={noindex}
       lang={lang}
+      standalone={standalone}
+      extraJsonLd={extraJsonLd}
     />
   </head>
 

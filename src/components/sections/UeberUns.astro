@@ -1,0 +1,456 @@
+---
+/**
+ * Über uns — Manifest + Team (/ueber-uns · /en/about).
+ *
+ * Gleicher Sektions-Rhythmus/Einschub + Reveal-Muster wie die Startseite; KEIN
+ * Pinning/Scrollytelling (Lenis-Konflikt). Genau EINE H1, danach lückenlose
+ * H2/H3. Fakten (Portalanzahl, Ratings, Stand) aus site.ts. Signature-Moment:
+ * die Pull-Quote nutzt den Scroll-Text-Fill (initScrollTextFill in animations.ts);
+ * ohne JS / reduced-motion sofort voll eingefärbt.
+ */
+import { getLangFromUrl, useTranslations } from '../../i18n';
+import type { Locale } from '../../data/site';
+import { portalCount, aggregateRating, downloads, ratingsAsOf } from '../../data/site';
+import StoreBadges from '../StoreBadges.astro';
+
+const lang: Locale = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const A = t.about;
+
+// Marker-Split (Keyword-Highlight) — wie die übrigen Sektionen.
+function markParts(text: string, mark: string) {
+  const i = text.indexOf(mark);
+  if (i < 0) return { pre: text, mark: '', post: '' };
+  return { pre: text.slice(0, i), mark, post: text.slice(i + mark.length) };
+}
+const head = markParts(A.headline, A.headlineMark);
+
+// Origin-Absatz p3: {n} → exakte Portalanzahl aus site.ts.
+const p3bold = A.origin.p3bold.replace('{n}', String(portalCount));
+
+// Abschluss-Microline aus site.ts (Rating/Downloads/Stand).
+const ratingStr = new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+}).format(aggregateRating.ratingValue);
+const ratingsLine = A.ratingsLine
+  .replace('{rating}', ratingStr)
+  .replace('{downloads}', downloads)
+  .replace('{asOf}', ratingsAsOf[lang]);
+
+// Monogramm (Initialen) für die Team-Karten.
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+// Scroll-Text-Fill: Segmente → Wort-Spans (tf-w), Emphasis-Segmente → tf-em.
+type Seg = { t: string; em?: boolean };
+const quoteTokens = (A.quote as Seg[]).flatMap((seg) =>
+  seg.t.split(/(\s+)/).map((tok) => ({ tok, em: !!seg.em })),
+);
+---
+
+<section class="ab" data-about aria-labelledby="ab-h1">
+  <div class="ab-inner">
+    {/* ---- Kopf: Kicker + H1 (Marker auf „Warum") ---- */}
+    <header class="ab-head" id="manifest" data-reveal>
+      <p class="ab-kicker">{A.kicker}</p>
+      <h1 class="ab-h1" id="ab-h1">
+        <span class="marker"
+          ><span class="marker__bg" data-about-mark aria-hidden="true"></span><span class="marker__label"
+            >{head.mark}</span
+          ></span
+        >{head.post}
+      </h1>
+    </header>
+
+    {/* ---- Intro ---- */}
+    <div class="ab-prose" data-reveal>
+      <p class="ab-lead">{A.intro.lead}</p>
+      <p>{A.intro.p1}</p>
+      <p set:html={A.intro.p2} />
+    </div>
+
+    {/* ---- Ein unfaires Spiel ---- */}
+    <div class="ab-block" data-reveal>
+      <h2 class="ab-h2">{A.unfair.h2}</h2>
+      <div class="ab-prose">
+        <p set:html={A.unfair.p1} />
+      </div>
+    </div>
+
+    {/* ---- Zwei Gründe ---- */}
+    <div class="ab-block" data-reveal>
+      <h2 class="ab-h2">{A.reasons.h2}</h2>
+      <div class="ab-prose">
+        <p><strong>{A.reasons.tempoLabel}</strong> {A.reasons.tempoBody}</p>
+        <p><strong>{A.reasons.reachLabel}</strong> {A.reasons.reachBody}</p>
+        <p>{A.reasons.close}</p>
+      </div>
+
+      {/* Der Wohnungsmarkt in Zahlen — drei gelbe Stat-Kacheln */}
+      <h3 class="ab-h3">{A.stats.heading}</h3>
+      <ul class="ab-stats" data-reveal>
+        {
+          A.stats.tiles.map((tile) => (
+            <li class="ab-stat">
+              <span class="ab-stat-num">
+                {tile.value}
+                <sup class="ab-stat-note">
+                  <a href={`#ab-fn-${tile.note}`} aria-label={`Fußnote ${tile.note}`}>
+                    {tile.note}
+                  </a>
+                </sup>
+              </span>
+              <span class="ab-stat-label">{tile.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    {/* ---- Signature-Moment: Pull-Quote mit Scroll-Text-Fill ---- */}
+    <figure class="ab-quote-wrap" data-reveal>
+      <blockquote class="ab-quote" data-textfill>
+        {
+          quoteTokens.map(({ tok, em }) =>
+            /^\s+$/.test(tok) ? (
+              <span> </span>
+            ) : (
+              <span class:list={['tf-w', { 'tf-em': em }]}>{tok}</span>
+            ),
+          )
+        }
+      </blockquote>
+    </figure>
+
+    {/* ---- Deshalb gibt es den Immobilien Bot ---- */}
+    <div class="ab-block" data-reveal>
+      <h2 class="ab-h2">{A.origin.h2}</h2>
+      <div class="ab-prose">
+        <p>{A.origin.p1}</p>
+        <p>{A.origin.p2}</p>
+        <p>{A.origin.p3pre}<strong>{p3bold}</strong>{A.origin.p3post}</p>
+        <p class="ab-origin-line">{A.origin.p4}</p>
+        <p>{A.origin.p5}</p>
+      </div>
+    </div>
+
+    {/* ---- Woran wir glauben (Marker auf „Alle.") ---- */}
+    <div class="ab-block" data-reveal>
+      <h2 class="ab-h2">{A.believe.h2}</h2>
+      <div class="ab-prose ab-believe">
+        <p class="ab-believe-lead">
+          {A.believe.p1}<span class="marker"
+            ><span class="marker__bg" data-about-mark aria-hidden="true"></span><span class="marker__label"
+              >{A.believe.p1Mark}</span
+            ></span
+          >
+        </p>
+        <p>{A.believe.p2}</p>
+        <p class="ab-believe-close">{A.believe.p3}</p>
+      </div>
+    </div>
+
+    {/* ---- Das Team ---- */}
+    <div class="ab-block" id="team" data-reveal>
+      <h2 class="ab-h2">{A.team.h2}</h2>
+      <ul class="ab-team">
+        {
+          A.team.members.map((m) => (
+            <li class="ab-card">
+              {/* Foto-Slot: Monogramm-Kreis; ein späteres Bild ersetzt ihn ohne
+                  Layout-Änderung (gleiche Box). */}
+              <span class="ab-mono" aria-hidden="true">
+                {initials(m.name)}
+              </span>
+              <span class="ab-card-name">{m.name}</span>
+              <span class="ab-card-role">{m.role}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    {/* ---- Abschluss: Microline + Store-Badges ---- */}
+    <div class="ab-close" data-reveal>
+      <p class="ab-ratings">{ratingsLine}</p>
+      <StoreBadges position="about" />
+    </div>
+
+    {/* ---- Fußnoten ---- */}
+    <section class="ab-notes" aria-label={A.footnotesTitle}>
+      <h2 class="ab-notes-title">{A.footnotesTitle}</h2>
+      <ol class="ab-notes-list">
+        {A.footnotes.map((fn, i) => <li id={`ab-fn-${i + 1}`}>{fn}</li>)}
+      </ol>
+    </section>
+  </div>
+</section>
+
+<style>
+  .ab {
+    background-color: var(--color-white);
+    color: var(--color-black);
+    padding-block: var(--spacing-section);
+    padding-inline: var(--spacing-inset);
+  }
+  .ab-inner {
+    max-width: 46rem; /* Lesebreite ~65–72ch */
+    margin-inline: auto;
+  }
+
+  /* ---- Kopf ---- */
+  .ab-kicker {
+    margin: 0 0 14px;
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-grey-text);
+  }
+  .ab-h1 {
+    margin: 0;
+    font-weight: 900;
+    font-size: clamp(2.4rem, 6.4vw, 4.25rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* ---- Fließtext (CD-Proportionen, Lesebreite) ---- */
+  .ab-prose {
+    max-width: 42rem;
+    font-size: clamp(1.05rem, 1.5vw, 1.2rem);
+    line-height: 1.6;
+    color: #4a4a49;
+  }
+  .ab-prose p {
+    margin: 0 0 1.1em;
+  }
+  .ab-prose p:last-child {
+    margin-bottom: 0;
+  }
+  .ab-prose strong {
+    color: var(--color-black);
+    font-weight: 900;
+  }
+  .ab-prose :global(em) {
+    font-style: italic;
+  }
+  .ab-lead {
+    font-weight: 900;
+    font-size: clamp(1.3rem, 2.6vw, 1.75rem);
+    line-height: 1.2;
+    color: var(--color-black);
+  }
+  .ab-block {
+    margin-top: clamp(3rem, 7vh, 5rem);
+  }
+  .ab-h2 {
+    margin: 0 0 0.7em;
+    font-weight: 900;
+    font-size: clamp(1.7rem, 3.8vw, 2.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+  }
+  .ab-h3 {
+    margin: clamp(2rem, 4vh, 2.75rem) 0 1.1em;
+    font-weight: 900;
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    color: var(--color-black);
+  }
+  .ab-origin-line {
+    font-weight: 900;
+    color: var(--color-black);
+  }
+
+  /* ---- Stat-Kacheln (gelb, Stil der Bewertungs-Aggregate) ---- */
+  .ab-stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 639.98px) {
+    .ab-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ab-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px 20px;
+    border-radius: 18px;
+    background: var(--color-yellow);
+    color: var(--color-black);
+  }
+  .ab-stat-num {
+    font-weight: 900;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .ab-stat-note {
+    font-size: 0.42em;
+    vertical-align: super;
+    line-height: 0;
+    margin-left: 0.15em;
+  }
+  .ab-stat-note a {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.65;
+  }
+  .ab-stat-note a:hover {
+    opacity: 1;
+  }
+  .ab-stat-label {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  /* ---- Signature-Quote (Scroll-Text-Fill) ---- */
+  .ab-quote-wrap {
+    margin: clamp(3.5rem, 9vh, 6rem) 0;
+  }
+  .ab-quote {
+    margin: 0;
+    max-width: 30ch;
+    font-weight: 900;
+    font-size: clamp(1.9rem, 5vw, 3.4rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  /* Einzelne Wörter des Fills. Ohne JS / reduced-motion voll sichtbar (opacity 1);
+     initScrollTextFill setzt den ausgegrauten Startzustand per JS und flutet auf 1. */
+  .ab-quote :global(.tf-w) {
+    display: inline-block;
+  }
+  /* Emphasis-Wörter „leuchten gelb auf": dunkle Schrift auf gelbem Marker
+     (barrierefrei — kein gelber Text auf Hell). */
+  .ab-quote :global(.tf-em) {
+    background: var(--color-yellow);
+    color: var(--color-black);
+    padding: 0 0.12em;
+    border-radius: 0.1em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .ab-believe-lead {
+    font-weight: 900;
+    font-size: clamp(1.3rem, 2.8vw, 1.9rem);
+    line-height: 1.25;
+    color: var(--color-black);
+  }
+  .ab-believe-close {
+    font-weight: 900;
+    color: var(--color-black);
+  }
+
+  /* ---- Team-Karten ---- */
+  .ab-team {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 639.98px) {
+    .ab-team {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ab-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 24px;
+    border-radius: 18px;
+    background: var(--color-grey);
+  }
+  /* Foto-Slot = Monogramm-Kreis (Initialen). Feste Box → ein Bild ersetzt ihn 1:1. */
+  .ab-mono {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
+    border-radius: 999px;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    font-weight: 900;
+    font-size: 1.35rem;
+    letter-spacing: 0.02em;
+  }
+  .ab-card-name {
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: var(--color-black);
+  }
+  .ab-card-role {
+    font-size: 0.9rem;
+    color: var(--color-grey-text);
+  }
+
+  /* ---- Abschluss ---- */
+  .ab-close {
+    margin-top: clamp(3rem, 7vh, 5rem);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .ab-ratings {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--color-grey-text);
+  }
+
+  /* ---- Fußnoten ---- */
+  .ab-notes {
+    margin-top: clamp(3rem, 7vh, 4.5rem);
+    padding-top: 20px;
+    border-top: 1px solid var(--color-darkgrey);
+  }
+  .ab-notes-title {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-grey-text);
+  }
+  .ab-notes-list {
+    margin: 0;
+    padding-left: 1.4em;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ab-notes-list li {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ab-quote :global(.tf-w) {
+      opacity: 1 !important;
+    }
+  }
+</style>

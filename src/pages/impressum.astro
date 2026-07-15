@@ -1,12 +1,46 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Section from '../components/Section.astro';
-import { useTranslations } from '../i18n';
-const t = useTranslations('de');
+/**
+ * Impressum (§ 5 TMG) — verbatim aus der alten WordPress-Seite migriert.
+ * DE-only Rechtsseite. Inhalt unverändert (keine Content-Anpassungen).
+ */
+import LegalLayout from '../layouts/LegalLayout.astro';
 ---
 
-<BaseLayout title={`${t.legal.imprint.title} · Immobilien Bot`} description={t.legal.imprint.title} noindex>
-  <Section title={t.legal.imprint.title}>
-    <p class="text-body opacity-70">{t.legal.placeholder}</p>
-  </Section>
-</BaseLayout>
+<LegalLayout
+  title="Impressum"
+  description="Impressum der JS Immobilien Bot GmbH, Berlin – Anbieterkennzeichnung gemäß § 5 TMG mit Handelsregister, USt-ID und Kontaktangaben zur App Immobilien Bot."
+>
+  <h2>Angaben gemäß § 5 TMG</h2>
+  <p>JS Immobilien Bot GmbH</p>
+  <p>
+    Vertreten durch:<br />
+    Dr. Juri Schmidt (Geschäftsführer)<br />
+    Schönfließer Str. 1<br />
+    10439 Berlin
+  </p>
+  <p>
+    Handelsregister:<br />
+    Amtsgericht Charlottenburg<br />
+    Registernummer: HRB 285832
+  </p>
+  <p>
+    Umsatzsteuer-Identifikationsnummer<br />
+    Umsatzsteuer-ID gemäß § 27a Umsatzsteuergesetz:<br />
+    DE462328097
+  </p>
+
+  <h2>Kontakt</h2>
+  <p>
+    E-Mail: <a href="mailto:mail@immobilien-bot.de">mail@immobilien-bot.de</a>
+  </p>
+
+  <h2>EU-Streitschlichtung</h2>
+  <p>
+    Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:<br />
+    <a href="https://ec.europa.eu/consumers/odr/">https://ec.europa.eu/consumers/odr/</a>.
+  </p>
+  <p>
+    Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+    Verbraucherschlichtungsstelle teilzunehmen.
+  </p>
+</LegalLayout>

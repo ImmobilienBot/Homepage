@@ -47,6 +47,58 @@ export function localizePath(path: string, lang: Locale): string {
   return bare === '/' ? '/en/' : `/en${bare}`;
 }
 
+/* ------------------------------------------------------------------ */
+/* Sprach-Pendants                                                     */
+/* ------------------------------------------------------------------ */
+/**
+ * Routen mit ÜBERSETZTEM Slug (nicht bloß /en-Präfix). Für alle anderen Seiten
+ * genügt `localizePath` (reine Präfix-Logik). Hier NUR die Ausnahmen pflegen.
+ */
+export const translatedRoutes: { de: string; en: string }[] = [
+  { de: '/ueber-uns/', en: '/en/about/' },
+];
+
+/**
+ * DE-only-Seiten (Rechtsseiten) — es gibt KEIN Sprach-Pendant. Der Umschalter
+ * führt für die jeweils andere Sprache auf die Sprach-Root. (Normalisiert ohne
+ * Trailing-Slash.)
+ */
+export const standaloneRoutes = new Set(['/impressum', '/datenschutz', '/agb', '/contact']);
+
+const stripTrailing = (p: string): string => (p.length > 1 && p.endsWith('/') ? p.slice(0, -1) : p);
+const hasTrailing = (p: string): boolean => p.length > 1 && p.endsWith('/');
+/** `dest` an den Trailing-Slash-Stil von `like` angleichen (Self-Ref-Konsistenz). */
+const applyTrailing = (dest: string, like: string): string => {
+  const base = stripTrailing(dest);
+  return hasTrailing(like) ? (base === '' ? '/' : `${base}/`) : base === '' ? '/' : base;
+};
+
+/**
+ * Sprach-Pendant eines Pfads inkl. übersetzter Slugs. Für die aktuelle Sprache
+ * identisch zum Eingabepfad (Self-Referencing hreflang bleibt exakt). Basis für
+ * `getAlternates` (hreflang) UND den Header-Sprachumschalter.
+ */
+export function pathPendant(path: string, target: Locale): string {
+  const norm = stripTrailing(path);
+  for (const pair of translatedRoutes) {
+    if (norm === stripTrailing(pair.de) || norm === stripTrailing(pair.en)) {
+      return applyTrailing(target === defaultLang ? pair.de : pair.en, path);
+    }
+  }
+  return localizePath(path, target);
+}
+
+/**
+ * href für den Sprachumschalter. DE-only-Seiten ohne Pendant → Sprach-Root der
+ * Zielsprache (aktuelle Sprache bleibt auf der Seite).
+ */
+export function switchLangHref(path: string, target: Locale): string {
+  if (standaloneRoutes.has(stripTrailing(path))) {
+    return target === defaultLang ? path : '/en/';
+  }
+  return pathPendant(path, target);
+}
+
 /**
  * Reziproke hreflang-Alternates für die aktuelle URL erzeugen.
  * Gibt absolute URLs zurück (Basis = Astro.site).
@@ -59,9 +111,9 @@ export function getAlternates(
   const path = url.pathname;
   const alternates = (['de', 'en'] as Locale[]).map((lang) => ({
     lang: hreflangCodes[lang],
-    href: origin + localizePath(path, lang),
+    href: origin + pathPendant(path, lang),
   }));
   // x-default zeigt auf die Standard-Sprache (DE)
-  alternates.push({ lang: 'x-default', href: origin + localizePath(path, 'de') });
+  alternates.push({ lang: 'x-default', href: origin + pathPendant(path, 'de') });
   return alternates;
 }

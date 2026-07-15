@@ -13,7 +13,7 @@
  * Ring auf Dunkel sichtbar (data-cursor-dark → html.cursor-invert).
  */
 import { Image } from 'astro:assets';
-import { getLangFromUrl, useTranslations, localizePath } from '../../i18n';
+import { getLangFromUrl, useTranslations } from '../../i18n';
 import { contact } from '../../data/site';
 import PillButton from '../ui/PillButton.astro';
 import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
@@ -21,7 +21,8 @@ import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const C = t.sections.contact;
-const privacyHref = localizePath('/datenschutz', lang);
+// Rechtsseiten sind DE-only (kein /en-Pendant) → immer die DE-Route verlinken.
+const privacyHref = '/datenschutz';
 
 // Keyword-Marker im Headline-Text (Marker = Gelb-Fläche, Text #3b3b3a → auf Dunkel ok).
 function markParts(text: string, mark: string) {

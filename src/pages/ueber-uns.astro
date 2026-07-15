@@ -1,0 +1,19 @@
+---
+/**
+ * Über uns (DE, /ueber-uns) — Manifest + Team.
+ * Reziprokes hreflang-Pendant: /en/about (via getAlternates → pathPendant).
+ * AboutPage/Organization(founder)/Person-JSON-LD via extraJsonLd.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import UeberUns from '../components/sections/UeberUns.astro';
+import { useTranslations } from '../i18n';
+import { buildAboutJsonLd } from '../utils/aboutJsonLd';
+
+const t = useTranslations('de');
+const A = t.about;
+const jsonLd = buildAboutJsonLd('de', A.meta.title, A.meta.description, A.team.members);
+---
+
+<BaseLayout title={A.meta.title} description={A.meta.description} extraJsonLd={jsonLd}>
+  <UeberUns />
+</BaseLayout>
