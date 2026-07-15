@@ -614,6 +614,18 @@ const IC_INSTAGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none
     line-height: 1.5;
   }
 
+  /* Mobile-Pass (< 1024px): iOS zoomt Felder mit <16px beim Fokus → Eingabe-
+     Schrift auf 16px; Themen-Chips auf volle 44px-Tap-Höhe. Desktop ≥1024px
+     unverändert (Input 15px, Chip 40px). */
+  @media (max-width: 1023.98px) {
+    .kt-input {
+      font-size: 16px;
+    }
+    .kt-chip-label {
+      min-height: 44px;
+    }
+  }
+
   /* ---- Submit + DSGVO + Status ---- */
   .kt-submit {
     margin-top: 4px;
