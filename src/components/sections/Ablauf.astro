@@ -289,5 +289,11 @@ const howToLd = {
       border-right: 0;
       border-bottom: 2px dashed var(--color-darkgrey);
     }
+    /* Mobile-Pass: gestapelte Tickets haben volle Breite → Beschreibungstext auf
+       16px (Lesbarkeit). Desktop ≥1024px bleibt bei 14px (unverändert). */
+    .ab-ticket-desc {
+      font-size: 1rem;
+      line-height: 1.5;
+    }
   }
 </style>
