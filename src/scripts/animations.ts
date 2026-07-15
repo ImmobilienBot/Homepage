@@ -281,6 +281,9 @@ function initHeroChoreography() {
  */
 function initHeroCanvas() {
   if (!window.matchMedia('(pointer: fine)').matches) return;
+  // Mobile-Pass: Konstellations-Canvas unterhalb lg GAR NICHT initialisieren
+  // (das weiche gelbe CSS-Glow trägt die Tiefe). Desktop ≥1024px unverändert.
+  if (!window.matchMedia('(min-width: 1024px)').matches) return;
   const canvas = document.querySelector<HTMLCanvasElement>('#hero [data-hero-canvas]');
   const hero = document.querySelector<HTMLElement>('#hero');
   if (!canvas || !hero) return;
