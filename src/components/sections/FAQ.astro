@@ -459,7 +459,12 @@ const PLUS_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" st
   }
   .faq-chip {
     flex: none;
-    padding: 8px 14px;
+    /* Mobile-Pass: volle 44px-Tap-Höhe (Chips sind Sprung-Links). Chips sind
+       ≥1024px display:none → wirkt ausschließlich mobil. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
     border-radius: 999px;
     background: var(--color-grey);
     color: var(--color-black);
