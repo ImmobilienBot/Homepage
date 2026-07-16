@@ -30,7 +30,7 @@ const PAGES = ['/', '/en/'];
 // (opacity/visibility) noch von einem opaken aria-hidden-Layer verdeckt sein.
 // [name, selector, minHeight] — der Header ist bewusst eine schlanke Leiste (~74px).
 const EXPECTED_SECTIONS = [
-  ['header', 'header', 40],
+  ['header', 'header.site-header', 40],
   ['hero', '#hero', 100],
   ['problem', '#problem', 100],
   ['portale', '#portale', 100],
