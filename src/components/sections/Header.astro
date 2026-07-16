@@ -213,12 +213,25 @@ const navItems = [
 </header>
 
 <script>
-  // Vollbreite ↔ Pille — rein CSS-getrieben (kein GSAP nötig).
+  // Vollbreite ↔ Pille (CSS-getrieben). HYSTERESE gegen iOS-Safari-Toolbar-Jitter:
+  // Safaris Toolbar kollabiert/expandiert richtungsabhängig und verschiebt
+  // scrollY/innerHeight um ~50–60px. Eine EINZELNE Schwelle in dieser Zone ließe den
+  // Pillen-Zustand hin- und herflippen (= sichtbare Header-Höhenänderung je Scroll-
+  // Richtung). Lösung: Pille AN erst ab scrollY > 96, zurück zu Vollbreite erst < 12 —
+  // die Totzone (12–96 = 84px) ist größer als das Toolbar-Delta, also kein Oszillieren.
+  // rAF-throttled; scrollY auf ≥ 0 geklemmt (iOS-Rubber-Banding liefert negative Werte).
   const header = document.querySelector('[data-header]');
+  const ON = 96;
+  const OFF = 12;
+  let scrolled = false;
   let ticking = false;
   function update() {
-    header?.toggleAttribute('data-scrolled', window.scrollY > 60);
     ticking = false;
+    const y = Math.max(0, window.scrollY);
+    if (!scrolled && y > ON) scrolled = true;
+    else if (scrolled && y < OFF) scrolled = false;
+    else return; // in der Totzone → kein Zustandswechsel
+    header?.toggleAttribute('data-scrolled', scrolled);
   }
   function onScroll() {
     if (!ticking) {
