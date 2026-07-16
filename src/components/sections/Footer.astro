@@ -108,7 +108,9 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
      ≥1024px unverändert (Bar existiert dort nicht). */
   @media (max-width: 1023.98px) {
     .footer {
-      padding-bottom: calc(2rem + 76px + env(safe-area-inset-bottom));
+      /* env() MIT Fallback (sonst wäre die ganze calc()-Deklaration ohne env()-
+         Support ungültig → kein Platz für die Smart-Bar). */
+      padding-bottom: calc(2rem + 76px + env(safe-area-inset-bottom, 0px));
     }
   }
   .footer-col {
