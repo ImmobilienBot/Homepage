@@ -198,9 +198,9 @@ export const en: Dict = {
         '{count} sources, monitored around the clock — every new listing lands in your app in real time.',
       groupNational: 'Nationwide',
       groupRegional: 'Regional',
-      // Mobile „Ein Feed"-Bühne (<lg): gelber Störer, Regional-Accordion, Phone-Alt.
-      sourcesBadge: '{n} sources',
-      regionalToggle: 'Regional · {n} portals',
+      // Mobile <lg: „All portals" accordion (title + subline) + phone alt.
+      accordionTitle: 'All {n} portals',
+      accordionSub: 'Nationwide & regional',
       mobilePhoneAlt:
         'Immobilien Bot app screen "Configure search": a list of property portals, all selected.',
       pushTitle: 'Immobilien Bot',

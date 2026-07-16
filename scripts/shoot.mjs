@@ -199,8 +199,8 @@ async function main() {
 
     if (wantState('portale')) await statePage(async (page) => {
       await setChromeHidden(page, true);
-      await page.evaluate(() => { const d = document.querySelector('.pf-regional'); if (d) d.open = true; }); await wait(600);
-      await shootSection(page, 'portale', 'de-390-portale-regional-open');
+      await page.evaluate(() => { const d = document.querySelector('.pf-regional'); if (d) d.open = true; }); await wait(700);
+      await shootSection(page, 'portale', 'de-390-portale-open');
     });
 
     // Sektionsübergang Portale → Folgesektion: die Portale-Unterkante wird im Viewport

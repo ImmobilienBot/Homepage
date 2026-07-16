@@ -29,14 +29,16 @@ const t = useTranslations(getLangFromUrl(Astro.url));
 const P = t.sections.portals;
 
 // Mobile „Quellen-Strom" (Block D): zwei gegenläufige Marquee-Zeilen, Bundesweit
-// 5+5 aufgeteilt (alle Namen aus site.ts; Primär-Track sichtbar/vorlesbar, Klon-Track
-// aria-hidden für den nahtlosen Loop). Kein Störer mehr — die Zahl steht in der Subline.
+// 5+5 aufgeteilt. REIN DEKORATIV (aria-hidden) — die kanonische, vorlesbare Portal-Liste
+// ist das „Alle Portale"-Accordion darunter (jeder Name genau einmal hörbar).
 const streamRows = [nationalPortals.slice(0, 5), nationalPortals.slice(5)];
-const regionalToggle = P.regionalToggle.replace('{n}', String(regionalPortals.length));
-// Städte-Teaser = eindeutige Regionen der Regional-Portale (erste Region-Komponente).
-const regionalCities = [
-  ...new Set(regionalPortals.map((p) => (p.region ? p.region.split('/')[0] : '')).filter(Boolean)),
-];
+
+// „Alle Portale"-Accordion: Titel + Unterzeile (Zahl aus site.ts) und Gruppen-Labels
+// (Bundesweit/Regional je mit abgeleiteter Anzahl). Alles buildseitig, nichts hart.
+const accordionTitle = P.accordionTitle.replace('{n}', String(portalCount));
+const accordionSub = P.accordionSub;
+const nationalLabel = `${P.groupNational} · ${nationalPortals.length}`;
+const regionalLabel = `${P.groupRegional} · ${regionalPortals.length}`;
 
 // Subline: {count} = portalCount (fett). Am Platzhalter splitten.
 const [subPre, subPost] = P.subline.split('{count}');
@@ -97,8 +99,9 @@ const feedData = {
         animierte Regional-Accordion. Marquee = CSS-only (wie Bewertungen). */}
     <div class="pf-mobile">
       <div class="pf-stage">
-        {/* Quellen-Strom (z:0, hinter dem Phone). Primär-Track vorlesbar, Klon aria-hidden. */}
-        <div class="pf-stream" aria-label={P.groupNational}>
+        {/* Quellen-Strom — REIN DEKORATIV (komplett aria-hidden). Die vorlesbare Liste
+            ist das „Alle Portale"-Accordion darunter (jeder Name genau einmal). */}
+        <div class="pf-stream" aria-hidden="true">
           {
             streamRows.map((row, ri) => (
               <div class:list={['pf-stream-row', `pf-stream-row--${ri + 1}`]}>
@@ -133,15 +136,13 @@ const feedData = {
         </div>
       </div>
 
+      {/* „Alle Portale"-Accordion = kanonische, vorlesbare Portal-Liste (bundesweit +
+          regional, je Gruppe mit Anzahl). Default ZU. */}
       <details class="pf-regional">
         <summary class="pf-regional-sum">
           <span class="pf-regional-head">
-            <span class="pf-regional-title">{regionalToggle}</span>
-            {
-              regionalCities.length > 0 && (
-                <span class="pf-regional-cities">{regionalCities.join(' · ')}</span>
-              )
-            }
+            <span class="pf-regional-title">{accordionTitle}</span>
+            <span class="pf-regional-cities">{accordionSub}</span>
           </span>
           <svg
             class="pf-regional-chev"
@@ -156,18 +157,38 @@ const feedData = {
             aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg
           >
         </summary>
-        {/* grid-template-rows 0fr→1fr (dokumentierte Ausnahme) für das Aufklappen. */}
+        {/* grid-template-rows 0fr→1fr (dokumentierte Ausnahme) für das Aufklappen. --k
+            läuft durchgehend (Labels + Chips) für einen sauberen, gedeckelten Stagger. */}
         <div class="pf-regional-wrap">
-          <ul class="pf-regional-list">
-            {
-              regionalPortals.map((p, i) => (
-                <li class="pf-regional-item" style={`--k:${i}`}>
-                  <span class="pf-regional-name">{p.name}</span>
-                  {cityTag(p) && <span class="pf-regional-city">{cityTag(p)}</span>}
-                </li>
-              ))
-            }
-          </ul>
+          <div class="pf-groups">
+            <div class="pf-group">
+              <h3 class="pf-mgroup-label" style="--k:0">{nationalLabel}</h3>
+              <ul class="pf-regional-list">
+                {
+                  nationalPortals.map((p, i) => (
+                    <li class="pf-regional-item" style={`--k:${1 + i}`}>
+                      <span class="pf-regional-name">{p.name}</span>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div class="pf-group">
+              <h3 class="pf-mgroup-label" style={`--k:${1 + nationalPortals.length}`}>
+                {regionalLabel}
+              </h3>
+              <ul class="pf-regional-list">
+                {
+                  regionalPortals.map((p, i) => (
+                    <li class="pf-regional-item" style={`--k:${2 + nationalPortals.length + i}`}>
+                      <span class="pf-regional-name">{p.name}</span>
+                      {cityTag(p) && <span class="pf-regional-city">{cityTag(p)}</span>}
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+          </div>
         </div>
       </details>
     </div>
@@ -859,15 +880,30 @@ const feedData = {
     .pf-regional[open] .pf-regional-wrap {
       grid-template-rows: 1fr;
     }
+    /* Der grid-rows-Kollaps klippt an .pf-groups (direktes Kind des Grid-Wrappers). */
+    .pf-groups {
+      overflow: hidden;
+      min-height: 0;
+      padding: 4px 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .pf-mgroup-label {
+      margin: 0 0 8px;
+      font-weight: 900;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-grey-text);
+    }
     .pf-regional-list {
       list-style: none;
       margin: 0;
-      padding: 4px 0 10px;
+      padding: 0;
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      min-height: 0;
-      overflow: hidden;
     }
     .pf-regional-item {
       display: inline-flex;
@@ -881,17 +917,22 @@ const feedData = {
       font-weight: 700;
       font-size: 12px;
       color: var(--color-black);
-      /* Entrance-Stagger beim Aufklappen (nur opacity/transform). */
+    }
+    /* Entrance-Stagger beim Aufklappen (Labels + Chips, nur opacity/transform). --k läuft
+       durchgehend; 16ms/Item deckelt den Gesamt-Stagger bei ~22 Elementen auf < 400ms. */
+    .pf-mgroup-label,
+    .pf-regional-item {
       opacity: 0;
       transform: translateY(6px);
       transition:
         opacity 250ms ease,
         transform 250ms ease;
     }
+    .pf-regional[open] .pf-mgroup-label,
     .pf-regional[open] .pf-regional-item {
       opacity: 1;
       transform: none;
-      transition-delay: calc(var(--k) * 30ms);
+      transition-delay: calc(var(--k) * 16ms);
     }
     .pf-regional-city {
       font-weight: 400;
@@ -928,6 +969,7 @@ const feedData = {
       .pf-regional-wrap {
         transition: none;
       }
+      .pf-mgroup-label,
       .pf-regional-item {
         opacity: 1;
         transform: none;

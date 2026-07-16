@@ -203,9 +203,9 @@ export const de = {
         '{count} Quellen, rund um die Uhr überwacht — jedes neue Angebot landet in Echtzeit in deiner App.',
       groupNational: 'Bundesweit',
       groupRegional: 'Regional',
-      // Mobile „Ein Feed"-Bühne (<lg): gelber Störer, Regional-Accordion, Phone-Alt.
-      sourcesBadge: '{n} Quellen',
-      regionalToggle: 'Regional · {n} Portale',
+      // Mobile <lg: „Alle Portale"-Accordion (Titel + Unterzeile) + Phone-Alt.
+      accordionTitle: 'Alle {n} Portale',
+      accordionSub: 'Bundesweit & regional',
       mobilePhoneAlt:
         'Immobilien-Bot-App-Screen „Suche konfigurieren": eine Liste der Immobilienportale, alle ausgewählt.',
       // Push-Benachrichtigung (Lockscreen). {flat}/{portal} zur Laufzeit ersetzt.
