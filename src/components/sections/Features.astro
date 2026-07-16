@@ -167,7 +167,13 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
                   <div class="ft-glow" aria-hidden="true" />
                   <div class="ft-phone">
                     <div class="ft-shot is-active">
-                      <Image src={shots[i]} alt={s.alt} class="ft-shot-img" loading="lazy" />
+                      <Image
+                        src={shots[i]}
+                        alt={s.alt}
+                        class="ft-shot-img"
+                        sizes="(min-width: 1024px) 300px, 160px"
+                        loading="lazy"
+                      />
                     </div>
                     <PhoneFrame class="ft-frame" />
                   </div>
@@ -1246,9 +1252,9 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
   /* =====================================================================
      Block E — Mobile: je Feature eine eigenständige Karte (Bevel-Muster).
      Reihenfolge Index (01…04, Menü-Ziffern-Stil) → Titel → Copy → Checks →
-     Screenshot, unten bündig an der Kartenkante angeschnitten (kein Geräterahmen).
+     Phone-Mockup (Geräterahmen + Screenshot), unten an der Kartenkante angeschnitten.
      ALLE Regeln in max-width:1023.98px → Desktop-Enhancement/Basis-Stack ≥lg
-     unberührt (Markup unverändert; der Bevel entsteht rein per CSS).
+     unberührt (Markup/PhoneFrame unverändert; der Anschnitt entsteht rein per CSS).
      ===================================================================== */
   @media (max-width: 1023.98px) {
     .ft-blocks {
@@ -1289,36 +1295,26 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
       align-items: flex-start;
       text-align: left;
     }
-    /* Screenshot: volle Kartenbreite, oben leicht gerundet, unten von der Karte gekappt. */
+    /* Phone-MOCKUP (Geräterahmen + Screenshot, Basis-Geometrie wie Hero/Portale):
+       zentriert ~65 % der Karten-Innenbreite, unten an der KARTEN-Unterkante bei ~50 %
+       gekappt (kein Dissolve — die Kartenkante ist die bewusste Schnittkante). Der
+       Anschnitt sitzt an .ft-block-phone (max-height + overflow), damit alle 4 Phones
+       auf gleicher relativer Höhe kappen. .ft-frame/.ft-shot/.ft-glow behalten ihre
+       Basis-Werte → echtes Geräte-Mockup. */
     .ft-block-phone {
-      margin: 20px -24px 0;
-      display: block;
-      width: auto;
+      margin: 22px auto 0;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      max-height: clamp(172px, 46vw, 214px); /* ~50 % des Phones sichtbar */
+      overflow: hidden;
     }
     .ft-phone-stage--inline {
-      width: 100%;
-      max-height: clamp(150px, 40vw, 200px);
-      overflow: hidden;
-      padding-top: 0;
-    }
-    .ft-glow {
-      display: none;
-    }
-    .ft-frame {
-      display: none; /* kein Geräterahmen im Bevel-Muster */
-    }
-    .ft-shot {
-      position: relative;
-      left: auto;
-      top: auto;
-      width: 100%;
-      height: auto;
-      border-radius: 12px 12px 0 0;
-      overflow: hidden;
-    }
-    .ft-shot-img {
-      width: 100%;
-      height: auto;
+      width: 65%;
+      max-width: 230px;
+      max-height: none; /* Höhe/Anschnitt steuert .ft-block-phone */
+      overflow: visible;
+      padding-top: 6px; /* Notch-/Glow-Luft oben */
     }
   }
 </style>
