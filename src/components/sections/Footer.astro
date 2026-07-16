@@ -33,7 +33,7 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
 
 <footer class="footer bg-grey px-inset pt-14 pb-8 text-black">
   <div class="mx-auto max-w-6xl">
-    <div class="grid grid-cols-1 items-start gap-10 sm:grid-cols-4 sm:gap-8">
+    <div class="footer-grid grid grid-cols-2 items-start gap-x-6 gap-y-5 sm:grid-cols-4 sm:gap-8">
       {/* Spalte 1 — Rechtliches */}
       <nav class="footer-col" aria-label={F.colLegal}>
         <p class="footer-label">{F.colLegal}</p>
@@ -180,6 +180,34 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
      NUR im 1-spaltigen Stapel — die 4-spaltige Anlage ab sm (≥640px, inkl. ≥1024px)
      bleibt kompakt/unverändert. */
   @media (max-width: 639.98px) {
+    /* Block H: kompakter Footer — 2-Spalten-Grid (Linkgruppen nebeneinander),
+       Badges volle Breite, engere Abstände → Höhe grob halbiert. */
+    .footer {
+      padding-top: 2.5rem; /* 40px statt pt-14 (56px) */
+    }
+    .footer-col {
+      gap: 10px;
+    }
+    /* Explizite Platzierung: Rechtliches (hoch) links über beide Zeilen, Mehr + Sprache
+       gestapelt rechts, Badges/Copyright volle Breite darunter → keine leere Zelle,
+       keine separate Sprache-Zeile (spart eine Zeilenhöhe). */
+    .footer-grid > .footer-col:nth-child(1) {
+      grid-column: 1;
+      grid-row: 1 / 3;
+    }
+    .footer-grid > .footer-col:nth-child(2) {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .footer-grid > .footer-col:nth-child(3) {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .footer-col--badges {
+      grid-column: 1 / -1; /* App-laden/Badges/Copyright volle Breite unter dem Grid */
+      grid-row: 3;
+      margin-top: 2px;
+    }
     .footer-list {
       gap: 2px;
     }
@@ -188,6 +216,10 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
       display: inline-flex;
       align-items: center;
       min-height: 44px;
+    }
+    .footer-sources {
+      margin-top: 24px;
+      padding-top: 16px;
     }
   }
 
