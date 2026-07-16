@@ -46,6 +46,8 @@ function initSmoothScroll() {
     lenis.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
+  // Für das Mobile-Menü-Overlay (Header): Scroll-Lock via lenis.stop()/start().
+  (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
   return lenis;
 }
 

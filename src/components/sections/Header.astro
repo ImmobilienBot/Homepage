@@ -16,6 +16,7 @@ import { getLangFromUrl, useTranslations, localizePath, switchLangHref } from '.
 import type { Locale } from '../../data/site';
 import Logo from '../../assets/images/immobilien-bot-logo.svg';
 import PillButton from '../ui/PillButton.astro';
+import StoreBadges from '../StoreBadges.astro';
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -41,6 +42,15 @@ const navBefore = [
 // Sprachumschalter-Ziele (Sprach-Pendant der aktuellen Seite).
 const deHref = switchLangHref(path, 'de');
 const enHref = switchLangHref(path, 'en');
+
+// Vollständige Menü-Reihenfolge fürs Mobile-Overlay (Features · Portale · Preise ·
+// FAQ · Über uns · Kontakt). `section` = Scroll-Spy-ID (Über uns ist ein Seitenlink
+// ohne Spy). Anchors absolut → funktionieren auch von Unterseiten.
+const navItems = [
+  ...navBefore.map((item) => ({ label: item.label, href: anchor(item.id), section: item.id })),
+  { label: t.nav.about, href: aboutHref, section: undefined as string | undefined },
+  { label: t.nav.contact, href: anchor('kontakt'), section: 'kontakt' },
+];
 ---
 
 <header class="site-header" data-header>
@@ -128,64 +138,71 @@ const enHref = switchLangHref(path, 'en');
         <span class="sm:hidden">{t.nav.ctaShort}</span>
       </PillButton>
 
-      {/* Mobile-Menü — natives <details> (ohne JS auf-/zuklappbar). */}
-      <details class="nav-mobile" data-mobile>
-        <summary class="nav-burger" aria-label={t.nav.menuOpen} data-burger>
-          <span class="burger-box" aria-hidden="true">
-            <span></span><span></span><span></span>
-          </span>
-        </summary>
-        <div class="nav-mobile-panel">
-          {
-            navBefore.map((item) => (
-              <a href={anchor(item.id)} class="m-link">
-                {item.label}
-              </a>
-            ))
-          }
-          <details class="m-sub">
-            <summary class="m-link m-sub-summary">
-              {t.nav.about}
-              <svg
-                class="m-caret"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg
-              >
-            </summary>
-            <a href={aboutHref} class="m-sublink">{t.nav.about}</a>
-            <a href={`${aboutHref}#manifest`} class="m-sublink">{t.nav.aboutManifest}</a>
-            <a href={`${aboutHref}#team`} class="m-sublink">{t.nav.aboutTeam}</a>
-          </details>
-          <a href={anchor('kontakt')} class="m-link">{t.nav.contact}</a>
+      {/* Mobile-Menü — Trigger (Vollbild-Overlay, JS-Enhancement; Overlay liegt
+          BEWUSST außerhalb von .nav-inner, weil deren backdrop-filter im Scroll-
+          Zustand sonst einen Containing-Block für position:fixed erzeugt). */}
+      <button
+        type="button"
+        class="nav-burger"
+        aria-label={t.nav.menuOpen}
+        aria-controls="nav-overlay"
+        aria-expanded="false"
+        data-burger
+      >
+        <span class="burger-box" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+    </div>
+  </div>
 
-          <div class="m-lang" role="group" aria-label="Sprache / Language">
-            <a
-              href={deHref}
-              hreflang="de"
-              lang="de"
-              class:list={['m-lang-opt', { 'is-active': lang === 'de' }]}
-              aria-label={t.nav.langToDe}
-              aria-current={lang === 'de' ? 'true' : undefined}>DE</a
-            >
-            <span class="lang-sep" aria-hidden="true">|</span>
-            <a
-              href={enHref}
-              hreflang="en"
-              lang="en"
-              class:list={['m-lang-opt', { 'is-active': lang === 'en' }]}
-              aria-label={t.nav.langToEn}
-              aria-current={lang === 'en' ? 'true' : undefined}>EN</a
-            >
-          </div>
-        </div>
-      </details>
+  {/* ---- Vollbild-Menü-Overlay (nur <lg, JS-Enhancement) ---- */}
+  <div id="nav-overlay" class="nav-overlay" data-overlay aria-hidden="true">
+    <nav class="mo-nav" aria-label={t.nav.menuOpen}>
+      <ol class="mo-list">
+        {
+          navItems.map((item, i) => (
+            <li class="mo-item" style={`--i:${i}`}>
+              <a
+                href={item.href}
+                class="mo-link"
+                data-mo-link
+                data-section={item.section ?? ''}
+              >
+                <span class="mo-index" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span class="mo-mask">
+                  <span class="mo-line">{item.label}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    <div class="mo-footer" style={`--i:${navItems.length}`}>
+      <StoreBadges position="Homepage_MobileMenu" androidPosition="mobile_menu" class="mo-badges" />
+      <div class="mo-lang" role="group" aria-label="Sprache / Language">
+        <a
+          href={deHref}
+          hreflang="de"
+          lang="de"
+          class:list={['mo-lang-opt', { 'is-active': lang === 'de' }]}
+          aria-label={t.nav.langToDe}
+          aria-current={lang === 'de' ? 'true' : undefined}>DE</a
+        >
+        <span class="mo-lang-sep" aria-hidden="true">|</span>
+        <a
+          href={enHref}
+          hreflang="en"
+          lang="en"
+          class:list={['mo-lang-opt', { 'is-active': lang === 'en' }]}
+          aria-label={t.nav.langToEn}
+          aria-current={lang === 'en' ? 'true' : undefined}>EN</a
+        >
+      </div>
     </div>
   </div>
 </header>
@@ -273,20 +290,116 @@ const enHref = switchLangHref(path, 'en');
     });
   }
 
-  // Mobile-Menü: aria-label des Triggers spiegeln + bei Link-Klick schließen.
-  const mobile = document.querySelector<HTMLDetailsElement>('[data-mobile]');
-  const burger = mobile?.querySelector<HTMLElement>('[data-burger]');
-  if (mobile && burger) {
+  // Mobile-Menü — Vollbild-Overlay (JS-Enhancement). Ohne JS bleibt der Seiten-
+  // inhalt normal per Scroll erreichbar; das Overlay ist reine Zugabe.
+  const burger = document.querySelector<HTMLButtonElement>('[data-burger]');
+  const overlay = document.querySelector<HTMLElement>('[data-overlay]');
+  if (burger && overlay) {
     const openLabel = burger.getAttribute('aria-label') || 'Menü öffnen';
-    const closeLabel = mobile.dataset.closeLabel || openLabel;
-    mobile.addEventListener('toggle', () => {
-      burger.setAttribute('aria-label', mobile.open ? closeLabel : openLabel);
-    });
-    mobile.querySelectorAll('a').forEach((a) =>
+    const closeLabel = openLabel === 'Open menu' ? 'Close menu' : 'Menü schließen';
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const links = Array.from(overlay.querySelectorAll<HTMLAnchorElement>('a[href]'));
+    const focusables = [burger, ...links];
+    let isOpen = false;
+
+    const lockScroll = (v: boolean) => {
+      document.documentElement.classList.toggle('menu-open', v);
+      // Lenis (falls schon initialisiert) anhalten/fortsetzen; CSS-overflow ist der
+      // Fallback für No-Lenis / vor der rIC-Initialisierung.
+      const lenis = (window as unknown as { __lenis?: { stop(): void; start(): void } }).__lenis;
+      if (lenis) v ? lenis.stop() : lenis.start();
+    };
+
+    // Aktiven Scroll-Spy-Punkt in die Overlay-Zeilen spiegeln (gelber Marker).
+    const syncActive = () => {
+      const activeId =
+        document.querySelector<HTMLAnchorElement>('[data-nav-link].is-active')?.getAttribute('href')?.split('#')[1] || '';
+      overlay.querySelectorAll<HTMLElement>('[data-mo-link]').forEach((a) => {
+        a.classList.toggle('is-active', !!activeId && a.dataset.section === activeId);
+      });
+    };
+
+    const open = () => {
+      if (isOpen) return;
+      isOpen = true;
+      syncActive();
+      overlay.setAttribute('aria-hidden', 'false');
+      overlay.setAttribute('data-open', '');
+      header?.setAttribute('data-menu-open', '');
+      burger.setAttribute('aria-expanded', 'true');
+      burger.setAttribute('aria-label', closeLabel);
+      lockScroll(true);
+      // Fokus auf den ersten Link (nach dem Paint).
+      requestAnimationFrame(() => links[0]?.focus());
+    };
+
+    const finishClose = () => {
+      overlay.removeAttribute('data-open');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.classList.remove('is-closing');
+    };
+    const close = (returnFocus = true) => {
+      if (!isOpen) return;
+      isOpen = false;
+      header?.removeAttribute('data-menu-open');
+      burger.setAttribute('aria-expanded', 'false');
+      burger.setAttribute('aria-label', openLabel);
+      lockScroll(false);
+      if (reduce) {
+        finishClose();
+      } else {
+        // Fade-out über die Overlay-Transition, dann Endzustand.
+        overlay.classList.add('is-closing');
+        overlay.removeAttribute('data-open');
+        const done = () => {
+          overlay.removeEventListener('transitionend', done);
+          finishClose();
+        };
+        overlay.addEventListener('transitionend', done);
+        window.setTimeout(() => {
+          if (overlay.classList.contains('is-closing')) done();
+        }, 400);
+      }
+      if (returnFocus) burger.focus();
+    };
+
+    burger.addEventListener('click', () => (isOpen ? close() : open()));
+
+    // Anchor-Tap: erst schließen (ohne Fokus-Rückgabe), dann übernimmt der globale
+    // Lenis-Anchor-Handler den Smooth-Scroll. Instant schließen → Scroll startet sofort.
+    links.forEach((a) => {
       a.addEventListener('click', () => {
-        mobile.open = false;
-      }),
-    );
+        if (!isOpen) return;
+        isOpen = false;
+        header?.removeAttribute('data-menu-open');
+        burger.setAttribute('aria-expanded', 'false');
+        burger.setAttribute('aria-label', openLabel);
+        lockScroll(false);
+        finishClose();
+      });
+    });
+
+    // ESC schließt; einfacher Fokus-Trap innerhalb des Overlays.
+    document.addEventListener('keydown', (e) => {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      } else if (e.key === 'Tab') {
+        const list = focusables.filter((el) => el.offsetParent !== null || el === burger);
+        if (!list.length) return;
+        const first = list[0];
+        const last = list[list.length - 1];
+        const act = document.activeElement as HTMLElement;
+        if (e.shiftKey && act === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && act === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
   }
 </script>
 
@@ -546,28 +659,31 @@ const enHref = switchLangHref(path, 'en');
     font-size: 0.8rem;
   }
 
-  /* ---- Mobile-Menü (Hamburger + natives <details>) ---- */
-  .nav-mobile {
-    position: relative;
-  }
-  @media (min-width: 1280px) {
-    .nav-mobile {
-      display: none;
-    }
-  }
+  /* ---- Mobile-Menü: Hamburger-Trigger + Vollbild-Overlay (< 1280px = Burger-Range) ----
+     Das Overlay ersetzt das frühere Dropdown-Panel im GESAMTEN Burger-Bereich (<1280).
+     Der RUHEZUSTAND des Headers ≥1024px bleibt visuell identisch (gleicher Burger,
+     gleiche Pille); nur der geöffnete Menü-Zustand zeigt im 1024–1280-Band nun das
+     Overlay statt des Dropdowns (dokumentiert im Report). Desktop-Nav ab 1280 unberührt. */
   .nav-burger {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 2.5rem;
     height: 2.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
     border-radius: 0.7rem;
     cursor: pointer;
-    list-style: none;
     -webkit-tap-highlight-color: transparent;
+    /* über dem Overlay bedienbar (nav-inner bekommt bei offenem Menü z-index:2). */
+    position: relative;
+    z-index: 2;
   }
-  .nav-burger::-webkit-details-marker {
-    display: none;
+  @media (min-width: 1280px) {
+    .nav-burger {
+      display: none;
+    }
   }
   .burger-box {
     position: relative;
@@ -585,133 +701,231 @@ const enHref = switchLangHref(path, 'en');
     background: var(--color-black);
     border-radius: 2px;
     transition:
-      transform 0.28s ease,
-      opacity 0.2s ease;
+      transform 0.3s ease,
+      opacity 0.2s ease,
+      background-color 0.3s ease;
   }
-  .nav-mobile[open] .burger-box span:nth-child(1) {
+  /* Offen: X-Morph + helle Linien (auf dunklem Overlay). */
+  .site-header[data-menu-open] .burger-box span {
+    background: var(--color-offwhite);
+  }
+  .site-header[data-menu-open] .burger-box span:nth-child(1) {
     transform: translateY(7px) rotate(45deg);
   }
-  .nav-mobile[open] .burger-box span:nth-child(2) {
+  .site-header[data-menu-open] .burger-box span:nth-child(2) {
     opacity: 0;
   }
-  .nav-mobile[open] .burger-box span:nth-child(3) {
+  .site-header[data-menu-open] .burger-box span:nth-child(3) {
     transform: translateY(-7px) rotate(-45deg);
   }
   .nav-burger:focus-visible {
     outline: 2px solid var(--color-black);
     outline-offset: 2px;
   }
+  .site-header[data-menu-open] .nav-burger:focus-visible {
+    outline-color: var(--color-yellow);
+  }
 
-  .nav-mobile-panel {
-    position: absolute;
-    top: calc(100% + 0.75rem);
-    right: 0;
-    width: min(78vw, 20rem);
+  /* Bei offenem Menü: nav-inner über das Overlay heben (Burger klickbar), Pille +
+     backdrop-filter entfernen und Logo/Lang-Switch/CTA ausblenden — nur der X-Burger
+     bleibt. So sitzt der X sauber auf dem dunklen Overlay. */
+  .site-header[data-menu-open] .nav-inner {
+    position: relative;
+    z-index: 2;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .site-header[data-menu-open] .nav-logo-link,
+  .site-header[data-menu-open] .lang-switch,
+  .site-header[data-menu-open] .nav-right :global(.pill-btn) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ---- Vollbild-Overlay ---- */
+  .nav-overlay {
+    position: fixed;
+    inset: 0;
+    /* im Header-Stacking-Context (z-40): über der Seite, unter nav-inner (z-2). */
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-    padding: 0.8rem;
-    background: color-mix(in srgb, var(--color-offwhite) 98%, transparent);
-    border: 1px solid rgb(59 59 58 / 0.08);
-    border-radius: 1.1rem;
-    box-shadow: 0 26px 60px -22px rgb(59 59 58 / 0.5);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    justify-content: center;
+    gap: clamp(2rem, 6vh, 3.5rem);
+    padding: max(5.5rem, 12vh) clamp(1.5rem, 8vw, 3rem)
+      calc(2rem + env(safe-area-inset-bottom));
+    background: var(--color-black);
+    /* Ruhezustand: unsichtbar + nicht bedienbar; JS-Enhancement blendet ein. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease,
+      visibility 0s linear 0.3s;
   }
-  .m-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.7rem 0.65rem;
-    border-radius: 0.7rem;
-    font-weight: 900;
-    font-size: 0.9rem;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--color-black);
-    text-decoration: none;
-    cursor: pointer;
+  @media (min-width: 1280px) {
+    .nav-overlay {
+      display: none;
+    }
+  }
+  .nav-overlay[data-open] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+
+  .mo-nav {
+    width: 100%;
+  }
+  .mo-list {
     list-style: none;
-  }
-  .m-link::-webkit-details-marker {
-    display: none;
-  }
-  .m-link:focus-visible {
-    outline: 2px solid var(--color-black);
-    outline-offset: 1px;
-  }
-  .m-sub {
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    gap: clamp(0.35rem, 1.1vh, 0.85rem);
   }
-  .m-sub-summary {
-    justify-content: space-between;
-  }
-  .m-caret {
-    transition: transform 0.25s ease;
-    color: #666665;
-  }
-  .m-sub[open] .m-caret {
-    transform: rotate(180deg);
-  }
-  .m-sublink {
-    padding: 0.55rem 0.65rem 0.55rem 1.3rem;
-    border-radius: 0.6rem;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: #4a4a49;
+  .mo-link {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
     text-decoration: none;
+    padding: 0.15rem 0;
+    min-height: 44px;
   }
-  .m-sublink:focus-visible {
-    outline: 2px solid var(--color-black);
-    outline-offset: 1px;
+  .mo-index {
+    flex: none;
+    font-weight: 900;
+    font-size: 0.85rem;
+    color: var(--color-grey-yellow); /* #c0c0c1 */
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
   }
-  .m-lang {
+  .mo-mask {
+    display: block;
+    overflow: hidden;
+    padding-inline: 0.2em;
+    margin-inline: -0.2em;
+  }
+  .mo-line {
+    display: inline-block;
+    position: relative;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 9vw, 2.8rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--color-offwhite);
+    transform: translateY(110%);
+    transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .nav-overlay[data-open] .mo-line {
+    transform: translateY(0);
+    transition-delay: calc(var(--i) * 60ms + 150ms);
+  }
+  /* Aktive Sektion (Scroll-Spy gespiegelt): gelber Marker-Unterstrich (skewX). */
+  .mo-link.is-active .mo-line::after {
+    content: '';
+    position: absolute;
+    left: -0.05em;
+    right: -0.05em;
+    bottom: 0.12em;
+    height: 0.12em;
+    background: var(--color-yellow);
+    border-radius: 0.13em;
+    transform: skewX(-8deg);
+  }
+  .mo-link:focus-visible {
+    outline: 2px solid var(--color-yellow);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  /* Footer: Store-Badges nebeneinander + Sprachumschalter. */
+  .mo-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    transform: translateY(110%);
+    opacity: 0;
+    transition:
+      transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1),
+      opacity 0.4s ease;
+  }
+  .nav-overlay[data-open] .mo-footer {
+    transform: none;
+    opacity: 1;
+    transition-delay: calc(var(--i) * 60ms + 150ms);
+  }
+  .mo-lang {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.4rem;
-    padding: 0.7rem 0.65rem 0.3rem;
-    border-top: 1px solid var(--color-darkgrey);
+    gap: 0.6rem;
   }
-  .m-lang-opt {
+  .mo-lang-opt {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.3rem;
     font-weight: 400;
-    font-size: 0.9rem;
+    font-size: 1rem;
     letter-spacing: 0.05em;
-    color: #666665;
+    color: var(--color-grey-yellow);
     text-decoration: none;
   }
-  .m-lang-opt.is-active {
+  .mo-lang-opt.is-active {
     font-weight: 900;
-    color: var(--color-black);
+    color: var(--color-offwhite);
     text-decoration: underline;
     text-decoration-color: var(--color-yellow);
     text-decoration-thickness: 2px;
     text-underline-offset: 4px;
   }
-  .m-lang-opt:focus-visible {
-    outline: 2px solid var(--color-black);
+  .mo-lang-opt:focus-visible {
+    outline: 2px solid var(--color-yellow);
     outline-offset: 2px;
     border-radius: 2px;
   }
+  .mo-lang-sep {
+    color: #57574f;
+  }
 
-  /* ---- Mobile-Pass (< 1024px): Touch-Targets ≥ 44px. Wirkt NICHT auf den
-     1024–1280px-Bereich (dort bleibt die Hamburger-Leiste pixelidentisch). ---- */
+  /* Scroll-Lock (CSS-Fallback; greift auch vor der Lenis-Init / ganz ohne Lenis). */
+  :global(html.menu-open),
+  :global(html.menu-open body) {
+    overflow: hidden;
+  }
+
+  /* reduced-motion: Overlay + Zeilen sofort im Endzustand, kein Slide/Fade. */
+  @media (prefers-reduced-motion: reduce) {
+    .nav-overlay,
+    .nav-overlay[data-open],
+    .mo-line,
+    .nav-overlay[data-open] .mo-line,
+    .mo-footer,
+    .nav-overlay[data-open] .mo-footer {
+      transition: none;
+    }
+    .mo-line {
+      transform: none;
+    }
+    .mo-footer {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  /* ---- Mobile-Pass (< 1024px): Burger-Touch-Target ≥ 44px. ---- */
   @media (max-width: 1023px) {
     .nav-burger {
       width: 2.75rem;
       height: 2.75rem;
-    }
-    .m-link,
-    .m-sublink {
-      min-height: 44px;
-    }
-    .m-sublink {
-      display: flex;
-      align-items: center;
-    }
-    .m-lang-opt {
-      padding: 0.4rem 0.3rem;
     }
   }
 
