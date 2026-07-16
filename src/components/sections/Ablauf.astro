@@ -269,28 +269,112 @@ const howToLd = {
   }
 
   /* =====================================================================
-     Mobile (< lg): Tickets stapeln; Perforation wird zur Unterkante, Stanz-Kreise
-     links/rechts. Radius: Ticket 1 oben, Ticket 4 unten.
+     Mobile (< lg): vertikaler Stepper. Links eine 2px-Progress-Rail (#d9dada) mit
+     Pfeilspitze unten, je Schritt ein gelber 32px-Dot mit Schrittnummer (CSS-Counter
+     → keine neuen Texte/kein Markup); Inhalt rechts der Rail. Karten-Strip/Perforation
+     entfallen. Rein statisch. Desktop ≥1024px (Ticket-Design) bleibt unverändert.
      ===================================================================== */
   @media (max-width: 1023.98px) {
     .ab-h2 {
       font-size: clamp(1.85rem, 8vw, 2.5rem);
     }
+
+    /* Container: Karten-Strip-Optik auflösen, Rail + Counter aufsetzen. */
     .ab-tickets {
-      grid-template-columns: 1fr;
+      display: block;
+      grid-template-columns: none;
+      gap: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      position: relative;
+      counter-reset: abstep;
     }
-    .ab-ticket:first-child {
-      border-radius: 16px 16px 0 0;
+    /* Progress-Rail (2px) über alle Schritte. */
+    .ab-tickets::before {
+      content: '';
+      position: absolute;
+      left: 15px; /* Dot-Mitte (16px) − 1px */
+      top: 18px;
+      bottom: 18px;
+      width: 2px;
+      background: var(--color-darkgrey);
     }
-    .ab-ticket:nth-child(4) {
-      border-radius: 0 0 16px 16px;
+    /* Pfeilspitze unten. */
+    .ab-tickets::after {
+      content: '';
+      position: absolute;
+      left: 16px;
+      bottom: 4px;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid var(--color-darkgrey);
+    }
+
+    /* Schritt = flacher Block rechts der Rail (keine Karte). */
+    .ab-ticket {
+      counter-increment: abstep;
+      display: block;
+      background-color: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0 0 clamp(1.75rem, 6vw, 2.5rem) 56px;
+    }
+    .ab-ticket:last-child {
+      padding-bottom: 0;
     }
     .ab-ticket:not(:last-child) {
       border-right: 0;
-      border-bottom: 2px dashed var(--color-darkgrey);
+      border-bottom: 0;
     }
-    /* Mobile-Pass: gestapelte Tickets haben volle Breite → Beschreibungstext auf
-       16px (Lesbarkeit). Desktop ≥1024px bleibt bei 14px (unverändert). */
+
+    /* Dot mit Schrittnummer (auf der Rail). */
+    .ab-ticket::before {
+      content: counter(abstep);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--color-yellow);
+      color: var(--color-black);
+      font-weight: 900;
+      font-size: 15px;
+      z-index: 1;
+    }
+
+    /* Schritt 4 („noch nicht passiert"): flach wie die anderen; Dot als Umriss
+       (pending), Texte auf hellem Grund lesbar, Pill mit dunklem Umriss. */
+    .ab-ticket--dark {
+      background-color: transparent;
+    }
+    .ab-ticket--dark::before {
+      background: transparent;
+      box-shadow: inset 0 0 0 2px var(--color-yellow);
+      color: var(--color-black);
+    }
+    .ab-ticket--dark .ab-step {
+      color: rgb(59 59 58 / 0.45);
+    }
+    .ab-ticket--dark .ab-ticket-title {
+      color: var(--color-black);
+    }
+    .ab-ticket--dark .ab-ticket-desc {
+      color: rgb(59 59 58 / 0.72);
+    }
+    .ab-ticket--dark .ab-pill {
+      background-color: transparent;
+      border: 1.5px solid var(--color-black);
+      color: var(--color-black);
+    }
+
+    /* Beschreibungstext auf 16px (volle Breite, Lesbarkeit). */
     .ab-ticket-desc {
       font-size: 1rem;
       line-height: 1.5;
