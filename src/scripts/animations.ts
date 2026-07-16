@@ -620,42 +620,57 @@ function initHeroScrollCue() {
  * „43.000" (DOM) auf dunklem BG + alles sofort sichtbar. DPR ≤ 2. Vom Hero-Canvas entkoppelt.
  */
 /**
- * Problem — Count-up-Dramaturgie NUR auf Mobile (< 1024px). Desktop (Scrub/Partikel)
- * bleibt initProblem3c vorbehalten. Läuft im !prefersReducedMotion-Bündel → unter
- * reduced-motion gar nicht erst aufgerufen (statischer Endzustand: Zahl = P.bigNumber,
- * Ring voll, 288 sichtbar). Sequenz beim Betreten (IntersectionObserver, once):
- * „43.000" zählt in ~1,5s hoch (easeOutExpo), Stoppuhr-Ring läuft parallel (CSS via
- * .is-counting), „288" poppt bei ~1,4s (CSS). Zielwert + Locale kommen aus
- * data-Attributen (buildseitig aus P.bigNumber abgeleitet) — keine zweite Zahlenquelle.
+ * Problem — sequentieller Count-up der Mobile-„Anzeigetafel" (< 1024px). Desktop
+ * (Scrub/Partikel) bleibt initProblem3c vorbehalten. Läuft im !prefersReducedMotion-
+ * Bündel → unter reduced-motion gar nicht erst aufgerufen (statische Endwerte). Sequenz
+ * beim Betreten (IntersectionObserver, once): 43.000 ~1,2s easeOutExpo → 30 ~0,5s →
+ * 288 ~0,5s, Startversatz ~150ms, gesamt < 2s. Ziel/Locale aus data-Attributen (aus
+ * site.ts problemStat gerendert) — keine zweite Zahlenquelle; Endwerte = statisches DOM.
  */
 function initProblemMobile() {
   if (window.matchMedia('(min-width: 1024px)').matches) return; // Desktop = initProblem3c
+  const board = document.querySelector<HTMLElement>('#problem [data-p3-board]');
+  if (!board) return;
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
   if (!section) return;
-  const numEl = section.querySelector<HTMLElement>('[data-p3-count]');
-  const target = numEl ? parseInt(numEl.dataset.p3Count || '0', 10) : 0;
-  const nf = new Intl.NumberFormat(numEl?.dataset.p3Locale === 'en' ? 'en-US' : 'de-DE');
+  const nums = Array.from(board.querySelectorAll<HTMLElement>('[data-p3-board-num]'));
+  if (!nums.length) return;
+  const nf = new Intl.NumberFormat(board.dataset.p3Locale === 'en' ? 'en-US' : 'de-DE');
+  const easeOutExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
+  const countOne = (el: HTMLElement, target: number, dur: number) =>
+    new Promise<void>((resolve) => {
+      let start: number | null = null;
+      const step = (ts: number) => {
+        if (start === null) start = ts;
+        const p = Math.min((ts - start) / dur, 1);
+        el.textContent = nf.format(Math.round(target * easeOutExpo(p)));
+        if (p < 1) requestAnimationFrame(step);
+        else {
+          el.textContent = nf.format(target); // exakter Endwert
+          resolve();
+        }
+      };
+      requestAnimationFrame(step);
+    });
+
+  const durations = [1200, 500, 500]; // 43.000 → 30 → 288
   const runSequence = () => {
-    section.classList.add('is-counting'); // triggert Ring-Sweep + 288-Pop (CSS)
-    if (!numEl || !target) return;
-    const dur = 1500;
-    const easeOutExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
-    let start: number | null = null;
-    const step = (ts: number) => {
-      if (start === null) start = ts;
-      const p = Math.min((ts - start) / dur, 1);
-      numEl.textContent = nf.format(Math.round(target * easeOutExpo(p)));
-      if (p < 1) requestAnimationFrame(step);
-      else numEl.textContent = nf.format(target); // exakter Endwert (= P.bigNumber)
-    };
-    requestAnimationFrame(step);
+    // Jede nächste Zahl startet ~150ms VOR dem Ende der vorigen (fließend, gesamt <2s:
+    // 1200 + (500−150) + (500−150) = 1900ms).
+    let startAt = 0;
+    for (let i = 0; i < nums.length; i++) {
+      const target = parseInt(nums[i].dataset.target || '0', 10);
+      const dur = durations[i] ?? 500;
+      window.setTimeout(() => void countOne(nums[i], target, dur), startAt);
+      startAt += Math.max(dur - 150, 0);
+    }
   };
 
   // Late-Setup-Garde: liegt die Sektion beim (verzögerten) Setup schon an/über der
   // Startlinie, NICHT auf 0 zurücksetzen → statischer Endzustand steht sofort.
   if (isPastRevealStart(section, 0.65)) return;
-  if (numEl && target) numEl.textContent = nf.format(0); // below-fold, unsichtbar
+  for (const el of nums) el.textContent = nf.format(0); // below-fold, unsichtbar
   const io = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {

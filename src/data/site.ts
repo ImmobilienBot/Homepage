@@ -199,6 +199,17 @@ export const pricing: Plan[] = [
  */
 export const firstMonthSuccessRate = 70;
 
+/**
+ * Problem-Statistik (Berliner Zeitung). EINE Quelle für den Desktop-Satz UND das
+ * Mobile-Scoreboard: 43.000 Bewerber · 30 Minuten · 288 Wohnungen. i18n-Strings
+ * interpolieren daraus (kein zweiter Zahlenbestand). [TODO: Quelle verlinken]
+ */
+export const problemStat = {
+  applicants: 43000,
+  minutes: 30,
+  flats: 288,
+} as const;
+
 /** Vorteile-Streifen unter den Preiskarten. */
 export const pricingBenefits: string[] = [
   'Echtzeit-Push (auch via Telegram)',

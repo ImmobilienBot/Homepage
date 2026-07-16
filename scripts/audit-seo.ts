@@ -24,6 +24,7 @@ import {
   portalCount,
   ratings,
   totalReviewCount,
+  problemStat,
 } from '../src/data/site.ts';
 
 type Severity = 'error' | 'warn';
@@ -289,6 +290,15 @@ function auditPage(file: string) {
     }
     if (!vt.includes(String(totalReviewCount)))
       add('S12', 'error', page, `totalReviewCount „${totalReviewCount}" (aus site.ts) fehlt im sichtbaren HTML.`);
+    // Problem-Statistik (Berliner Zeitung) — die drei Zahlen aus site.ts problemStat
+    // (Desktop-Satz/Zahl + Mobile-Scoreboard rendern daraus).
+    const applicantsStr = new Intl.NumberFormat(loc === 'de' ? 'de-DE' : 'en-US').format(
+      problemStat.applicants,
+    );
+    for (const s of [applicantsStr, String(problemStat.minutes), String(problemStat.flats)]) {
+      if (!vt.includes(s))
+        add('S12', 'error', page, `Problem-Statistik „${s}" (aus site.ts) fehlt im sichtbaren HTML.`);
+    }
   }
 
   // --- S16: Kontakt-Fakten-Sync (nur Home) — sichtbare mailto-Adresse + JSON-LD ---

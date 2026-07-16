@@ -72,11 +72,12 @@ export const en: Dict = {
     problem: {
       // sr-only title (structure/SEO). The visible claim is carried by number + H2.
       title: 'The Problem',
-      // Big particle number (display, NOT a heading) — forms from particles in the
-      // canvas. Asterisk → source in the footer footnote.
-      bigNumber: '43,000',
-      // Stat sentence, TIGHTLY coupled to the number (smaller, muted white).
-      stat: 'applicants for 288 flats. After 30 minutes, it was over.',
+      // Stat sentence as TEMPLATE — numbers from site.ts (problemStat). Desktop
+      // sentence AND mobile scoreboard render from the same source. The big number
+      // (43,000) derives from problemStat.applicants (locale-formatted).
+      stat: 'applicants for {flats} flats. After {minutes} minutes, it was over.',
+      // Scoreboard labels (mobile board, rendered uppercase).
+      board: { applicants: 'Applicants', minutes: 'Minutes', flats: 'Flats' },
       // Reversal headline (H2). Yellow marker ONLY on „you".
       headline: 'One of them gets there first: you.',
       // Marker includes word + directly following punctuation (no overlap).

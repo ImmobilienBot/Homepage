@@ -74,11 +74,12 @@ export const de = {
     problem: {
       // sr-only-Titel (Struktur/SEO). Die sichtbare Aussage tragen Zahl + H2.
       title: 'Das Problem',
-      // Große Partikel-Zahl (Display, KEIN Heading) — formt sich im Canvas aus
-      // Partikeln. Sternchen → Quelle in der Footer-Fußnote.
-      bigNumber: '43.000',
-      // Statistik-Satz, ENG an die Zahl gekoppelt (kleiner, gedämpftes Weiß).
-      stat: 'Bewerber auf 288 Wohnungen. Nach 30 Minuten war Schluss.',
+      // Statistik-Satz als TEMPLATE — Zahlen aus site.ts (problemStat). Desktop-Satz
+      // UND Mobile-Scoreboard rendern aus derselben Quelle. Die große Zahl (43.000)
+      // ergibt sich aus problemStat.applicants (locale-formatiert).
+      stat: 'Bewerber auf {flats} Wohnungen. Nach {minutes} Minuten war Schluss.',
+      // Scoreboard-Labels (Mobile-„Anzeigetafel", uppercase gerendert).
+      board: { applicants: 'Bewerber', minutes: 'Minuten', flats: 'Wohnungen' },
       // Umkehr-Headline (H2). Gelber Marker NUR auf „du".
       headline: 'Einer davon ist zuerst da: du.',
       // Marker umschließt Wort + direkt anschließendes Satzzeichen (kein Overlap).
