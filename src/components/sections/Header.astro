@@ -158,6 +158,11 @@ const navItems = [
 
   {/* ---- Vollbild-Menü-Overlay (nur <lg, JS-Enhancement) ---- */}
   <div id="nav-overlay" class="nav-overlay" data-overlay aria-hidden="true">
+    {/* Eigener Schließen-Button (Kind des Overlays → unabhängig von Header-Zuständen).
+        Der Burger im Header wird bei offenem Menü komplett versteckt. */}
+    <button type="button" class="mo-close" data-mo-close aria-label={t.nav.menuClose}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
     <nav class="mo-nav" aria-label={t.nav.menuOpen}>
       <ol class="mo-list">
         {
@@ -298,8 +303,11 @@ const navItems = [
     const openLabel = burger.getAttribute('aria-label') || 'Menü öffnen';
     const closeLabel = openLabel === 'Open menu' ? 'Close menu' : 'Menü schließen';
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const closeX = overlay.querySelector<HTMLButtonElement>('[data-mo-close]');
     const links = Array.from(overlay.querySelectorAll<HTMLAnchorElement>('a[href]'));
-    const focusables = [burger, ...links];
+    // Fokus-Trap innerhalb des Overlays: Schließen-✕ + alle Links (NICHT der Burger,
+    // der bei offenem Menü versteckt ist).
+    const focusables = [closeX, ...links].filter(Boolean) as HTMLElement[];
     let isOpen = false;
 
     const lockScroll = (v: boolean) => {
@@ -364,6 +372,7 @@ const navItems = [
     };
 
     burger.addEventListener('click', () => (isOpen ? close() : open()));
+    closeX?.addEventListener('click', () => close());
 
     // Anchor-Tap: erst schließen (ohne Fokus-Rückgabe), dann übernimmt der globale
     // Lenis-Anchor-Handler den Smooth-Scroll. Instant schließen → Scroll startet sofort.
@@ -386,7 +395,7 @@ const navItems = [
         e.preventDefault();
         close();
       } else if (e.key === 'Tab') {
-        const list = focusables.filter((el) => el.offsetParent !== null || el === burger);
+        const list = focusables.filter((el) => el.offsetParent !== null);
         if (!list.length) return;
         const first = list[0];
         const last = list[list.length - 1];
@@ -676,9 +685,7 @@ const navItems = [
     border-radius: 0.7rem;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    /* über dem Overlay bedienbar (nav-inner bekommt bei offenem Menü z-index:2). */
-    position: relative;
-    z-index: 2;
+    transition: opacity 0.2s ease;
   }
   @media (min-width: 1280px) {
     .nav-burger {
@@ -705,33 +712,18 @@ const navItems = [
       opacity 0.2s ease,
       background-color 0.3s ease;
   }
-  /* Offen: X-Morph + helle Linien (auf dunklem Overlay). */
-  .site-header[data-menu-open] .burger-box span {
-    background: var(--color-offwhite);
-  }
-  .site-header[data-menu-open] .burger-box span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-  }
-  .site-header[data-menu-open] .burger-box span:nth-child(2) {
-    opacity: 0;
-  }
-  .site-header[data-menu-open] .burger-box span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
-  }
   .nav-burger:focus-visible {
     outline: 2px solid var(--color-black);
     outline-offset: 2px;
   }
-  .site-header[data-menu-open] .nav-burger:focus-visible {
-    outline-color: var(--color-yellow);
-  }
 
-  /* Bei offenem Menü: nav-inner über das Overlay heben (Burger klickbar), Pille +
-     backdrop-filter entfernen und Logo/Lang-Switch/CTA ausblenden — nur der X-Burger
-     bleibt. So sitzt der X sauber auf dem dunklen Overlay. */
+  /* Bei offenem Menü: Header-Interaktion komplett ausblenden (Logo, Lang-Switch, CTA
+     UND der Burger). Der Schließen-✕ lebt IM Overlay (eigenes Kind) und ist damit
+     unabhängig vom Header-Zustand — insbesondere von der sticky-Pille im Scroll-
+     Zustand, deren Scroll-Lock (overflow:hidden) den sticky Header samt Burger sonst
+     aus dem Sichtfeld zog (= verschwundenes X, Bug Runde 3/Block A). Kein z-index-Trick
+     an .nav-inner mehr nötig. Pille/backdrop-filter werden entfernt (falls sichtbar). */
   .site-header[data-menu-open] .nav-inner {
-    position: relative;
-    z-index: 2;
     background: transparent !important;
     box-shadow: none !important;
     border-color: transparent !important;
@@ -740,6 +732,7 @@ const navItems = [
   }
   .site-header[data-menu-open] .nav-logo-link,
   .site-header[data-menu-open] .lang-switch,
+  .site-header[data-menu-open] .nav-burger,
   .site-header[data-menu-open] .nav-right :global(.pill-btn) {
     opacity: 0;
     pointer-events: none;
@@ -779,6 +772,29 @@ const navItems = [
     transition:
       opacity 0.3s ease,
       transform 0.3s ease;
+  }
+
+  /* Eigener Schließen-✕ des Overlays (oben rechts, 44×44, unabhängig vom Header). */
+  .mo-close {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-offwhite);
+    cursor: pointer;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mo-close:focus-visible {
+    outline: 2px solid var(--color-yellow);
+    outline-offset: 2px;
   }
 
   .mo-nav {
