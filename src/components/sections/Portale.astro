@@ -704,13 +704,10 @@ const feedData = {
       margin-top: clamp(0.5rem, 3vw, 1.5rem);
     }
 
-    /* --- Zwei gegenläufige Marquee-Zeilen, edge-bleed, HINTER dem Phone. --- */
+    /* --- Zwei gegenläufige Marquee-Zeilen, edge-bleed, IM FLUSS ÜBER dem Phone
+       (kein Overlay mehr → volle Lesbarkeit). Fade-Maske links/rechts bleibt. --- */
     .pf-stream {
-      position: absolute;
-      top: 30px;
-      left: calc(-1 * var(--spacing-inset));
-      right: calc(-1 * var(--spacing-inset));
-      z-index: 0;
+      margin: 0 calc(-1 * var(--spacing-inset)) clamp(1.5rem, 6vw, 2.5rem);
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -761,15 +758,16 @@ const feedData = {
       }
     }
 
-    /* --- Phone (unten angeschnitten ~60 %), Glow dahinter; überdeckt die Strom-
-       Oberkante (Quellen fließen ins Gerät). --- */
+    /* --- Phone unter dem Strom, ~50–55 % sichtbar; Glow bleibt. Der harte Anschnitt
+       wird ein Dissolve (mask-image: unteres ~22 % läuft transparent aus). --- */
     .pf-mphone {
       position: relative;
-      width: min(62vw, 280px);
-      max-height: clamp(210px, 44vw, 280px);
-      margin: 84px auto 0; /* Platz, damit der Strom das obere Drittel hinterläuft */
-      overflow: hidden; /* schneidet den unteren Teil an */
-      z-index: 1;
+      width: min(60vw, 260px);
+      max-height: clamp(200px, 50vw, 260px);
+      margin: 0 auto;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
+      mask-image: linear-gradient(to bottom, #000 78%, transparent);
     }
     .pf-mglow {
       position: absolute;

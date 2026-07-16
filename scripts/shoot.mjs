@@ -203,6 +203,26 @@ async function main() {
       await shootSection(page, 'portale', 'de-390-portale-regional-open');
     });
 
+    // Sektionsübergang Portale → Folgesektion: die Portale-Unterkante wird im Viewport
+    // zentriert (oberes Halbbild = Portale-Ende, unteres = Anfang der Folgesektion).
+    if (wantState('portale')) {
+      const page = await browser.newPage();
+      await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 2, isMobile: false, hasTouch: true });
+      await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle0', timeout: 30000 });
+      await wait(1400); // Lenis initialisiert
+      await setChromeHidden(page, true);
+      await page.evaluate(() => {
+        const el = document.querySelector('#portale');
+        const bottom = el.getBoundingClientRect().bottom + window.scrollY;
+        window.__lenis?.stop();
+        window.scrollTo(0, Math.max(0, bottom - window.innerHeight * 0.5));
+      });
+      await wait(500);
+      await page.screenshot({ path: join(SHOTS, 'de-390-portale-seam.png'), captureBeyondViewport: false });
+      console.log(`${C.grn}✓${C.rst} de-390-portale-seam.png`);
+      await page.close();
+    }
+
     if (wantState('faq')) await statePage(async (page) => {
       await setChromeHidden(page, true);
       await page.evaluate(() => { const d = document.querySelector('#faq details, #faq .faq-item details'); if (d) d.open = true; }); await wait(500);
