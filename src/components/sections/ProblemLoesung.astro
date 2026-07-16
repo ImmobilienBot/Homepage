@@ -38,6 +38,32 @@ const benefits = P.benefits.map((b) => ({
   label: b.label.replace('{n}', String(portalCount)),
 }));
 
+// Count-up-Ziel (nur Mobile, Block C): AUS DERSELBEN Quelle wie die statische Anzeige
+// abgeleitet (P.bigNumber, Ziffern extrahiert) → keine zweite Zahlenquelle. Das JS
+// formatiert per Intl.NumberFormat(locale) zurück; der Endwert entspricht exakt
+// P.bigNumber. Ohne JS / reduced-motion steht P.bigNumber unverändert im DOM.
+const countTarget = Number(P.bigNumber.replace(/\D/g, ''));
+const countLocale = lang === 'en' ? 'en' : 'de';
+
+// Statistik-Satz um die zwei Kennzahlen (288 · 30) herum splitten → mobile Dramaturgie
+// (288 „poppt", 30 bekommt den Stoppuhr-Ring). Zahlen sind DE/EN identisch; die
+// Wortlaute bleiben unangetastet. Auf Desktop sind die <span>/das Ring-SVG neutral
+// (Ring display:none ≥lg, Spans inline) → Stat rendert visuell unverändert.
+function splitStat(s: string) {
+  const out: { text: string; fig?: 'flats' | 'minutes' }[] = [];
+  const re = /(288|30)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index > last) out.push({ text: s.slice(last, m.index) });
+    out.push({ text: m[0], fig: m[0] === '288' ? 'flats' : 'minutes' });
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) out.push({ text: s.slice(last) });
+  return out;
+}
+const statParts = splitStat(P.stat);
+
 // Lottie-Animationen je Vorteil (lazy via animations.ts geladen). Reihenfolge =
 // benefits: Glocke (Push) · Globus (Portale) · Stift (Bewerbung). Als ?url →
 // bleibt aus dem Main-Bundle draußen; JS fetcht + färbt auf CD-Gelb (Dunkel-BG).
@@ -71,17 +97,44 @@ const ICONS = [
         Zahl dort). Ohne JS/reduced-motion: statische DOM-„43.000" sichtbar. */}
     <div class="p3-stat-block">
       <div class="p3-stage" data-p3-stage>
-        <span class="p3-num" data-p3-num>{P.bigNumber}</span>
+        <span
+          class="p3-num"
+          data-p3-num
+          data-p3-count={countTarget}
+          data-p3-locale={countLocale}>{P.bigNumber}</span
+        >
       </div>
 
       {/* 2 · Statistik-Satz — kleiner, gedämpft, ENG unter der Zahl. Während der grauen
-          Fläche verborgen (data-p3-reveal), sonst würde Text auf der Fläche „schweben". */}
+          Fläche verborgen (data-p3-reveal). Kennzahlen (288/30) gewrappt für die mobile
+          Dramaturgie (Block C); Ring-SVG neben „30" ist ≥lg display:none. */}
       <p class="p3-stat" data-p3-reveal>
-        {P.stat}<a
-          href="#quelle-statistik"
-          class="p3-ast"
-          aria-label="Quelle der Statistik (Fußnote)">1</a
-        >
+        {
+          statParts.map((part) =>
+            part.fig ? (
+              <span class:list={['p3-fig', `p3-fig--${part.fig}`]}>
+                {part.fig === 'minutes' && (
+                  <svg class="p3-ring" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                    <circle class="p3-ring-track" cx="12" cy="12" r="9" fill="none" stroke-width="2.2" />
+                    <circle
+                      class="p3-ring-arc"
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      fill="none"
+                      stroke-width="2.6"
+                      stroke-linecap="round"
+                      transform="rotate(-90 12 12)"
+                    />
+                  </svg>
+                )}
+                {part.text}
+              </span>
+            ) : (
+              part.text
+            ),
+          )
+        }<a href="#quelle-statistik" class="p3-ast" aria-label="Quelle der Statistik (Fußnote)">1</a>
       </p>
     </div>
 
@@ -413,6 +466,63 @@ const ICONS = [
     }
     .p3-benefits {
       gap: 0.75rem 1.25rem;
+    }
+  }
+
+  /* =====================================================================
+     Block C — Mobile Count-up-Dramaturgie (Ring + 288-Pop). NUR <lg wirksam;
+     ≥lg ist das Ring-SVG display:none und die .p3-fig-Spans sind neutraler
+     Inline-Text → Desktop-Statistik unverändert. Ring-Farben auf die dunkle
+     Sektion adaptiert (Strich #3b3b3a wäre unsichtbar): fahler Off-White-Track +
+     gelber Sweep-Arc.
+     ===================================================================== */
+  .p3-ring {
+    display: none;
+  }
+  .p3-ring-track {
+    stroke: rgb(246 246 246 / 0.22);
+  }
+  .p3-ring-arc {
+    stroke: var(--color-yellow);
+    stroke-dasharray: 56.55; /* 2π·9 */
+    stroke-dashoffset: 0; /* Default: voll gezeichnet (No-JS / reduced-motion) */
+  }
+  @media (max-width: 1023.98px) {
+    .p3-ring {
+      display: inline-block;
+      vertical-align: -0.16em;
+      margin-right: 0.28em;
+    }
+    .p3-fig--minutes {
+      white-space: nowrap; /* Ring + „30" zusammenhalten */
+    }
+    .p3-fig--flats {
+      display: inline-block; /* für die Pop-Skalierung */
+    }
+    /* Nur wenn JS die Sequenz startet (.is-counting): Ring-Umlauf + 288-Pointe. */
+    .problem3c.is-counting .p3-ring-arc {
+      animation: p3RingSweep 1.2s ease-out both;
+    }
+    .problem3c.is-counting .p3-fig--flats {
+      animation: p3Pop 0.25s cubic-bezier(0.2, 0.8, 0.3, 1) 1.4s both;
+    }
+  }
+  @keyframes p3RingSweep {
+    from {
+      stroke-dashoffset: 56.55;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes p3Pop {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 </style>
