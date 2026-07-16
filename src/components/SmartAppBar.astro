@@ -1,0 +1,347 @@
+---
+/**
+ * SmartAppBar — OS-bewusste, fixierte Install-Karte (nur < lg, Conversion).
+ *
+ * Zitiert native App-Install-Banner: App-Icon · „Immobilien Bot" + OS-passende
+ * Bewertung (aus site.ts) · gelber Pill-CTA · dezentes Schließen-✕. Client-JS
+ * erkennt iOS/Android und setzt Ziel-Link + Bewertung; unbekanntes OS → Fallback
+ * mit beiden offiziellen Store-Badges (gleiche Karte).
+ *
+ * Sichtbarkeit (JS): erscheint, sobald die Hero-Badge-Gruppe ([data-hero-cta]) den
+ * Viewport nach oben verlässt; versteckt sich, wenn der Footer (eigene Badges) im
+ * Bild ist. Zusätzlich (CSS) versteckt bei offenem Menü-Overlay (html.menu-open) und
+ * bei fokussiertem Formularfeld (:has(input/textarea:focus) → iOS-Tastatur). ✕ setzt
+ * ein sessionStorage-Flag → in der Session nicht erneut. prefers-reduced-motion: kein
+ * Slide. Z-Index unter dem Menü-Overlay. Ohne JS bleibt die Karte unsichtbar (reines
+ * Enhancement; Store-Links sind über Hero/Preise/Footer ohnehin erreichbar).
+ *
+ * Tracking: Es existieren noch KEINE dataLayer-Store-Klick-Events (GTM noch nicht
+ * eingebaut, s. CLAUDE.md). Die CTAs tragen data-store + data-sab-position="sticky_bar";
+ * der Klick pusht defensiv ein dataLayer-Event, FALLS window.dataLayer existiert.
+ */
+import { Image } from 'astro:assets';
+import { getLangFromUrl, useTranslations } from '../i18n';
+import { ratings, getStoreLinks } from '../data/site';
+import StoreBadges from './StoreBadges.astro';
+import appIcon from '../assets/images/immobilien-bot-app-icon.png';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const S = t.smartBar;
+
+// Store-Links mit Platzierungs-Parameter „sticky_bar" (zentrale UTM-Steuerung).
+const links = getStoreLinks('sticky_bar', 'sticky_bar');
+
+const fmtScore = (v: number) =>
+  new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(v);
+
+// OS-Bewertungen aus site.ts (Score + Plattform-Label).
+const iosRating = `${fmtScore(ratings.appStore.stars)} · ${ratings.appStore.label}`;
+const androidRating = `${fmtScore(ratings.playStore.stars)} · ${ratings.playStore.label}`;
+const sabData = { iosRating, androidRating, iosHref: links.ios, androidHref: links.android };
+---
+
+<aside class="sab" data-smart-bar aria-hidden="true" aria-label={S.aria}>
+  <div class="sab-card">
+    {/* OS-Variante (iOS/Android) — Client blendet ein */}
+    <div class="sab-os" data-sab-os hidden>
+      <Image src={appIcon} alt="" width={80} height={80} class="sab-icon" loading="lazy" />
+      <div class="sab-txt">
+        <span class="sab-name">Immobilien Bot</span>
+        <span class="sab-rating">
+          <span class="sab-star" aria-hidden="true">★</span>
+          <span data-sab-rating></span>
+        </span>
+      </div>
+      <a
+        class="sab-cta"
+        data-sab-cta
+        href={links.ios}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-store=""
+        data-sab-position="sticky_bar">{S.cta}</a
+      >
+    </div>
+
+    {/* Fallback (unbekanntes OS) — beide offiziellen Badges kompakt */}
+    <div class="sab-fallback" data-sab-fallback hidden>
+      <Image src={appIcon} alt="" width={80} height={80} class="sab-icon" loading="lazy" />
+      <StoreBadges position="sticky_bar" class="sab-badges" lang={lang} />
+    </div>
+
+    <button type="button" class="sab-close" data-sab-close aria-label={S.close}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+
+  <script type="application/json" data-sab-data is:inline set:html={JSON.stringify(sabData)} />
+</aside>
+
+<script>
+  // Smart-App-Bar-Controller (kein GSAP; CSS treibt den Slide).
+  const bar = document.querySelector<HTMLElement>('[data-smart-bar]');
+  if (bar) {
+    const KEY = 'sab-dismissed';
+    if (sessionStorage.getItem(KEY)) {
+      bar.remove(); // in dieser Session bereits geschlossen
+    } else {
+      const dataEl = bar.querySelector('[data-sab-data]');
+      const data = JSON.parse(dataEl?.textContent || '{}');
+      const osEl = bar.querySelector<HTMLElement>('[data-sab-os]');
+      const fbEl = bar.querySelector<HTMLElement>('[data-sab-fallback]');
+      const cta = bar.querySelector<HTMLAnchorElement>('[data-sab-cta]');
+      const ratingEl = bar.querySelector<HTMLElement>('[data-sab-rating]');
+      const closeBtn = bar.querySelector<HTMLButtonElement>('[data-sab-close]');
+
+      // ---- OS-Erkennung ----
+      const ua = navigator.userAgent || '';
+      const isIOS =
+        /iPhone|iPad|iPod/i.test(ua) ||
+        (/Macintosh/i.test(ua) && typeof document !== 'undefined' && 'ontouchend' in document);
+      const isAndroid = /Android/i.test(ua);
+      const pushStore = (os: string) => {
+        const w = window as unknown as { dataLayer?: unknown[] };
+        if (Array.isArray(w.dataLayer)) {
+          w.dataLayer.push({ event: 'store_click', position: 'sticky_bar', os });
+        }
+      };
+
+      if ((isIOS || isAndroid) && osEl && cta && ratingEl) {
+        osEl.hidden = false;
+        const os = isIOS ? 'ios' : 'android';
+        cta.href = isIOS ? data.iosHref : data.androidHref;
+        cta.dataset.store = os;
+        ratingEl.textContent = isIOS ? data.iosRating : data.androidRating;
+        cta.addEventListener('click', () => pushStore(os));
+      } else if (fbEl) {
+        fbEl.hidden = false;
+        fbEl.querySelectorAll<HTMLAnchorElement>('a[data-store]').forEach((a) =>
+          a.addEventListener('click', () => pushStore(a.dataset.store || 'unknown')),
+        );
+      }
+
+      // ---- Sichtbarkeit ----
+      const heroCta = document.querySelector('[data-hero-cta]');
+      const footer = document.querySelector('footer');
+      let heroPassed = !heroCta; // ohne Hero (Unterseiten): sofort „passiert"
+      let footerNear = false;
+      const update = () => {
+        const show = heroPassed && !footerNear;
+        bar.classList.toggle('is-visible', show);
+        bar.setAttribute('aria-hidden', show ? 'false' : 'true');
+      };
+      if (heroCta) {
+        new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              // „passiert" = Hero-CTA ist nach OBEN aus dem Viewport gescrollt.
+              heroPassed = !e.isIntersecting && e.boundingClientRect.top < 0;
+            }
+            update();
+          },
+          { threshold: 0 },
+        ).observe(heroCta);
+      }
+      if (footer) {
+        new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) footerNear = e.isIntersecting;
+            update();
+          },
+          { threshold: 0 },
+        ).observe(footer);
+      }
+      update();
+
+      // ---- Schließen (Session-persistent) ----
+      closeBtn?.addEventListener('click', () => {
+        sessionStorage.setItem(KEY, '1');
+        bar.classList.remove('is-visible');
+        bar.setAttribute('aria-hidden', 'true');
+        window.setTimeout(() => bar.remove(), 320);
+      });
+    }
+  }
+</script>
+
+<style>
+  /* Nur < lg. Ab 1024px nie sichtbar (Desktop hat Header-CTA + QR). */
+  .sab {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 35; /* unter dem Menü-Overlay (Header z-40) */
+    /* Ruhezustand: unter dem Viewport, nicht bedienbar. */
+    transform: translateY(calc(100% + 24px));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
+      opacity 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+  @media (min-width: 1024px) {
+    .sab {
+      display: none;
+    }
+  }
+  .sab.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
+      opacity 0.25s ease;
+  }
+
+  /* Menü-Overlay offen ODER Formularfeld fokussiert (iOS-Tastatur) → Bar weg. */
+  :global(html.menu-open) .sab,
+  :global(html:has(input:focus, textarea:focus)) .sab {
+    transform: translateY(calc(100% + 24px));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sab-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--color-offwhite) 95%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgb(59 59 58 / 0.08);
+    box-shadow: 0 18px 44px -16px rgb(59 59 58 / 0.5);
+    min-height: 64px;
+  }
+
+  .sab-os,
+  .sab-fallback {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  .sab-icon {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgb(59 59 58 / 0.2);
+  }
+  .sab-txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+  .sab-name {
+    font-weight: 900;
+    font-size: 14px;
+    line-height: 1.2;
+    color: var(--color-black);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sab-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--color-grey-text);
+  }
+  .sab-star {
+    color: #f5b301; /* dezentes Sterngold — nur der kleine Rating-Stern */
+    font-size: 11px;
+  }
+
+  /* Gelber Pill-CTA (Store-Öffnen). ≥44px Touch-Höhe. */
+  .sab-cta {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: var(--radius-pill);
+    background: var(--color-yellow);
+    color: var(--color-black);
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+  .sab-cta:active {
+    transform: scale(0.97);
+  }
+  .sab-cta:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  /* Fallback: Badges kompakt. */
+  .sab-fallback :global(.store-badges) {
+    --badge-h: 2.2rem;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  /* Dezentes Schließen-✕ (≥32px Touch-Ziel via Padding). */
+  .sab-close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgb(59 59 58 / 0.55);
+    cursor: pointer;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sab-close:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 1px;
+  }
+
+  /* Sehr schmale Screens: CTA-Padding knapper (kein Overflow). */
+  @media (max-width: 360px) {
+    .sab-cta {
+      padding: 0 14px;
+    }
+    .sab-card {
+      gap: 8px;
+      padding: 9px 10px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sab,
+    .sab.is-visible {
+      transition: opacity 0.2s ease;
+      transform: none;
+    }
+    /* Ohne Slide: nur Opacity/Visibility steuern die Sichtbarkeit. */
+    .sab {
+      transform: none;
+    }
+    .sab-cta:active {
+      transform: none;
+    }
+  }
+</style>

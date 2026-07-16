@@ -103,6 +103,14 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
     font-size: 14px;
     line-height: 1.2;
   }
+  /* Platz für die fixierte Smart-App-Bar (< lg): Höhe ~64px + 12px Abstand +
+     Safe-Area, damit im Übergang kein Footer-Inhalt verdeckt wird. Desktop
+     ≥1024px unverändert (Bar existiert dort nicht). */
+  @media (max-width: 1023.98px) {
+    .footer {
+      padding-bottom: calc(2rem + 76px + env(safe-area-inset-bottom));
+    }
+  }
   .footer-col {
     display: flex;
     flex-direction: column;

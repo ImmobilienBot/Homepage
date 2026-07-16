@@ -33,6 +33,13 @@ export const de = {
     menuClose: 'Menü schließen',
   },
 
+  // Smart-App-Bar (mobile, fixierte Install-Karte). OS-bewusster CTA.
+  smartBar: {
+    aria: 'App laden – Immobilien Bot',
+    cta: 'Laden',
+    close: 'Leiste schließen',
+  },
+
   hero: {
     // Zeilenweise für Mask-Reveal (kinetische Typografie, siehe CLAUDE.md).
     headlineLines: ['Finde deine Traumwohnung,', 'bevor es andere tun.'],

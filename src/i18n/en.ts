@@ -33,6 +33,13 @@ export const en: Dict = {
     menuClose: 'Close menu',
   },
 
+  // Smart-App-Bar (mobile, fixed install card). OS-aware CTA.
+  smartBar: {
+    aria: 'Get the app – Immobilien Bot',
+    cta: 'Get',
+    close: 'Close bar',
+  },
+
   hero: {
     headlineLines: ['Find your dream flat', 'before anyone else.'],
     markKeyword: 'dream flat',
