@@ -392,8 +392,14 @@ const ICONS = [
     }
   }
 
-  /* Partikel-Canvas + Übergangs-Fläche nur mit JS + erlaubter Bewegung sichtbar. */
-  @media (prefers-reduced-motion: no-preference) {
+  /* Partikel-Canvas + Übergangs-Fläche nur mit JS + erlaubter Bewegung UND ab lg
+     sichtbar. WICHTIG (Mobile-Guardrail): Formung und Wisch werden ausschließlich
+     ≥1024px per JS (initProblem3c) getrieben — unterhalb lg kehrt der Init früh
+     zurück. Würde die graue .section-wipe hier per CSS eingeblendet, bliebe sie
+     mangels JS-Wisch DAUERHAFT als grauer Vorhang (z-5) über der Sektion stehen =
+     unsichtbare Problem-Sektion. Darum an dieselbe 1024px-Grenze wie der JS-Gate
+     koppeln → mobil kein Canvas/Vorhang, der statische DOM-Inhalt steht sofort. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
     :global(html.js) .p3-canvas,
     :global(html.js) .section-wipe {
       display: block;

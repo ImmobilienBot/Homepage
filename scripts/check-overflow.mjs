@@ -25,6 +25,40 @@ const PORT = 4331; // eigener Port (nicht 4321 → kollidiert nicht mit `astro p
 const WIDTHS = [320, 360, 390, 414];
 const PAGES = ['/', '/en/'];
 
+// Erwartete Sektionen der Startseite (echte IDs + Landmarks). Jede muss existieren,
+// clientHeight > 100 haben und sichtbaren Text tragen — und darf weder als Ghost
+// (opacity/visibility) noch von einem opaken aria-hidden-Layer verdeckt sein.
+// [name, selector, minHeight] — der Header ist bewusst eine schlanke Leiste (~74px).
+const EXPECTED_SECTIONS = [
+  ['header', 'header', 40],
+  ['hero', '#hero', 100],
+  ['problem', '#problem', 100],
+  ['portale', '#portale', 100],
+  ['features', '#features', 100],
+  ['ablauf', '#ablauf', 100],
+  ['bewertungen', '#bewertungen', 100],
+  ['preise', '#preise', 100],
+  ['faq', '#faq', 100],
+  ['kontakt', '#kontakt', 100],
+  ['footer', 'footer', 40],
+];
+
+/** Seite in Schritten bis zum Ende scrollen (feuert alle ScrollTrigger-Reveals), dann zurück. */
+async function autoScroll(page) {
+  await page.evaluate(async () => {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const h = document.scrollingElement || document.documentElement;
+    const step = Math.round(window.innerHeight * 0.8);
+    for (let y = 0; y <= h.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await sleep(90);
+    }
+    window.scrollTo(0, h.scrollHeight);
+    await sleep(150);
+    window.scrollTo(0, 0);
+  });
+}
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -125,56 +159,163 @@ async function main() {
         // kurze Ruhephase für Reveals/Idle-Bündel
         await new Promise((r) => setTimeout(r, 400));
 
-        const result = await page.evaluate(() => {
+        // Vollständig durchscrollen, damit alle below-fold-Reveals (ScrollTrigger /
+        // rIC-Bündel) tatsächlich feuern — sonst stünden legitime Reveal-Startzustände
+        // (opacity:0) fälschlich als „Ghost" da. Danach zurück nach oben.
+        await autoScroll(page);
+        await new Promise((r) => setTimeout(r, 350));
+
+        const result = await page.evaluate((expectedSections) => {
           const se = document.scrollingElement || document.documentElement;
           const iw = window.innerWidth;
+          const cssPath = (el) => {
+            const parts = [];
+            let node = el;
+            while (node && node.nodeType === 1 && parts.length < 4) {
+              let sel = node.tagName.toLowerCase();
+              if (node.id) {
+                sel += `#${node.id}`;
+                parts.unshift(sel);
+                break;
+              }
+              if (node.className && typeof node.className === 'string') {
+                const cls = node.className.trim().split(/\s+/).slice(0, 2).join('.');
+                if (cls) sel += `.${cls}`;
+              }
+              parts.unshift(sel);
+              node = node.parentElement;
+            }
+            return parts.join(' > ');
+          };
+
+          // ---- 1) Horizontaler Overflow ----
           const ok = se.scrollWidth <= iw + 1;
           const culprits = [];
           if (!ok) {
-            const cssPath = (el) => {
-              const parts = [];
-              let node = el;
-              while (node && node.nodeType === 1 && parts.length < 4) {
-                let sel = node.tagName.toLowerCase();
-                if (node.id) {
-                  sel += `#${node.id}`;
-                  parts.unshift(sel);
-                  break;
-                }
-                if (node.className && typeof node.className === 'string') {
-                  const cls = node.className.trim().split(/\s+/).slice(0, 2).join('.');
-                  if (cls) sel += `.${cls}`;
-                }
-                parts.unshift(sel);
-                node = node.parentElement;
-              }
-              return parts.join(' > ');
-            };
             for (const el of document.querySelectorAll('body *')) {
               const r = el.getBoundingClientRect();
               if (r.width === 0 || r.height === 0) continue;
               if (r.right > iw + 1 || r.left < -1) {
-                culprits.push({
-                  sel: cssPath(el),
-                  right: Math.round(r.right),
-                  left: Math.round(r.left),
-                });
+                culprits.push({ sel: cssPath(el), right: Math.round(r.right), left: Math.round(r.left) });
               }
             }
           }
-          return { ok, scrollWidth: se.scrollWidth, innerWidth: iw, culprits: culprits.slice(0, 12) };
-        });
+
+          // Effektive (durchmultiplizierte) Deckkraft entlang der Vorfahrenkette;
+          // 0, sobald ein Vorfahr display:none / visibility:hidden trägt.
+          const effOpacity = (el) => {
+            let o = 1;
+            let n = el;
+            while (n && n.nodeType === 1) {
+              const cs = getComputedStyle(n);
+              if (cs.display === 'none' || cs.visibility === 'hidden') return 0;
+              o *= parseFloat(cs.opacity || '1');
+              n = n.parentElement;
+            }
+            return o;
+          };
+          const isOpaqueBg = (cs) => {
+            const b = cs.backgroundColor || '';
+            if (b === 'transparent' || b === 'rgba(0, 0, 0, 0)') return false;
+            const m = b.match(/rgba?\(([^)]+)\)/);
+            if (!m) return false;
+            const parts = m[1].split(',').map((s) => parseFloat(s));
+            return parts.length < 4 || parts[3] >= 0.9;
+          };
+
+          // ---- 2) Sektions-Inventar + 3) Ghost/Occlusion je erwarteter Sektion ----
+          const missing = [];
+          const ghosts = [];
+          const covered = [];
+          for (const [name, selector, minH] of expectedSections) {
+            const sec = document.querySelector(selector);
+            if (!sec) {
+              missing.push({ name, reason: 'fehlt im DOM' });
+              continue;
+            }
+            if (sec.clientHeight <= minH) {
+              missing.push({ name, reason: `clientHeight ${sec.clientHeight} ≤ ${minH}` });
+              continue;
+            }
+            if ((sec.innerText || '').trim().length === 0) {
+              missing.push({ name, reason: 'kein sichtbarer Text' });
+              continue;
+            }
+
+            // Repräsentatives Text-Element (Heading bevorzugt, sonst längster Text).
+            let textEl = sec.querySelector('h1, h2, h3');
+            if (!textEl || (textEl.innerText || '').trim().length < 4) {
+              let best = null;
+              let bestLen = 0;
+              for (const el of sec.querySelectorAll('h1,h2,h3,h4,p,li,a,span,button')) {
+                const own = Array.from(el.childNodes)
+                  .filter((n) => n.nodeType === 3)
+                  .map((n) => n.textContent)
+                  .join('')
+                  .trim();
+                const r = el.getBoundingClientRect();
+                if (own.length >= 10 && r.width >= 80 && r.height >= 16 && own.length > bestLen) {
+                  best = el;
+                  bestLen = own.length;
+                }
+              }
+              textEl = best;
+            }
+            if (!textEl) continue;
+
+            // Ghost: sichtbarer Text, aber effektiv (fast) unsichtbar → hängengebliebener
+            // Reveal-/Startzustand (opacity/visibility), obwohl die Sektion below-fold
+            // längst passiert wurde.
+            if (effOpacity(textEl) < 0.1) {
+              ghosts.push({ name, sel: cssPath(textEl), text: (textEl.innerText || '').trim().slice(0, 40) });
+            }
+
+            // Occlusion: opaker, aria-hidden Deko-Layer (z. B. eine nie weggeräumte
+            // „section-wipe"), der die Sektion großflächig überdeckt und ÜBER dem Text
+            // liegt. Genau das Muster des Problem-Sektion-Bugs (grauer Vorhang bleibt <lg).
+            const secR = sec.getBoundingClientRect();
+            const secArea = secR.width * secR.height;
+            for (const d of sec.querySelectorAll('[aria-hidden="true"]')) {
+              const cs = getComputedStyle(d);
+              if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+              if (!isOpaqueBg(cs) || effOpacity(d) < 0.9) continue;
+              const dr = d.getBoundingClientRect();
+              const dArea = dr.width * dr.height;
+              const z = parseInt(cs.zIndex, 10);
+              if (secArea > 0 && dArea / secArea >= 0.6 && Number.isFinite(z) && z > 0) {
+                covered.push({ name, sel: cssPath(d), z, cover: Math.round((dArea / secArea) * 100) });
+                break;
+              }
+            }
+          }
+
+          return {
+            ok,
+            scrollWidth: se.scrollWidth,
+            innerWidth: iw,
+            culprits: culprits.slice(0, 12),
+            missing,
+            ghosts,
+            covered,
+          };
+        }, EXPECTED_SECTIONS);
 
         const tag = `${path.padEnd(6)} @ ${width}px`;
-        if (result.ok) {
-          console.log(`${C.grn}✓${C.rst} ${tag}  ${C.dim}(scrollWidth ${result.scrollWidth} ≤ ${result.innerWidth})${C.rst}`);
+        const contentIssues = result.missing.length + result.ghosts.length + result.covered.length;
+        if (result.ok && contentIssues === 0) {
+          console.log(`${C.grn}✓${C.rst} ${tag}  ${C.dim}(scrollWidth ${result.scrollWidth} ≤ ${result.innerWidth}; ${EXPECTED_SECTIONS.length} Sektionen sichtbar)${C.rst}`);
         } else {
-          console.log(
-            `${C.red}✗${C.rst} ${tag}  scrollWidth ${result.scrollWidth} > innerWidth ${result.innerWidth}`,
-          );
-          for (const c of result.culprits) {
-            console.log(`    ${C.yel}${c.sel}${C.rst}  ${C.dim}(right ${c.right}, left ${c.left})${C.rst}`);
+          if (!result.ok) {
+            console.log(`${C.red}✗${C.rst} ${tag}  scrollWidth ${result.scrollWidth} > innerWidth ${result.innerWidth}`);
+            for (const c of result.culprits) {
+              console.log(`    ${C.yel}${c.sel}${C.rst}  ${C.dim}(right ${c.right}, left ${c.left})${C.rst}`);
+            }
+          } else {
+            console.log(`${C.red}✗${C.rst} ${tag}  Content-Problem (Overflow ok)`);
           }
+          for (const m of result.missing) console.log(`    ${C.red}FEHLT${C.rst} ${m.name}  ${C.dim}(${m.reason})${C.rst}`);
+          for (const g of result.ghosts) console.log(`    ${C.red}GHOST${C.rst} ${g.name}: ${C.yel}${g.sel}${C.rst} „${g.text}…"`);
+          for (const cv of result.covered) console.log(`    ${C.red}VERDECKT${C.rst} ${cv.name}: opaker aria-hidden Layer ${C.yel}${cv.sel}${C.rst} ${C.dim}(z:${cv.z}, ${cv.cover}% Deckung)${C.rst}`);
           violations.push({ page: path, width, ...result });
         }
         await page.close();
@@ -187,10 +328,10 @@ async function main() {
 
   console.log('');
   if (violations.length) {
-    console.error(`${C.red}Overflow gefunden: ${violations.length} Breite(n)/Seite(n).${C.rst}`);
+    console.error(`${C.red}Probleme gefunden (Overflow und/oder fehlende/verdeckte Sektionen): ${violations.length} Breite(n)/Seite(n).${C.rst}`);
     process.exit(1);
   }
-  console.log(`${C.grn}Kein horizontaler Overflow — ${PAGES.length}×${WIDTHS.length} Kombinationen sauber.${C.rst}`);
+  console.log(`${C.grn}Sauber — ${PAGES.length}×${WIDTHS.length} Kombinationen: kein Overflow, alle ${EXPECTED_SECTIONS.length} Sektionen sichtbar & unverdeckt.${C.rst}`);
 }
 
 main().catch((e) => {
