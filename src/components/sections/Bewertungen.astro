@@ -349,15 +349,50 @@ const rows = [
   /* =====================================================================
      Mobile — Kacheln untereinander, kompakter.
      ===================================================================== */
+  /* Mobile (< 768px): drei Aggregat-Kacheln NEBENEINANDER (kompakt). Die volle
+     5-Sterne-Reihe wäre in ~85px-Kacheln bei 320px zu breit → ausgeblendet und durch
+     Zahl + EINEN Stern ersetzt (Score bleibt im aria-label der Kachel). Plattform-
+     Label klein/eng, damit „GOOGLE MAPS" bei 320px passt. 768–1023px behalten die
+     Basis (3 Kacheln mit voller Sterne-Reihe). */
   @media (max-width: 767.98px) {
     .bw-h2 {
       font-size: clamp(1.85rem, 8vw, 2.5rem);
     }
     .bw-tiles {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
     .bw-tile {
-      padding: 16px;
+      align-items: center;
+      text-align: center;
+      gap: 5px;
+      padding: 12px 6px;
+      border-radius: 12px;
+    }
+    .bw-tpill {
+      padding: 3px 6px;
+      font-size: 9px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    /* Volle Sterne-Reihe raus; stattdessen Score + ein Stern (prominent). */
+    .bw-tile :global(.star-rating) {
+      display: none;
+    }
+    .bw-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: clamp(1.25rem, 6.5vw, 1.6rem);
+    }
+    .bw-score::after {
+      content: '★';
+      font-size: 0.66em;
+      line-height: 1;
+      color: var(--color-black);
+    }
+    .bw-count {
+      font-size: 11px;
     }
   }
 
