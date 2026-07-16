@@ -318,28 +318,36 @@ const howToLd = {
       border-top: 8px solid var(--color-darkgrey);
     }
 
-    /* Schritt = flacher Block rechts der Rail (keine Karte). */
+    /* Schritt = KARTE rechts der Rail; Dot + Rail bleiben links außerhalb der Karte. */
     .ab-ticket {
       counter-increment: abstep;
+      position: relative;
       display: block;
-      background-color: transparent;
+      margin: 0 0 16px 56px; /* Platz für Rail/Dot links, einheitlicher Karten-Gap */
+      padding: 18px 20px;
+      background-color: var(--color-offwhite);
       border: 0;
-      border-radius: 0;
-      padding: 0 0 clamp(1.75rem, 6vw, 2.5rem) 56px;
+      border-radius: 18px;
+      box-shadow: 0 14px 34px -26px rgb(59 59 58 / 0.4);
+    }
+    /* Desktop-Strip-Außenradien überschreiben (sonst nur eine Seite gerundet). */
+    .ab-ticket:first-child,
+    .ab-ticket:nth-child(4) {
+      border-radius: 18px;
     }
     .ab-ticket:last-child {
-      padding-bottom: 0;
+      margin-bottom: 0;
     }
+    /* Desktop-Perforation (gestrichelter border-right, Spezifität 0,2,0) auf Mobile aus. */
     .ab-ticket:not(:last-child) {
       border-right: 0;
-      border-bottom: 0;
     }
 
-    /* Dot mit Schrittnummer (auf der Rail). */
+    /* Dot mit Schrittnummer — auf der Rail (links außerhalb), an der Kartenoberkante. */
     .ab-ticket::before {
       content: counter(abstep);
       position: absolute;
-      left: 0;
+      left: -56px;
       top: 0;
       width: 32px;
       height: 32px;
@@ -353,18 +361,15 @@ const howToLd = {
       z-index: 1;
     }
 
-    /* Schritt 4 („noch nicht passiert"): flach wie die anderen; Dot als Umriss
-       (pending), Texte auf hellem Grund lesbar, Pill mit dunklem Umriss. */
+    /* BUGFIX: Schritt 4 = Karte wie 1–3 (voller gelber Dot, kein Pending-Umriss;
+       Texte/Pill regulär). Das frühere „noch nicht passiert"-Outline entfällt. */
     .ab-ticket--dark {
-      background-color: transparent;
+      background-color: var(--color-offwhite);
     }
     .ab-ticket--dark::before {
-      background: transparent;
-      box-shadow: inset 0 0 0 2px var(--color-yellow);
+      background: var(--color-yellow);
+      box-shadow: none;
       color: var(--color-black);
-    }
-    .ab-ticket--dark .ab-step {
-      color: rgb(59 59 58 / 0.45);
     }
     .ab-ticket--dark .ab-ticket-title {
       color: var(--color-black);
@@ -373,9 +378,23 @@ const howToLd = {
       color: rgb(59 59 58 / 0.72);
     }
     .ab-ticket--dark .ab-pill {
-      background-color: transparent;
-      border: 1.5px solid var(--color-black);
+      background-color: var(--color-yellow);
+      border: 0;
       color: var(--color-black);
+    }
+
+    /* „Schritt N"-Label ist redundant zur Dot-Nummer → aus. Die Timing-Pill wird als
+       Tag ÜBER dem Titel verankert (linksbündig; nichts schwebt mehr frei rechts). */
+    .ab-step {
+      display: none;
+    }
+    .ab-ticket-head {
+      display: block;
+      margin: 0 0 10px;
+    }
+    .ab-pill {
+      display: inline-block;
+      margin: 0;
     }
 
     /* Beschreibungstext auf 16px (volle Breite, Lesbarkeit). */
