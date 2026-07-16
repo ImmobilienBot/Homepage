@@ -172,13 +172,12 @@ const sabData = { iosRating, androidRating, iosHref: links.ios, androidHref: lin
   /* Nur < lg. Ab 1024px nie sichtbar (Desktop hat Header-CTA + QR). */
   .sab {
     position: fixed;
-    left: 12px;
-    right: 12px;
-    /* WICHTIG: env() MIT Fallback 0px. Ohne Fallback ist `calc(12px + env(...))` auf
-       Browsern ohne env()-Support (ältere Android-WebViews) UNGÜLTIG → `bottom` fällt
-       auf `auto` zurück und die fixierte Bar „schwebt" an ihrer Flow-Position statt
-       unten zu kleben. Mit Fallback bleibt der feste 12px-Sockel garantiert. */
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 16px;
+    right: 16px;
+    /* WICHTIG: env() MIT Fallback 0px (sonst `bottom:auto` ohne env-Support). 16px-
+       Sockel + Safe-Area kalkuliert die Android-Gestenleiste ein → die Bar steht
+       nicht mehr zu tief/„abgeschnitten" hinter der Systemleiste. */
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 35; /* unter dem Menü-Overlay (Header z-40) */
     /* Ruhezustand: unter dem Viewport, nicht bedienbar. */
     transform: translateY(calc(100% + 24px));

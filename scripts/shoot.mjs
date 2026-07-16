@@ -159,11 +159,37 @@ async function main() {
       console.log(`${C.grn}✓${C.rst} de-390-menu-open-scrolled.png`);
     });
 
-    if (!only || only === 'smartbar') await statePage(async (page) => {
-      await page.evaluate(() => document.querySelector('#features')?.scrollIntoView()); await wait(800);
-      await page.screenshot({ path: join(SHOTS, 'de-390-smartbar-visible.png'), clip: { x: 0, y: 520, width: 390, height: 260 } });
-      console.log(`${C.grn}✓${C.rst} de-390-smartbar-visible.png`);
-    });
+    if (!only || only === 'smartbar') {
+      // Android-Geräteprofil (Pixel-Metrics, mobile UA, isMobile:true, dpr ~2.6) — NUR
+      // hier; check-overflow bleibt isMobile:false (sonst maskierter Overflow, Runde 1).
+      const AND_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Mobile Safari/537.36';
+      const shootBar = async (w, h, name) => {
+        const page = await browser.newPage();
+        await page.setUserAgent(AND_UA);
+        await page.setViewport({ width: w, height: h, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true });
+        await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle0', timeout: 30000 });
+        await wait(1400); // Lenis muss initialisiert sein, bevor stop()+scroll greift
+        // Lenis pausieren (sonst springt der Scroll zurück), an #features scrollen und
+        // die Bar sicher einblenden (Positions-Shot → freies Schweben/Schatten prüfen).
+        await page.evaluate(() => {
+          window.__lenis?.stop();
+          const el = document.querySelector('#features');
+          const y = el ? el.getBoundingClientRect().top + window.scrollY - 80 : 1600;
+          window.scrollTo(0, y);
+          const bar = document.querySelector('[data-smart-bar]');
+          if (bar) { bar.classList.add('is-visible'); bar.setAttribute('aria-hidden', 'false'); }
+        });
+        await wait(700);
+        // Voller VIEWPORT (captureBeyondViewport:false) → das fixierte Bar-Element wird
+        // an seiner Bildschirmposition unten mitaufgenommen (ein clip liefe in Dokument-
+        // koordinaten und träfe das fixierte Element nicht).
+        await page.screenshot({ path: join(SHOTS, `${name}.png`), captureBeyondViewport: false });
+        console.log(`${C.grn}✓${C.rst} ${name}.png ${C.dim}(Android-Profil)${C.rst}`);
+        await page.close();
+      };
+      await shootBar(412, 915, 'android-412-smartbar-visible');
+      await shootBar(320, 720, 'android-320-smartbar-visible');
+    }
 
     if (wantState('problem')) await statePage(async (page) => {
       await setChromeHidden(page, true);
