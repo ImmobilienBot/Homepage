@@ -358,6 +358,10 @@ const rows = [
     .bw-h2 {
       font-size: clamp(1.85rem, 8vw, 2.5rem);
     }
+    /* Einheitlicher Kopf→Inhalt-Abstand (Mobile-Rhythmus, Block 7). */
+    .bw-head {
+      margin-bottom: var(--head-gap-mobile);
+    }
     .bw-tiles {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;

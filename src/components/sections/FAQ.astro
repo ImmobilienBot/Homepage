@@ -454,7 +454,10 @@ const PLUS_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" st
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    margin: 0 calc(-1 * var(--spacing-inset));
+    /* Block 6: Abstand Chip-Zeile → erster Eintrag auf den einheitlichen Kopf→Inhalt-
+       Rhythmus (var(--head-gap-mobile) = 36px). 14px davon steckt in padding-bottom,
+       der Rest als margin-bottom → sichtbarer Gesamtabstand = 36px (DE/EN identisch). */
+    margin: 0 calc(-1 * var(--spacing-inset)) calc(var(--head-gap-mobile) - 14px);
     padding: 2px var(--spacing-inset) 14px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -533,6 +536,10 @@ const PLUS_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" st
   @media (max-width: 1023.98px) {
     .faq-q {
       font-size: 16px;
+    }
+    /* Einheitlicher Kopf→Inhalt-Abstand (Mobile-Rhythmus, Block 7). */
+    .faq-head {
+      margin-bottom: var(--head-gap-mobile);
     }
   }
   .faq-summary:focus-visible {
