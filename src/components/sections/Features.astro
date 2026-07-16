@@ -171,7 +171,7 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
                         src={shots[i]}
                         alt={s.alt}
                         class="ft-shot-img"
-                        sizes="(min-width: 1024px) 300px, 160px"
+                        sizes="(min-width: 1024px) 300px, 180px"
                         loading="lazy"
                       />
                     </div>
@@ -1302,19 +1302,24 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
        auf gleicher relativer Höhe kappen. .ft-frame/.ft-shot/.ft-glow behalten ihre
        Basis-Werte → echtes Geräte-Mockup. */
     .ft-block-phone {
+      /* EINE Stellschraube für den sichtbaren Phone-Anteil (~70–75 %) — alle 4 Karten
+         kappen dadurch auf gleicher RELATIVER Höhe (unabhängig von der Viewportbreite). */
+      --ft-phone-w: 60%;
+      --ft-phone-visible: 0.72;
       margin: 22px auto 0;
       display: flex;
       justify-content: center;
       width: 100%;
-      max-height: clamp(172px, 46vw, 214px); /* ~50 % des Phones sichtbar */
-      overflow: hidden;
     }
     .ft-phone-stage--inline {
-      width: 65%;
-      max-width: 230px;
-      max-height: none; /* Höhe/Anschnitt steuert .ft-block-phone */
-      overflow: visible;
-      padding-top: 6px; /* Notch-/Glow-Luft oben */
+      width: var(--ft-phone-w);
+      max-width: 220px;
+      /* Crop via aspect-ratio (Frame 534.12×1116.76): Stage-Höhe = sichtbarer Anteil
+         der vollen Phone-Höhe → oberer Teil des Phones, unten von der Karte gekappt. */
+      aspect-ratio: 534.12 / calc(1116.76 * var(--ft-phone-visible));
+      max-height: none;
+      overflow: hidden;
+      padding-top: 0;
     }
   }
 </style>
