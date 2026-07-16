@@ -82,6 +82,11 @@ const sabData = { iosRating, androidRating, iosHref: links.ios, androidHref: lin
 </aside>
 
 <script>
+  // Gürtel + Hosenträger zur Manifest-Umstellung ("display":"browser"): Chromes
+  // Install-Promotion (beforeinstallprompt) endgültig stilllegen, damit auf Android
+  // keine Install-Leiste unten einblendet und mit unserer Smart-Bar kollidiert.
+  window.addEventListener('beforeinstallprompt', (e) => e.preventDefault());
+
   // Smart-App-Bar-Controller (kein GSAP; CSS treibt den Slide).
   const bar = document.querySelector<HTMLElement>('[data-smart-bar]');
   if (bar) {
@@ -168,15 +173,60 @@ const sabData = { iosRating, androidRating, iosHref: links.ios, androidHref: lin
   }
 </script>
 
+<script>
+  // MESSKANAL ?vp-debug — Ground-Truth-Overlay für die Geräte-Abnahme (Android Edge-to-
+  // Edge). Ohne den URL-Param: sofortiger Early-Return, null Kosten. MIT ?vp-debug:
+  // kleines fixiertes Overlay (oben links) zeigt live die Viewport-/Safe-Area-Werte.
+  // Zweck: EIN Geräte-Screenshot mit ?vp-debug liefert die echten env-Werte statt Raten.
+  if (new URLSearchParams(location.search).has('vp-debug')) {
+    const box = document.createElement('div');
+    box.setAttribute('data-vp-debug', '');
+    box.style.cssText =
+      'position:fixed;top:8px;left:8px;z-index:9999;max-width:70vw;padding:6px 8px;' +
+      'background:rgba(20,20,19,.86);color:#fff03c;font:11px/1.45 ui-monospace,Menlo,monospace;' +
+      'white-space:pre;border-radius:6px;pointer-events:none;';
+    document.body.appendChild(box);
+
+    // env() ist aus JS nicht direkt lesbar → auf ein Probe-Element schreiben und den
+    // computed-Wert auslesen (-1px = „Property nicht unterstützt"-Marker).
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;';
+    document.body.appendChild(probe);
+    const readEnv = (name: string) => {
+      probe.style.bottom = `env(${name}, -1px)`;
+      return getComputedStyle(probe).bottom; // z. B. "34px" oder "-1px"
+    };
+
+    const bar = document.querySelector<HTMLElement>('[data-smart-bar]');
+    const vv = window.visualViewport;
+    const update = () => {
+      const barBottom = bar ? Math.round(bar.getBoundingClientRect().bottom) : NaN;
+      const lines = [
+        `inner  ${window.innerWidth}×${window.innerHeight}`,
+        vv ? `visual ${Math.round(vv.height)} @top ${Math.round(vv.offsetTop)}` : 'visual n/a',
+        `sai-bottom     ${readEnv('safe-area-inset-bottom')}`,
+        `sai-max-bottom ${readEnv('safe-area-max-inset-bottom')}`,
+        `bar Δ (innerH−barBottom)  ${Number.isNaN(barBottom) ? 'n/a' : window.innerHeight - barBottom}`,
+        `ua ${navigator.userAgent.replace(/^Mozilla\/5\.0 \(/, '').slice(0, 46)}`,
+      ];
+      box.textContent = lines.join('\n');
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    vv?.addEventListener('resize', update);
+    vv?.addEventListener('scroll', update);
+  }
+</script>
+
 <style>
   /* Nur < lg. Ab 1024px nie sichtbar (Desktop hat Header-CTA + QR). */
   .sab {
     position: fixed;
     left: 16px;
     right: 16px;
-    /* WICHTIG: env() MIT Fallback 0px (sonst `bottom:auto` ohne env-Support). 16px-
-       Sockel + Safe-Area kalkuliert die Android-Gestenleiste ein → die Bar steht
-       nicht mehr zu tief/„abgeschnitten" hinter der Systemleiste. */
+    /* env() MIT Fallback 0px (sonst `bottom:auto` ohne env-Support). iOS-Safari nutzt
+       diesen Zweig (korrekt). */
     bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 35; /* unter dem Menü-Overlay (Header z-40) */
     /* Ruhezustand: unter dem Viewport, nicht bedienbar. */
@@ -188,6 +238,17 @@ const sabData = { iosRating, androidRating, iosHref: links.ios, androidHref: lin
       transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
       opacity 0.25s ease,
       visibility 0s linear 0.25s;
+  }
+  /* Chrome/Android Edge-to-Edge (Chrome 135+/Android 15): Inhalt wird UNTER die Gesten-
+     Navigationsleiste gezeichnet; env(safe-area-inset-bottom) springt dort mit der
+     Browser-UI (teils 0 trotz überlappender Leiste) → Bar zu tief/gekappt. safe-area-MAX-
+     inset-bottom ist Chromes STABILER Maximalwert (eigens für persistente Bottom-UI, springt
+     nicht). iOS kennt die Property nicht → @supports greift dort nicht, Safari bleibt auf
+     dem funktionierenden Standard-Zweig. */
+  @supports (bottom: env(safe-area-max-inset-bottom, 0px)) {
+    .sab {
+      bottom: calc(16px + env(safe-area-max-inset-bottom, 0px));
+    }
   }
   @media (min-width: 1024px) {
     .sab {

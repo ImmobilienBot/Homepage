@@ -112,6 +112,12 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
          Support ungültig → kein Platz für die Smart-Bar). Bar ~64px + 16px Sockel. */
       padding-bottom: calc(1.5rem + 80px + env(safe-area-inset-bottom, 0px));
     }
+    /* Analog zur Smart-Bar: Chromes stabiler Max-Wert (Android Edge-to-Edge). */
+    @supports (bottom: env(safe-area-max-inset-bottom, 0px)) {
+      .footer {
+        padding-bottom: calc(1.5rem + 80px + env(safe-area-max-inset-bottom, 0px));
+      }
+    }
   }
   .footer-col {
     display: flex;
