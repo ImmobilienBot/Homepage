@@ -6,7 +6,11 @@ dist/
 # audit / lighthouse artifacts
 .lighthouseci/
 .tmp-lh/
+.tmp-lh-median/
 lh-*.json
+
+# visual self-check screenshots (shoot.mjs)
+.shots/
 
 # dependencies
 node_modules/

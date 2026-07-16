@@ -12,7 +12,8 @@
     "audit:seo": "tsx scripts/audit-seo.ts",
     "audit:lh": "tsx scripts/audit-lh.ts",
     "audit": "npm run build && npm run audit:seo && npm run audit:lh",
-    "check:overflow": "node scripts/check-overflow.mjs"
+    "check:overflow": "node scripts/check-overflow.mjs",
+    "shoot": "node scripts/shoot.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
