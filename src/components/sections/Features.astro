@@ -1242,4 +1242,83 @@ const GLOBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
       gap: 0.5rem;
     }
   }
+
+  /* =====================================================================
+     Block E — Mobile: je Feature eine eigenständige Karte (Bevel-Muster).
+     Reihenfolge Index (01…04, Menü-Ziffern-Stil) → Titel → Copy → Checks →
+     Screenshot, unten bündig an der Kartenkante angeschnitten (kein Geräterahmen).
+     ALLE Regeln in max-width:1023.98px → Desktop-Enhancement/Basis-Stack ≥lg
+     unberührt (Markup unverändert; der Bevel entsteht rein per CSS).
+     ===================================================================== */
+  @media (max-width: 1023.98px) {
+    .ft-blocks {
+      gap: 18px;
+    }
+    .ft-block {
+      align-items: stretch;
+      text-align: left;
+      background: var(--color-offwhite);
+      border-radius: 22px;
+      overflow: hidden;
+      /* Kein Bottom-Padding: der Screenshot bricht voll aus und sitzt bündig unten. */
+      padding: 24px 24px 0;
+      box-shadow: 0 18px 40px -30px rgb(59 59 58 / 0.4);
+    }
+    .ft-block-copy {
+      max-width: none;
+      width: 100%;
+    }
+    /* Kopf linksbündig: Index als Menü-Ziffer (grau) + Titel. */
+    .ft-acc-head {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: flex-start;
+      gap: 0.6rem;
+      text-align: left;
+    }
+    .ft-chip {
+      min-width: auto;
+      height: auto;
+      padding: 0;
+      background: transparent;
+      color: var(--color-grey-yellow); /* #c0c0c1 wie die Overlay-Ziffern */
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+    .ft-checks {
+      align-items: flex-start;
+      text-align: left;
+    }
+    /* Screenshot: volle Kartenbreite, oben leicht gerundet, unten von der Karte gekappt. */
+    .ft-block-phone {
+      margin: 20px -24px 0;
+      display: block;
+      width: auto;
+    }
+    .ft-phone-stage--inline {
+      width: 100%;
+      max-height: clamp(150px, 40vw, 200px);
+      overflow: hidden;
+      padding-top: 0;
+    }
+    .ft-glow {
+      display: none;
+    }
+    .ft-frame {
+      display: none; /* kein Geräterahmen im Bevel-Muster */
+    }
+    .ft-shot {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      height: auto;
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+    }
+    .ft-shot-img {
+      width: 100%;
+      height: auto;
+    }
+  }
 </style>
