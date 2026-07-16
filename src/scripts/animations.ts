@@ -587,6 +587,9 @@ function initCursor() {
  * damit er nicht stört. Nur Opacity (scrub). CSS-Loop (Punkt) läuft separat.
  */
 function initHeroScrollCue() {
+  // Mobile-Pass: der Scroll-Cue erscheint nur ≥1024px (CSS ebenso gegated) → mobil
+  // gar kein Fixed-Element, kein ScrollTrigger/Listener.
+  if (!window.matchMedia('(min-width: 1024px)').matches) return;
   const cue = document.querySelector<HTMLElement>('#hero [data-hero-cue]');
   if (!cue) return;
   gsap.to(cue, {
