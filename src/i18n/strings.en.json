@@ -529,14 +529,14 @@
     },
     "quote": [
       {
-        "t": "The flat doesn't go to whoever earns the most. It goes to whoever sees it "
+        "t": "The flat doesn't go to whoever earns the most. It goes to whoever sees it"
       },
       {
         "t": "first",
         "em": true
       },
       {
-        "t": " — on the portal "
+        "t": "— on the portal"
       },
       {
         "t": "nobody else checks",
@@ -550,7 +550,7 @@
       "h2": "That’s why Immobilien Bot exists",
       "p1": "At the end of 2021, Juri and his family started looking for a flat in Berlin. The reason: a baby on the way. It quickly became clear: searching manually takes far too much time and barely fits into everyday life. And at some point the realisation: the flats are there. You just hear about them too late — and many sit on portals you never open.",
       "p2": "So Juri built a tool that searched around the clock for him. It started as a simple Telegram notification for Kleinanzeigen. But soon friends and acquaintances asked for something similar.",
-      "p3pre": "Today the Immobilien Bot app scans ",
+      "p3pre": "Today the Immobilien Bot app scans",
       "p3bold": "{n} property portals at once",
       "p3post": ", around the clock — across all of Germany. The big nationwide ones — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. And the ones hardly anyone checks — the municipal housing associations in Berlin, Cologne and Hesse.",
       "p4": "From Berlin — for you.",
@@ -558,7 +558,7 @@
     },
     "believe": {
       "h2": "What we believe",
-      "p1": "Everyone deserves a home. Not just those with the right contacts. Not just those who refresh portals all day. Not just those who happen to know the right portal. ",
+      "p1": "Everyone deserves a home. Not just those with the right contacts. Not just those who refresh portals all day. Not just those who happen to know the right portal.",
       "p1Mark": "Everyone.",
       "p2": "Immobilien Bot is your edge — fast enough to be first, and wide enough to search everywhere. Whether you work full-time, have kids or are new to the city.",
       "p3": "You've waited long enough. Time for the flat to come to you."
