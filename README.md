@@ -55,6 +55,9 @@ Nach dem Login siehst du **drei Bereiche**:
 - **Neue Ratgeber-Artikel** vorher **kurz mit Artem abstimmen** (URL-Pfad muss er setzen).
 - **Parallel arbeiten:** Wenn mehrere gleichzeitig editieren, vorher absprechen – sonst
   überschreibt ihr euch gegenseitig.
+- **Unerwartete Fehlermeldung im CMS?** (z. B. „X fields have an error", Speichern klappt nicht)
+  → **nichts improvisieren, nichts erfinden**, keine Platzhalter wie „Test" eintragen. Mach einen
+  **Screenshot und schick ihn an Artem**. Ein leeres Feld ist bei uns oft völlig in Ordnung.
 
 ### 5. Optional: automatische Übersetzung (DeepL)
 
@@ -78,6 +81,10 @@ Ist rein optional; die Vorübersetzung immer gegenlesen.
   `src/i18n/strings.de.json` generiert und deckt so **100 % der Text-Keys** ab. **Neuer i18n-Key
   ⇒ `node scripts/gen-cms-config.mjs` laufen lassen und committen** – sonst schlägt der SEO-Audit
   (Check **G5**) fehl (und der Key ginge beim CMS-Speichern verloren).
+- **Alle generierten Felder sind `required: false`** (bewusst): leere Werte sind bei uns legitimer
+  Inhalt (z. B. der EN-only-Bewertungshinweis, dessen DE-Pendant leer ist). Die Existenz jedes Keys
+  garantieren der Buildzeit-Guard (`en.ts`) und die Audits G4/G5 — **nicht** Sveltias
+  Pflichtfeld-Validierung. Der Generator setzt das automatisch; nie von Hand auf `required: true`.
 - **i18n-Struktur:** Texte liegen in `src/i18n/strings.de.json` / `strings.en.json`; `de.ts`/`en.ts`
   sind dünne Wrapper mit unveränderter API. `en.ts` prüft die Struktur zur Buildzeit → fehlender/
   überzähliger EN-Key bricht den Build. `audit:seo` (Check **G4**) erzwingt DE↔EN-Parität.

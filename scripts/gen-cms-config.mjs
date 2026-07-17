@@ -154,7 +154,10 @@ function emitField(f, indent) {
   L.push(`${p}  label: ${q(f.label)}`);
   L.push(`${p}  widget: ${f.widget}`);
   if (f.value_type) L.push(`${p}  value_type: ${f.value_type}`);
-  if (f.required !== undefined) L.push(`${p}  required: ${f.required}`);
+  // Leere Werte sind bei uns legitimer Inhalt (z. B. der EN-only-Bewertungshinweis) → NIE
+  // CMS-Pflichtfeld. Die Existenz-Garantie liefern G4/G5 + der Buildzeit-Guard (en.ts),
+  // nicht Sveltias required-Validierung. Deshalb bekommt JEDES generierte Feld required: false.
+  L.push(`${p}  required: false`);
   if (f.i18n !== undefined) L.push(`${p}  i18n: ${f.i18n}`);
   if (f.collapsed !== undefined) L.push(`${p}  collapsed: ${f.collapsed}`);
   if (f.field) {

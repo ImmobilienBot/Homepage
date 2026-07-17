@@ -527,7 +527,12 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
   `public/admin/config.yml` wird von **`scripts/gen-cms-config.mjs`** aus `strings.de.json`
   generiert und deckt **100 %** der Keys ab. **Neuer i18n-Key ⇒ `node scripts/gen-cms-config.mjs`
   laufen lassen und committen** — sonst schlägt `audit:seo` (**G5**) fehl und der Key ginge beim
-  CMS-Speichern verloren.
+  CMS-Speichern verloren. **Jedes generierte Feld ist `required: false`** (bewusst): leere Strings
+  sind bei uns legitimer Inhalt (z. B. `sections.bewertungen.transNote` — **legitim leer in DE**,
+  gefüllt in EN, weil der Hinweis „All reviews translated…" nur im EN-Output sinnvoll ist und
+  konditional gerendert wird). Die Existenz-Garantie liefern der `en.ts`-Buildzeit-Guard + G4/G5,
+  **nicht** Sveltias `required`-Validierung — sonst blockiert das CMS das Speichern legitim leerer
+  Felder. Sveltia schreibt leere optionale Felder als `""` (nicht weggelassen), G4/G5 bleiben grün.
 - **Alle Produkt-Fakten** (Store-Links, Preise, Bewertungen, Portale) in `src/data/site.ts` —
   eine Quelle der Wahrheit.
 - **Bilder** immer über `astro:assets` / `<Image>` (WebP/AVIF, responsive).
