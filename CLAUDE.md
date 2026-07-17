@@ -482,8 +482,10 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
     scheitert auf dem Windows-Setup am chrome-launcher-EPERM (Temp-Cleanup) — `audit:lh` liest das von
     Lighthouse trotzdem geschriebene JSON und bleibt so lauffähig.
   - **CI** ist für **Performance maßgeblich:** die GitHub Action fährt weiter `lhci autorun`
-    (Median aus 3 Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). **Schwellen/Assertions
+    (Median aus **5** Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). **Schwellen/Assertions
     werden nie gesenkt, URLs nie aus der Prüfung genommen — Ursachen heilen, nie das Thermometer.**
+    (`numberOfRuns: 5` statt 3 → der Median ist robuster gegen VM-Streuung/Kaltstart-Ausreißer der
+    Runner, die einen 3er-Median an der Kante unter die Schwelle ziehen können.)
   - **Werkzeug-Pinning (gegen Prüfregel-/Rendering-Drift):** Die A11y-/SEO-Prüfregeln stecken in
     **axe-core → Lighthouse → `@lhci/cli`**. Deshalb ist `@lhci/cli` **exakt gepinnt** (kein `^`, in
     `package.json` **und** im Workflow via `npx @lhci/cli@<version> autorun`), und der Runner läuft
