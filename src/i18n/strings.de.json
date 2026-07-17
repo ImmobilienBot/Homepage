@@ -292,11 +292,11 @@
       "subline": "{total} Bewertungen auf drei Plattformen · {downloads} Downloads",
       "tileLabel": "{count} Bewertungen",
       "starsSr": "{n} von 5 Sternen",
-      "transNote": "",
-      "footnote": ""
+      "transNote": "Test",
+      "footnote": "test"
     },
     "faq": {
-      "title": "Häufige Fragen",
+      "title": "Häufige Fragen Test",
       "headline": "Häufige Fragen.",
       "headlineMarker": "Fragen",
       "sub": "Kurz und ehrlich beantwortet — von Portalen bis Preisen. Wenn etwas fehlt, schreib uns einfach.",
@@ -530,14 +530,14 @@
     },
     "quote": [
       {
-        "t": "Die Wohnung bekommt nicht, wer am meisten verdient. Sondern wer sie "
+        "t": "Die Wohnung bekommt nicht, wer am meisten verdient. Sondern wer sie"
       },
       {
         "t": "als Erster",
         "em": true
       },
       {
-        "t": " sieht — auf dem Portal, auf das sonst "
+        "t": "sieht — auf dem Portal, auf das sonst"
       },
       {
         "t": "keiner schaut",
@@ -551,15 +551,15 @@
       "h2": "Deshalb gibt es den Immobilien Bot",
       "p1": "Ende 2021 begann für Juri und seine Familie die Wohnungssuche in Berlin. Der Grund: Nachwuchs. Schnell wurde klar: Die manuelle Suche ist viel zu zeitintensiv und mit dem Alltag kaum vereinbar. Und irgendwann die Erkenntnis: Die Wohnungen sind ja da. Du erfährst nur zu spät davon — und viele stehen auf Portalen, die du nie öffnest.",
       "p2": "Also hat Juri ein Tool gebaut, das rund um die Uhr für ihn suchte. Angefangen hat das Ganze als einfache Telegram-Benachrichtigung für Kleinanzeigen. Doch bald fragten Freunde und Bekannte nach etwas Ähnlichem.",
-      "p3pre": "Mittlerweile erfasst die Immobilien Bot App rund um die Uhr ",
+      "p3pre": "Mittlerweile erfasst die Immobilien Bot App rund um die Uhr",
       "p3bold": "{n} Immobilienportale gleichzeitig",
-      "p3post": " — in ganz Deutschland. Die großen bundesweiten — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. Und die, die sonst kaum jemand prüft — die kommunalen Wohnungsbaugesellschaften in Berlin, Köln und Hessen.",
+      "p3post": "— in ganz Deutschland. Die großen bundesweiten — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. Und die, die sonst kaum jemand prüft — die kommunalen Wohnungsbaugesellschaften in Berlin, Köln und Hessen.",
       "p4": "Aus Berlin — für dich.",
       "p5": "Sobald eine Wohnung erscheint, die zu dir passt, bekommst du sie sofort — per Push, in genau den Minuten, in denen sie überhaupt zu sehen ist. Nicht als Nummer 200. Als einer der Ersten."
     },
     "believe": {
       "h2": "Woran wir glauben",
-      "p1": "Jeder Mensch verdient ein Zuhause. Nicht nur die mit den richtigen Kontakten. Nicht nur die, die den ganzen Tag Portale aktualisieren. Nicht nur die, die zufällig das richtige Portal kennen. ",
+      "p1": "Jeder Mensch verdient ein Zuhause. Nicht nur die mit den richtigen Kontakten. Nicht nur die, die den ganzen Tag Portale aktualisieren. Nicht nur die, die zufällig das richtige Portal kennen.",
       "p1Mark": "Alle.",
       "p2": "Der Immobilien Bot ist dein Vorteil — schnell genug, um Erster zu sein, und weit genug, um überall zu suchen. Egal, ob du Vollzeit arbeitest, Kinder hast oder neu in der Stadt bist.",
       "p3": "Du hast lange genug gewartet. Zeit, dass die Wohnung zu dir kommt."
