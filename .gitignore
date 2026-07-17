@@ -32,3 +32,7 @@ Thumbs.db
 .vscode/
 !.vscode/extensions.json
 .idea/
+
+# i18n-migration text-diff (Wegwerf)
+.text-before.txt
+.text-after.txt
