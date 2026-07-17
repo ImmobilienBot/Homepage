@@ -1493,6 +1493,35 @@ function initBewertungen() {
 }
 
 /**
+ * Marquee-Klone der Bewertungen-Reihen ERST clientseitig, nach First Paint/LCP
+ * (läuft im Idle-Bündel). Das Server-HTML enthält jedes Testimonial nur EINMAL
+ * (halbe Marquee-DOM-Last im kritischen Pfad → weniger Style-Recalc über das
+ * Gesamt-DOM). Hier hängt je Reihe genau EIN aria-hidden-Klon-Set an den Track
+ * (nahtloser -50%-Loop) und markiert die Reihe als `.is-marquee` → der CSS-Loop
+ * startet erst JETZT (nie ohne Klone → kein Sprung/keine Lücke). Klonen ist rein
+ * horizontal (gleiche Reihenhöhe) → kein Layout-Shift/CLS. Idempotent. Unter
+ * `prefers-reduced-motion` wird die Funktion NICHT aufgerufen (Reihe bleibt eine
+ * nativ scrollbare Einzelreihe ohne Autoplay — wie bisher).
+ */
+function initReviewMarquee() {
+  const rows = gsap.utils.toArray<HTMLElement>('#bewertungen [data-bw-marquee]');
+  rows.forEach((row) => {
+    const track = row.querySelector<HTMLElement>('.bw-track');
+    if (!track || track.querySelector('.bw-clones')) return; // idempotent
+    // Klon-Set aufbauen und EINMAL anhängen (ein Reflow statt N).
+    const clones = document.createElement('div');
+    clones.className = 'bw-clones';
+    clones.setAttribute('aria-hidden', 'true');
+    for (const card of Array.from(track.children)) {
+      clones.appendChild(card.cloneNode(true));
+    }
+    track.appendChild(clones);
+    // Loop erst freigeben, wenn das Klon-Set steht.
+    row.classList.add('is-marquee');
+  });
+}
+
+/**
  * Ablauf-Sektion (Ticket-Leiste): eine Timeline (once:true). Startzustände NUR
  * per gsap.set (ohne JS / reduced-motion alles im Endzustand). H2 zeilenweiser
  * Mask-Reveal + Marker-Wipe → Subline → Tickets gestaffelt. Nur transform/opacity.
@@ -2214,6 +2243,7 @@ runIdle(() => {
     safeInit('Portale', () => initPortale());
     safeInit('Ablauf', () => initAblauf());
     safeInit('Bewertungen', () => initBewertungen());
+    safeInit('ReviewMarquee', () => initReviewMarquee());
     safeInit('Preise', () => initPreise());
     safeInit('Faq', () => initFaq());
     safeInit('Kontakt', () => initKontakt());
