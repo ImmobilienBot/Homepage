@@ -558,6 +558,9 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - **Keine Fake-Live-Zähler** und keine erfundenen Daten (z. B. „gerade X Angebote online").
   Eine gezeigte Push-Benachrichtigung ist ok (echte Funktion), erfundene Marktzahlen nicht.
 - **Keine Portal-Logos** (rechtlich) — nur Text-Namen.
+- **Abgesenkter Text auf MainBlack (`#3b3b3a`)** nutzt den Weiß-Token (`#f6f6f6`) mit **mindestens
+  `0.6` Deckkraft** — darunter reißt der WCAG-Kontrast von 4,5:1 (Referenzfall `.p3-row-label`:
+  `0.6` = 4,88:1, `0.55` = 4,38:1 ✗).
 - **Mobile-first**; mobiler Lighthouse-Score ~100 halten (Animationen mit Performance-Budget).
 - **`prefers-reduced-motion`** respektieren (Animationen reduzieren/abschalten).
 - **Secrets:** GTM-ID darf ins Repo (öffentlich). Echte Keys/Tokens **nie** ins Repo — in
