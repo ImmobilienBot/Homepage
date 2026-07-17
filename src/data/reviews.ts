@@ -15,7 +15,9 @@
  * Rezensionslink (`googleMapsReviewsUrl`) und die Store-Links (`storeLinks`).
  */
 import { ratings } from './site';
-import testimonials from './testimonials.json';
+// testimonials.json ist als { testimonials: [...] } (Objekt-Root) abgelegt, damit die
+// Sveltia-„files"-Collection die Liste editieren kann (bare-Array-Root wird nicht unterstützt).
+import testimonialsData from './testimonials.json';
 
 export type ReviewPlatform = 'appstore' | 'googleplay' | 'googlemaps';
 
@@ -48,7 +50,7 @@ export const reviewPlatformLabel: Record<ReviewPlatform, string> = {
 };
 
 /** CMS-Datensatz (name) → bisherige Review-Form (author) — Bewertungen bleibt unverändert. */
-export const reviews: Review[] = (testimonials as Testimonial[]).map((t) => ({
+export const reviews: Review[] = (testimonialsData.testimonials as Testimonial[]).map((t) => ({
   id: t.id,
   author: t.name,
   platform: t.platform,

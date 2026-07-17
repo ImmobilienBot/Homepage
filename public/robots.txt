@@ -5,6 +5,8 @@
 
 User-agent: *
 Allow: /
+# Ausnahme: das Text-CMS (Sveltia) unter /admin ist kein Inhalt und bleibt unindexiert.
+Disallow: /admin/
 
 # Sitemap wird von @astrojs/sitemap generiert.
 Sitemap: https://immobilien-bot.de/sitemap-index.xml

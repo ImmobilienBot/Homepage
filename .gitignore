@@ -36,3 +36,6 @@ Thumbs.db
 # i18n-migration text-diff (Wegwerf)
 .text-before.txt
 .text-after.txt
+
+# Sveltia CMS bundle (per postinstall/prebuild aus node_modules synchronisiert, ~2 MB)
+public/admin/sveltia-cms.js

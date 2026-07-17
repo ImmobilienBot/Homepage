@@ -1,0 +1,1520 @@
+# AUTOGENERIERT von scripts/gen-cms-config.mjs — NICHT von Hand editieren.
+# Bei neuen i18n-Keys: `node scripts/gen-cms-config.mjs` erneut ausführen und committen.
+# Die „Website-Texte"-Felder decken 100 % von src/i18n/strings.de.json ab (SEO-Audit G5 erzwingt das).
+
+backend:
+  name: github
+  repo: ImmobilienBot/Homepage
+  branch: staging
+  base_url: https://sveltia-cms-auth.socialmedia-9bf.workers.dev
+
+# Bild-Uploads sind NICHT Teil von v1 (Bilder laufen über Artem). media_folder ist nur formal gesetzt.
+media_folder: src/assets/images/ratgeber
+public_folder: /src/assets/images/ratgeber
+
+# DE/EN nebeneinander: pro Sprache eine Datei (strings.de.json / strings.en.json).
+i18n:
+  structure: multiple_files
+  locales: [de, en]
+  default_locale: de
+
+collections:
+  # ── 1) Alle sichtbaren Website-Texte (DE/EN nebeneinander) ─────────────────────────
+  - name: website-texte
+    label: 'Website-Texte'
+    label_singular: 'Website-Texte'
+    description: 'Alle sichtbaren Texte der Startseite und der Über-uns-Seite (Deutsch & Englisch nebeneinander).'
+    i18n: true
+    files:
+      - name: strings
+        label: 'Alle Texte'
+        i18n: true
+        file: 'src/i18n/strings.{{locale}}.json'
+        format: json
+        fields:
+          - name: meta
+            label: 'Meta / SEO – Startseite'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: title
+                label: 'Titel'
+                widget: string
+                i18n: true
+              - name: description
+                label: 'Beschreibung (SEO)'
+                widget: text
+                i18n: true
+          - name: nav
+            label: 'Navigation & Menü'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: bot
+                label: 'Bot'
+                widget: string
+                i18n: true
+              - name: features
+                label: 'Features'
+                widget: string
+                i18n: true
+              - name: portale
+                label: 'Portale'
+                widget: string
+                i18n: true
+              - name: pricing
+                label: 'Pricing'
+                widget: string
+                i18n: true
+              - name: faq
+                label: 'Faq'
+                widget: string
+                i18n: true
+              - name: about
+                label: 'About'
+                widget: string
+                i18n: true
+              - name: aboutManifest
+                label: 'About Manifest'
+                widget: string
+                i18n: true
+              - name: aboutTeam
+                label: 'About Team'
+                widget: string
+                i18n: true
+              - name: contact
+                label: 'Kontakt'
+                widget: string
+                i18n: true
+              - name: cta
+                label: 'Button-Text'
+                widget: string
+                i18n: true
+              - name: ctaFree
+                label: 'Button-Text (gratis)'
+                widget: string
+                i18n: true
+              - name: ctaShort
+                label: 'Button-Text (kurz)'
+                widget: string
+                i18n: true
+              - name: skipToContent
+                label: 'Skip-Link'
+                widget: string
+                i18n: true
+              - name: langToDe
+                label: 'Sprache → Deutsch'
+                widget: string
+                i18n: true
+              - name: langToEn
+                label: 'Sprache → Englisch'
+                widget: string
+                i18n: true
+              - name: menuOpen
+                label: 'Menü öffnen'
+                widget: string
+                i18n: true
+              - name: menuClose
+                label: 'Menü schließen'
+                widget: string
+                i18n: true
+          - name: smartBar
+            label: 'Mobile Sticky-Leiste'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: aria
+                label: 'Vorlese-Text (aria-label)'
+                widget: string
+                i18n: true
+              - name: cta
+                label: 'Button-Text'
+                widget: string
+                i18n: true
+              - name: close
+                label: 'Schließen'
+                widget: string
+                i18n: true
+          - name: hero
+            label: 'Hero – oberster Bereich'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: headlineLines
+                label: 'Überschrift (Zeilen)'
+                widget: list
+                i18n: true
+                field:
+                  name: wert
+                  label: 'Wert'
+                  widget: string
+              - name: markKeyword
+                label: 'Gelb markiertes Wort'
+                widget: string
+                i18n: true
+              - name: subline
+                label: 'Unterzeile'
+                widget: text
+                i18n: true
+              - name: trust
+                label: 'Trust-Zeile'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: rating
+                    label: 'Bewertung'
+                    widget: string
+                    i18n: true
+                  - name: ratingLabel
+                    label: 'Bewertungs-Label'
+                    widget: string
+                    i18n: true
+                  - name: downloads
+                    label: 'Downloads-Zeile'
+                    widget: string
+                    i18n: true
+              - name: mockupAlt
+                label: 'Alt-Text (Bildbeschreibung)'
+                widget: text
+                i18n: true
+              - name: mapAlt
+                label: 'Alt-Text (Bildbeschreibung)'
+                widget: text
+                i18n: true
+              - name: configAlt
+                label: 'Alt-Text (Bildbeschreibung)'
+                widget: text
+                i18n: true
+              - name: notification
+                label: 'Benachrichtigungs-Karte'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: app
+                    label: 'App-Name'
+                    widget: string
+                    i18n: true
+                  - name: time
+                    label: 'Uhrzeit'
+                    widget: string
+                    i18n: true
+                  - name: lead
+                    label: 'Einleitung'
+                    widget: string
+                    i18n: true
+                  - name: items
+                    label: 'Einträge'
+                    widget: list
+                    i18n: true
+                    field:
+                      name: wert
+                      label: 'Wert'
+                      widget: string
+          - name: sections
+            label: 'Seitenabschnitte'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: problem
+                label: 'Abschnitt: Problem'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: stat
+                    label: 'Statistik-Zeile'
+                    widget: text
+                    i18n: true
+                  - name: board
+                    label: 'Zahlen-Tafel'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: applicants
+                        label: 'Bewerber'
+                        widget: string
+                        i18n: true
+                      - name: minutes
+                        label: 'Minuten'
+                        widget: string
+                        i18n: true
+                      - name: flats
+                        label: 'Wohnungs-Beispiele'
+                        widget: string
+                        i18n: true
+                  - name: headline
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: headlineMark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: benefits
+                    label: 'Vorteile'
+                    widget: list
+                    i18n: true
+                    fields:
+                      - name: label
+                        label: 'Beschriftung'
+                        widget: string
+                        i18n: true
+                  - name: trustCancel
+                    label: 'Kündigungs-Hinweis'
+                    widget: string
+                    i18n: true
+                  - name: moreLink
+                    label: 'Mehr-Link'
+                    widget: string
+                    i18n: true
+              - name: features
+                label: 'Abschnitt: Features'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: eyebrow
+                    label: 'Kleine Überzeile'
+                    widget: string
+                    i18n: true
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: h2Mark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: subline
+                    label: 'Unterzeile'
+                    widget: string
+                    i18n: true
+                  - name: notif
+                    label: 'Benachrichtigungs-Karte'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: app
+                        label: 'App-Name'
+                        widget: string
+                        i18n: true
+                      - name: time
+                        label: 'Uhrzeit'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: string
+                        i18n: true
+                  - name: steps
+                    label: 'Schritte'
+                    widget: list
+                    i18n: true
+                    fields:
+                      - name: num
+                        label: 'Nummer'
+                        widget: string
+                        i18n: true
+                      - name: h3
+                        label: 'Zwischenüberschrift'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: text
+                        i18n: true
+                      - name: checks
+                        label: 'Häkchen-Punkte'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                      - name: alt
+                        label: 'Alt-Text (Bildbeschreibung)'
+                        widget: text
+                        i18n: true
+                  - name: bentoTitle
+                    label: 'Bento-Titel'
+                    widget: string
+                    i18n: true
+                  - name: bentoMark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: filter
+                    label: 'Filter'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: h4
+                        label: 'Zwischenüberschrift'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: text
+                        i18n: true
+                      - name: chips
+                        label: 'Filter-Chips'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                  - name: darkmode
+                    label: 'Dark-Mode'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: h4
+                        label: 'Zwischenüberschrift'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: string
+                        i18n: true
+                      - name: ariaChain
+                        label: 'Vorlese-Text (aria-label)'
+                        widget: string
+                        i18n: true
+                  - name: telegram
+                    label: 'Telegram'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: h4
+                        label: 'Zwischenüberschrift'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: string
+                        i18n: true
+                  - name: listviews
+                    label: 'Listenansichten'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: h4Label
+                        label: 'Zwischenüberschrift'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: string
+                        i18n: true
+                  - name: language
+                    label: 'Sprache'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: h4
+                        label: 'Zwischenüberschrift'
+                        widget: string
+                        i18n: true
+                      - name: body
+                        label: 'Text'
+                        widget: string
+                        i18n: true
+              - name: portals
+                label: 'Abschnitt: Portale'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: count
+                    label: 'Anzahl-Text'
+                    widget: string
+                    i18n: true
+                  - name: headline
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: headlineMark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: subline
+                    label: 'Unterzeile'
+                    widget: text
+                    i18n: true
+                  - name: groupNational
+                    label: 'Gruppe bundesweit'
+                    widget: string
+                    i18n: true
+                  - name: groupRegional
+                    label: 'Gruppe regional'
+                    widget: string
+                    i18n: true
+                  - name: accordionTitle
+                    label: 'Akkordeon-Titel'
+                    widget: string
+                    i18n: true
+                  - name: accordionSub
+                    label: 'Akkordeon-Unterzeile'
+                    widget: string
+                    i18n: true
+                  - name: mobilePhoneAlt
+                    label: 'Alt-Text (Bildbeschreibung)'
+                    widget: text
+                    i18n: true
+                  - name: pushTitle
+                    label: 'Push-Titel'
+                    widget: string
+                    i18n: true
+                  - name: pushTemplate
+                    label: 'Push-Vorlage'
+                    widget: string
+                    i18n: true
+                  - name: timeNow
+                    label: 'Uhrzeit jetzt'
+                    widget: string
+                    i18n: true
+                  - name: time3
+                    label: 'Uhrzeit -3'
+                    widget: string
+                    i18n: true
+                  - name: time6
+                    label: 'Uhrzeit -6'
+                    widget: string
+                    i18n: true
+                  - name: flats
+                    label: 'Wohnungs-Beispiele'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: berlin
+                        label: 'Berlin'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                      - name: koeln
+                        label: 'Köln'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                      - name: frankfurt
+                        label: 'Frankfurt'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                      - name: hessen
+                        label: 'Hessen'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                      - name: national
+                        label: 'Bundesweit'
+                        widget: list
+                        i18n: true
+                        field:
+                          name: wert
+                          label: 'Wert'
+                          widget: string
+                  - name: fallbackPushes
+                    label: 'Fallback-Pushes'
+                    widget: list
+                    i18n: true
+                    field:
+                      name: wert
+                      label: 'Wert'
+                      widget: string
+              - name: ablauf
+                label: 'Abschnitt: Ablauf'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: h2Mark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: subline
+                    label: 'Unterzeile'
+                    widget: text
+                    i18n: true
+                  - name: tickets
+                    label: 'Tickets'
+                    widget: list
+                    i18n: true
+                    fields:
+                      - name: label
+                        label: 'Beschriftung'
+                        widget: string
+                        i18n: true
+                      - name: pill
+                        label: 'Kleines Label (Pill)'
+                        widget: string
+                        i18n: true
+                      - name: title
+                        label: 'Titel'
+                        widget: string
+                        i18n: true
+                      - name: desc
+                        label: 'Beschreibung'
+                        widget: string
+                        i18n: true
+              - name: pricing
+                label: 'Abschnitt: Preise'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: eyebrow
+                    label: 'Kleine Überzeile'
+                    widget: string
+                    i18n: true
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: line1
+                        label: 'Line1'
+                        widget: string
+                        i18n: true
+                      - name: line2
+                        label: 'Line2'
+                        widget: string
+                        i18n: true
+                      - name: line3
+                        label: 'Line3'
+                        widget: string
+                        i18n: true
+                      - name: mark
+                        label: 'Gelb markiertes Wort'
+                        widget: string
+                        i18n: true
+                  - name: copy
+                    label: 'Fließtext'
+                    widget: text
+                    i18n: true
+                  - name: checks
+                    label: 'Häkchen-Punkte'
+                    widget: list
+                    i18n: true
+                    field:
+                      name: wert
+                      label: 'Wert'
+                      widget: string
+                  - name: stat
+                    label: 'Statistik-Zeile'
+                    widget: string
+                    i18n: true
+                  - name: qrCaption
+                    label: 'QR-Beschriftung'
+                    widget: string
+                    i18n: true
+                  - name: toggle
+                    label: 'Umschalter'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: week
+                        label: 'Woche'
+                        widget: string
+                        i18n: true
+                      - name: month
+                        label: 'Monat'
+                        widget: string
+                        i18n: true
+                  - name: per
+                    label: 'Zeitraum-Label'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: week
+                        label: 'Woche'
+                        widget: string
+                        i18n: true
+                      - name: month
+                        label: 'Monat'
+                        widget: string
+                        i18n: true
+                  - name: day
+                    label: 'Tagespreis-Text'
+                    widget: string
+                    i18n: true
+                  - name: desc
+                    label: 'Beschreibung'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: week
+                        label: 'Woche'
+                        widget: string
+                        i18n: true
+                      - name: month
+                        label: 'Monat'
+                        widget: string
+                        i18n: true
+                  - name: badge
+                    label: 'Spar-Badge'
+                    widget: string
+                    i18n: true
+                  - name: cta
+                    label: 'Button-Text'
+                    widget: string
+                    i18n: true
+                  - name: micro
+                    label: 'Kleingedrucktes'
+                    widget: string
+                    i18n: true
+                  - name: toggleAria
+                    label: 'Umschalter (Vorlese-Text)'
+                    widget: string
+                    i18n: true
+              - name: bewertungen
+                label: 'Abschnitt: Bewertungen'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: headline
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: headlineMark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: subline
+                    label: 'Unterzeile'
+                    widget: string
+                    i18n: true
+                  - name: tileLabel
+                    label: 'Kachel-Label'
+                    widget: string
+                    i18n: true
+                  - name: starsSr
+                    label: 'Sterne (Vorlese-Text)'
+                    widget: string
+                    i18n: true
+                  - name: transNote
+                    label: 'Übersetzungs-Hinweis'
+                    widget: string
+                    i18n: true
+                  - name: footnote
+                    label: 'Fußnote'
+                    widget: string
+                    i18n: true
+              - name: faq
+                label: 'Abschnitt: FAQ'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: headline
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: headlineMarker
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: sub
+                    label: 'Unterzeile'
+                    widget: text
+                    i18n: true
+                  - name: contactCard
+                    label: 'Kontakt-Karte'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: title
+                        label: 'Titel'
+                        widget: string
+                        i18n: true
+                      - name: text
+                        label: 'Text'
+                        widget: string
+                        i18n: true
+                      - name: cta
+                        label: 'Button-Text'
+                        widget: string
+                        i18n: true
+                  - name: categories
+                    label: 'Kategorien'
+                    widget: list
+                    i18n: true
+                    fields:
+                      - name: id
+                        label: 'ID'
+                        widget: string
+                        i18n: true
+                      - name: label
+                        label: 'Beschriftung'
+                        widget: string
+                        i18n: true
+                      - name: items
+                        label: 'Einträge'
+                        widget: list
+                        i18n: true
+                        fields:
+                          - name: id
+                            label: 'ID'
+                            widget: string
+                            i18n: true
+                          - name: q
+                            label: 'Frage'
+                            widget: string
+                            i18n: true
+                          - name: a
+                            label: 'Antwort'
+                            widget: text
+                            i18n: true
+              - name: contact
+                label: 'Abschnitt: Kontakt'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: kicker
+                    label: 'Kleine Überzeile'
+                    widget: string
+                    i18n: true
+                  - name: headline
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: headlineMark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: copy
+                    label: 'Fließtext'
+                    widget: text
+                    i18n: true
+                  - name: channels
+                    label: 'Kontaktkanäle'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: email
+                        label: 'E-Mail'
+                        widget: string
+                        i18n: true
+                      - name: telegram
+                        label: 'Telegram'
+                        widget: string
+                        i18n: true
+                      - name: telegramSub
+                        label: 'Telegram-Unterzeile'
+                        widget: string
+                        i18n: true
+                      - name: instagram
+                        label: 'Instagram'
+                        widget: string
+                        i18n: true
+                      - name: instagramSub
+                        label: 'Instagram-Unterzeile'
+                        widget: string
+                        i18n: true
+                  - name: card
+                    label: 'Karte'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: app
+                        label: 'App-Name'
+                        widget: string
+                        i18n: true
+                      - name: sub
+                        label: 'Unterzeile'
+                        widget: string
+                        i18n: true
+                      - name: iconAlt
+                        label: 'Alt-Text (Bildbeschreibung)'
+                        widget: string
+                        i18n: true
+                  - name: form
+                    label: 'Formular'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: topicLegend
+                        label: 'Themen-Überschrift'
+                        widget: string
+                        i18n: true
+                      - name: topics
+                        label: 'Themen (Auswahl)'
+                        widget: object
+                        i18n: true
+                        collapsed: true
+                        fields:
+                          - name: app
+                            label: 'App-Name'
+                            widget: string
+                            i18n: true
+                          - name: feedback
+                            label: 'Feedback'
+                            widget: string
+                            i18n: true
+                          - name: problem
+                            label: 'Problem'
+                            widget: string
+                            i18n: true
+                          - name: presse
+                            label: 'Presse'
+                            widget: string
+                            i18n: true
+                          - name: sonstiges
+                            label: 'Sonstiges'
+                            widget: string
+                            i18n: true
+                      - name: name
+                        label: 'Name'
+                        widget: string
+                        i18n: true
+                      - name: namePlaceholder
+                        label: 'Platzhalter Name'
+                        widget: string
+                        i18n: true
+                      - name: email
+                        label: 'E-Mail'
+                        widget: string
+                        i18n: true
+                      - name: emailPlaceholder
+                        label: 'Platzhalter E-Mail'
+                        widget: string
+                        i18n: true
+                      - name: message
+                        label: 'Nachricht'
+                        widget: string
+                        i18n: true
+                      - name: messagePlaceholder
+                        label: 'Platzhalter Nachricht'
+                        widget: string
+                        i18n: true
+                      - name: submit
+                        label: 'Absenden-Button'
+                        widget: string
+                        i18n: true
+                      - name: sending
+                        label: 'Sende-Status'
+                        widget: string
+                        i18n: true
+                      - name: privacy
+                        label: 'Datenschutz-Hinweis'
+                        widget: text
+                        i18n: true
+                      - name: privacyLink
+                        label: 'Datenschutz-Linktext'
+                        widget: string
+                        i18n: true
+                  - name: success
+                    label: 'Erfolgsmeldung'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: title
+                        label: 'Titel'
+                        widget: string
+                        i18n: true
+                      - name: copy
+                        label: 'Fließtext'
+                        widget: string
+                        i18n: true
+                      - name: again
+                        label: 'Nochmal-Button'
+                        widget: string
+                        i18n: true
+                  - name: error
+                    label: 'Fehlermeldung'
+                    widget: string
+                    i18n: true
+                  - name: thanks
+                    label: 'Danke-Seite'
+                    widget: object
+                    i18n: true
+                    collapsed: true
+                    fields:
+                      - name: metaTitle
+                        label: 'Seitentitel (Browser-Tab / SEO)'
+                        widget: string
+                        i18n: true
+                      - name: metaDescription
+                        label: 'Beschreibung (SEO)'
+                        widget: text
+                        i18n: true
+                      - name: back
+                        label: 'Zurück-Link'
+                        widget: string
+                        i18n: true
+          - name: about
+            label: 'Seite „Über uns"'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: meta
+                label: 'Meta'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+                  - name: description
+                    label: 'Beschreibung (SEO)'
+                    widget: text
+                    i18n: true
+              - name: kicker
+                label: 'Kleine Überzeile'
+                widget: string
+                i18n: true
+              - name: headline
+                label: 'Überschrift'
+                widget: string
+                i18n: true
+              - name: headlineMark
+                label: 'Gelb markiertes Wort'
+                widget: string
+                i18n: true
+              - name: intro
+                label: 'Einleitung'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: lead
+                    label: 'Einleitung'
+                    widget: string
+                    i18n: true
+                  - name: p1
+                    label: 'Absatz 1'
+                    widget: text
+                    i18n: true
+                  - name: p2
+                    label: 'Absatz 2'
+                    widget: text
+                    i18n: true
+              - name: unfair
+                label: 'Unfair-Block'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: p1
+                    label: 'Absatz 1'
+                    widget: text
+                    i18n: true
+              - name: reasons
+                label: 'Gründe'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: tempoLabel
+                    label: 'Tempo-Label'
+                    widget: string
+                    i18n: true
+                  - name: tempoBody
+                    label: 'Tempo-Text'
+                    widget: text
+                    i18n: true
+                  - name: reachLabel
+                    label: 'Reichweite-Label'
+                    widget: string
+                    i18n: true
+                  - name: reachBody
+                    label: 'Reichweite-Text'
+                    widget: text
+                    i18n: true
+                  - name: close
+                    label: 'Schließen'
+                    widget: text
+                    i18n: true
+              - name: stats
+                label: 'Zahlen'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: heading
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: tiles
+                    label: 'Kacheln'
+                    widget: list
+                    i18n: true
+                    fields:
+                      - name: value
+                        label: 'Wert'
+                        widget: string
+                        i18n: true
+                      - name: label
+                        label: 'Beschriftung'
+                        widget: string
+                        i18n: true
+                      - name: note
+                        label: 'Fußnoten-Nummer'
+                        widget: number
+                        value_type: int
+                        i18n: true
+              - name: quote
+                label: 'Zitat-Zeilen'
+                widget: list
+                i18n: true
+                fields:
+                  - name: t
+                    label: 'Zeile'
+                    widget: text
+                    i18n: true
+                  - name: em
+                    label: 'Gelb hervorheben (an/aus)'
+                    widget: boolean
+                    required: false
+                    i18n: true
+              - name: origin
+                label: 'Entstehung'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: p1
+                    label: 'Absatz 1'
+                    widget: text
+                    i18n: true
+                  - name: p2
+                    label: 'Absatz 2'
+                    widget: text
+                    i18n: true
+                  - name: p3pre
+                    label: 'Absatz 3 (vor fett)'
+                    widget: string
+                    i18n: true
+                  - name: p3bold
+                    label: 'Absatz 3 (fett)'
+                    widget: string
+                    i18n: true
+                  - name: p3post
+                    label: 'Absatz 3 (nach fett)'
+                    widget: text
+                    i18n: true
+                  - name: p4
+                    label: 'Absatz 4'
+                    widget: string
+                    i18n: true
+                  - name: p5
+                    label: 'Absatz 5'
+                    widget: text
+                    i18n: true
+              - name: believe
+                label: 'Überzeugung'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: p1
+                    label: 'Absatz 1'
+                    widget: text
+                    i18n: true
+                  - name: p1Mark
+                    label: 'Gelb markiertes Wort'
+                    widget: string
+                    i18n: true
+                  - name: p2
+                    label: 'Absatz 2'
+                    widget: text
+                    i18n: true
+                  - name: p3
+                    label: 'Absatz 3'
+                    widget: text
+                    i18n: true
+              - name: team
+                label: 'Team'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: h2
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: members
+                    label: 'Team-Mitglieder'
+                    widget: list
+                    i18n: true
+                    fields:
+                      - name: name
+                        label: 'Name'
+                        widget: string
+                        i18n: true
+                      - name: role
+                        label: 'Rolle'
+                        widget: string
+                        i18n: true
+              - name: ratingsLine
+                label: 'Bewertungs-Zeile'
+                widget: string
+                i18n: true
+              - name: footnotesTitle
+                label: 'Titel Fußnoten'
+                widget: string
+                i18n: true
+              - name: footnotes
+                label: 'Fußnoten'
+                widget: list
+                i18n: true
+                field:
+                  name: wert
+                  label: 'Wert'
+                  widget: text
+          - name: cta
+            label: 'Buttons – App laden'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: appStore
+                label: 'App Store'
+                widget: string
+                i18n: true
+              - name: playStore
+                label: 'Google Play'
+                widget: string
+                i18n: true
+              - name: tryFree
+                label: 'Gratis testen'
+                widget: string
+                i18n: true
+          - name: footer
+            label: 'Footer'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: imprint
+                label: 'Impressum'
+                widget: string
+                i18n: true
+              - name: privacy
+                label: 'Datenschutz-Hinweis'
+                widget: string
+                i18n: true
+              - name: terms
+                label: 'AGB'
+                widget: string
+                i18n: true
+              - name: contact
+                label: 'Kontakt'
+                widget: string
+                i18n: true
+              - name: blog
+                label: 'Blog'
+                widget: string
+                i18n: true
+              - name: colLegal
+                label: 'Spalte Rechtliches'
+                widget: string
+                i18n: true
+              - name: colMore
+                label: 'Spalte Mehr'
+                widget: string
+                i18n: true
+              - name: colLang
+                label: 'Spalte Sprache'
+                widget: string
+                i18n: true
+              - name: colApp
+                label: 'Spalte App'
+                widget: string
+                i18n: true
+              - name: langSwitch
+                label: 'Sprachumschalter'
+                widget: string
+                i18n: true
+              - name: copyright
+                label: 'Copyright'
+                widget: string
+                i18n: true
+              - name: signature
+                label: 'Signatur'
+                widget: string
+                i18n: true
+              - name: sources
+                label: 'Quellen'
+                widget: list
+                i18n: true
+                field:
+                  name: wert
+                  label: 'Wert'
+                  widget: string
+          - name: legal
+            label: 'Rechtsseiten – Titel'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: imprint
+                label: 'Impressum'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+              - name: privacy
+                label: 'Datenschutz-Hinweis'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+              - name: terms
+                label: 'AGB'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    i18n: true
+              - name: placeholder
+                label: 'Platzhalter-Text'
+                widget: string
+                i18n: true
+          - name: blog
+            label: 'Blog – Platzhalter'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: title
+                label: 'Titel'
+                widget: string
+                i18n: true
+              - name: metaTitle
+                label: 'Seitentitel (Browser-Tab / SEO)'
+                widget: string
+                i18n: true
+              - name: soon
+                label: 'Bald-Text'
+                widget: text
+                i18n: true
+              - name: back
+                label: 'Zurück-Link'
+                widget: string
+                i18n: true
+          - name: ratgeber
+            label: 'Ratgeber – UI-Texte'
+            widget: object
+            i18n: true
+            collapsed: true
+            fields:
+              - name: publishedLabel
+                label: 'Veröffentlicht-Label'
+                widget: string
+                i18n: true
+              - name: cta
+                label: 'Button-Text'
+                widget: object
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: headline
+                    label: 'Überschrift'
+                    widget: string
+                    i18n: true
+                  - name: body
+                    label: 'Text'
+                    widget: text
+                    i18n: true
+              - name: moreTitle
+                label: 'Mehr-Titel'
+                widget: string
+                i18n: true
+
+  # ── 2) Bewertungen (Testimonials) ──────────────────────────────────────────────────
+  - name: testimonials
+    label: 'Bewertungen'
+    description: 'Die echten Kundenstimmen in der Bewertungen-Sektion (Text zweisprachig am selben Eintrag).'
+    files:
+      - name: liste
+        label: 'Alle Bewertungen'
+        file: 'src/data/testimonials.json'
+        format: json
+        fields:
+          - name: testimonials
+            label: 'Bewertungen'
+            label_singular: 'Bewertung'
+            widget: list
+            summary: '{{fields.name}} · {{fields.platform}} · {{fields.rating}}★'
+            fields:
+              - name: id
+                label: 'ID (nicht ändern)'
+                widget: string
+                readonly: true
+                hint: 'Stabile, technische ID – bitte nicht verändern.'
+              - name: name
+                label: 'Name'
+                widget: string
+              - name: city
+                label: 'Ort (optional)'
+                widget: string
+                required: false
+              - name: platform
+                label: 'Plattform'
+                widget: select
+                options:
+                  - { label: 'App Store', value: appstore }
+                  - { label: 'Google Play', value: googleplay }
+                  - { label: 'Google Maps', value: googlemaps }
+              - name: rating
+                label: 'Sterne (1–5)'
+                widget: number
+                value_type: int
+                min: 1
+                max: 5
+              - name: text
+                label: 'Zitat'
+                widget: object
+                fields:
+                  - name: de
+                    label: 'Deutsch'
+                    widget: text
+                  - name: en
+                    label: 'Englisch'
+                    widget: text
+
+  # ── 3) Ratgeber-Artikel (DE-only, Markdown) ────────────────────────────────────────
+  - name: ratgeber
+    label: 'Ratgeber-Artikel'
+    label_singular: 'Ratgeber-Artikel'
+    description: 'Die Ratgeber-/Blog-Artikel. Text bearbeiten ist ok – URL (path) und Datum bitte nicht ändern.'
+    folder: src/content/ratgeber
+    extension: md
+    format: frontmatter
+    create: true
+    delete: false
+    slug: '{{fields.slug}}'
+    fields:
+      - name: title
+        label: 'Titel (Überschrift H1)'
+        widget: string
+      - name: metaTitle
+        label: 'Seitentitel (Browser-Tab / SEO)'
+        widget: string
+      - name: description
+        label: 'Beschreibung (SEO)'
+        widget: text
+      - name: path
+        label: 'URL-Pfad (nicht ändern!)'
+        widget: string
+        readonly: true
+        hint: 'Kanonische URL des Artikels – Änderung bricht Google-Rankings. Nur Artem ändert das.'
+      - name: pubDate
+        label: 'Veröffentlicht am (Anzeige, nicht ändern)'
+        widget: string
+        readonly: true
+      - name: datetime
+        label: 'Datum (technisch)'
+        widget: string
+        readonly: true
+      - name: heroImage
+        label: 'Titelbild (über Artem)'
+        widget: string
+        readonly: true
+        required: false
+        hint: 'Bilder laufen in v1 über Artem – hier nicht ändern.'
+      - name: heroAlt
+        label: 'Titelbild-Beschreibung (Alt-Text)'
+        widget: string
+        required: false
+      - name: body
+        label: 'Artikel-Inhalt'
+        widget: markdown

@@ -510,11 +510,24 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 
 ## Konventionen & Regeln
 
-- **Alle Texte** in i18n-Dateien (`src/i18n/de.ts` + `en.ts`), **nie** hart in Komponenten —
-  hält DE/EN synchron. **Bewusste Ausnahme:** die Review-Texte liegen beidsprachig in
-  `src/data/reviews.ts` (nicht in den i18n-Dateien), damit Zitat, Autor, Plattform und Sterne
-  eines Eintrags eine untrennbare Einheit bleiben und nie auseinanderlaufen. Der Google-Maps-
-  Rezensionslink ist ein Fakt und steht in `site.ts` (`googleMapsReviewsUrl`).
+- **Alle Texte** in i18n-Dateien, **nie** hart in Komponenten — hält DE/EN synchron. Die Strings
+  liegen als **JSON** in `src/i18n/strings.de.json` + `strings.en.json` (Sveltia-CMS-editierbar);
+  `src/i18n/de.ts` + `en.ts` sind **dünne Wrapper** mit unveränderter API (kein Komponenten-Import
+  ändert sich). `en.ts` prüft die Struktur zur **Buildzeit** (rekursiver Guard) → fehlender oder
+  überzähliger EN-Key **bricht den Build**; `audit:seo` (**G4**) erzwingt zusätzlich DE↔EN-Parität.
+  **Bewusste Ausnahme:** die Review-Texte liegen beidsprachig in `src/data/testimonials.json`
+  (`{ testimonials: [...] }`, via `reviews.ts`-Wrapper), damit Zitat, Autor, Plattform und Sterne
+  eines Eintrags eine untrennbare Einheit bleiben. Der Google-Maps-Rezensionslink ist ein Fakt und
+  steht in `site.ts` (`googleMapsReviewsUrl`).
+- **Text-CMS (Sveltia) unter `/admin`** — pflegt `strings.{de,en}.json`, `testimonials.json` und die
+  Ratgeber-Artikel; ändert am **öffentlichen** Output nichts (kein Skript/Request/Markup auf `/`,
+  `/en/`, Ratgeber). Das Bundle kommt aus der **exakt gepinnten** devDependency `@sveltia/cms`
+  (**kein CDN, kein „latest"**) via `scripts/sync-cms.mjs` (postinstall + prebuild → gitignored
+  `public/admin/sveltia-cms.js`); ein Update ist ein bewusster Versions-Bump + Smoke-Test.
+  `public/admin/config.yml` wird von **`scripts/gen-cms-config.mjs`** aus `strings.de.json`
+  generiert und deckt **100 %** der Keys ab. **Neuer i18n-Key ⇒ `node scripts/gen-cms-config.mjs`
+  laufen lassen und committen** — sonst schlägt `audit:seo` (**G5**) fehl und der Key ginge beim
+  CMS-Speichern verloren.
 - **Alle Produkt-Fakten** (Store-Links, Preise, Bewertungen, Portale) in `src/data/site.ts` —
   eine Quelle der Wahrheit.
 - **Bilder** immer über `astro:assets` / `<Image>` (WebP/AVIF, responsive).
