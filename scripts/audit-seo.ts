@@ -519,6 +519,31 @@ function auditGlobal() {
       add('G5', 'error', G, `config.yml konnte nicht geparst werden: ${(e as Error).message}`);
     }
   }
+
+  // --- G6: kein i18n-String-Wert mit Randleerzeichen (Sveltia trimmt sie beim Speichern) ---
+  // Wortabstände gehören ins Markup, nie an die String-Ränder. Verhindert dauerhaft, dass ein
+  // CMS-Save (oder Handedit) Inline-Verkettungen zerlegt — egal ob DE, EN, CMS oder CC.
+  for (const [loc, file] of [['DE', i18nDe], ['EN', i18nEn]] as const) {
+    if (!existsSync(file)) continue;
+    for (const { path, value } of i18nStringLeaves(JSON.parse(readFileSync(file, 'utf8')))) {
+      if (value !== value.trim())
+        add('G6', 'error', G, `${loc}: i18n-Wert „${path}" hat führendes/nachgestelltes Leerzeichen (${JSON.stringify(value.slice(0, 40))}) — Wortabstand gehört ins Markup, nicht an den String-Rand.`);
+    }
+  }
+}
+
+/** Alle String-Blätter eines i18n-Objekts mit Pfad (rekursiv, inkl. Arrays). */
+function i18nStringLeaves(o: unknown, prefix = ''): { path: string; value: string }[] {
+  const out: { path: string; value: string }[] = [];
+  if (Array.isArray(o)) {
+    o.forEach((v, i) => out.push(...i18nStringLeaves(v, `${prefix}[${i}]`)));
+  } else if (o && typeof o === 'object') {
+    for (const k of Object.keys(o as Record<string, unknown>))
+      out.push(...i18nStringLeaves((o as Record<string, unknown>)[k], prefix ? `${prefix}.${k}` : k));
+  } else if (typeof o === 'string') {
+    out.push({ path: prefix, value: o });
+  }
+  return out;
 }
 
 /** Kanonische Schema-Pfade eines i18n-Objekts (Arrays auf Struktur reduziert, Keys über Items vereint). */

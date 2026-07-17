@@ -491,7 +491,9 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
   Title/Description, Canonical, hreflang (de/en/x-default, reziprok), OG/Twitter, `img alt`,
   JSON-LD-Validität + Pflichttypen, **Fakten-Sync** (Preise/Portale/Rating aus `site.ts` müssen
   im HTML + JSON-LD stehen), interne Links/Anker, GEO-Klartext ohne JS, sowie global
-  `llms.txt` / `robots.txt` (AI-Crawler offen) / Sitemap.
+  `llms.txt` / `robots.txt` (AI-Crawler offen) / Sitemap. **Globale i18n-/CMS-Guards:** DE↔EN-
+  Key-Parität (**G4**), `config.yml`-Deckung aller i18n-Keys (**G5**), keine Randleerzeichen in
+  i18n-Strings (**G6**, gegen Sveltias Trim-Verhalten).
 - Die **GitHub Action** (`.github/workflows/audit.yml`) prüft dasselbe bei jedem Push — ein
   **Wächter**, der den Cloudflare-Deploy **nicht** blockiert (separate Pipeline), aber
   Performance-/SEO-/GEO-Regressionen sichtbar macht. `concurrency` bricht ältere Läufe ab.
@@ -533,6 +535,14 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
   konditional gerendert wird). Die Existenz-Garantie liefern der `en.ts`-Buildzeit-Guard + G4/G5,
   **nicht** Sveltias `required`-Validierung — sonst blockiert das CMS das Speichern legitim leerer
   Felder. Sveltia schreibt leere optionale Felder als `""` (nicht weggelassen), G4/G5 bleiben grün.
+- **Wortabstände gehören ins Markup, NIE an die String-Ränder.** Sveltia **trimmt** beim Speichern
+  führende/nachgestellte Leerzeichen jedes String-Feldes weg. i18n-Werte, die Teile eines Satzes
+  sind (Inline-Verkettung wie `about.quote`-Segmente, `about.origin.p3pre/p3post`,
+  `about.believe.p1`), dürfen ihren Trennabstand daher **nicht** als Randleerzeichen tragen — der
+  Abstand wird explizit im Template/Markup gesetzt (z. B. `{p3pre}{' '}<strong>…</strong>`, oder ein
+  eigenes Leerzeichen-Token bei der Segment-Verkettung). `audit:seo` (**G6**) erzwingt das: **kein**
+  String-Wert in `strings.{de,en}.json` (rekursiv) darf mit Whitespace beginnen oder enden — so kann
+  ein CMS-Save (oder Handedit) diese Fehlerklasse nie wieder unbemerkt einschleusen.
 - **Alle Produkt-Fakten** (Store-Links, Preise, Bewertungen, Portale) in `src/data/site.ts` —
   eine Quelle der Wahrheit.
 - **Bilder** immer über `astro:assets` / `<Image>` (WebP/AVIF, responsive).
