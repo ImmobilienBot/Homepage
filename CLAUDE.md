@@ -482,8 +482,17 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
     scheitert auf dem Windows-Setup am chrome-launcher-EPERM (Temp-Cleanup) — `audit:lh` liest das von
     Lighthouse trotzdem geschriebene JSON und bleibt so lauffähig.
   - **CI** ist für **Performance maßgeblich:** die GitHub Action fährt weiter `lhci autorun`
-    (Median aus 3 Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). Der CI-Workflow bleibt
-    bewusst unverändert.
+    (Median aus 3 Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). **Schwellen/Assertions
+    werden nie gesenkt, URLs nie aus der Prüfung genommen — Ursachen heilen, nie das Thermometer.**
+  - **Werkzeug-Pinning (gegen Prüfregel-/Rendering-Drift):** Die A11y-/SEO-Prüfregeln stecken in
+    **axe-core → Lighthouse → `@lhci/cli`**. Deshalb ist `@lhci/cli` **exakt gepinnt** (kein `^`, in
+    `package.json` **und** im Workflow via `npx @lhci/cli@<version> autorun`), und der Runner läuft
+    auf einem **gepinnten Image** (`ubuntu-24.04`, nicht `ubuntu-latest`) → das vorinstallierte
+    Chrome (Rendering) bleibt stabil. **Update = bewusster Bump** beider Stellen (`@lhci/cli` in
+    package.json + Workflow-`npx`-Version, ggf. Runner-Image) + lokaler `npm run audit`-Gegencheck;
+    danach die vier Scores neu bewerten. Nie ungepinnt zurückdrehen — sonst ändern sich Prüfregeln
+    unbemerkt. Der Artefakt-Upload nutzt `include-hidden-files: true` (das `.lighthouseci/`-Dot-
+    Verzeichnis wird von `upload-artifact@v4` sonst übersprungen).
 - **`audit:seo`-Errors werden wie Build-Fehler behandelt:** sofort fixen, nie ignorieren.
   **Warnings** (z. B. das bekannte `og:image`-TODO) gesammelt an Artem melden.
 - Das SEO-Skript auditiert nur **indexierbare** Seiten (`noindex`-Rechts-/Redirect-Seiten und

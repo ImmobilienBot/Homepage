@@ -16,7 +16,10 @@ concurrency:
 
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    # Runner-Image gepinnt (nicht ubuntu-latest) → das vorinstallierte Chrome und die
+    # Toolchain ändern sich nur bei bewusstem Bump, nicht unter uns weg (Prüfregel-/
+    # Rendering-Drift). Update-Prozess: siehe CLAUDE.md (Audit-System).
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +35,9 @@ jobs:
         run: npm run build
 
       - name: Lighthouse CI
-        run: npx lhci autorun
+        # @lhci/cli EXAKT gepinnt (kein ^) → bündelt Lighthouse + axe-core = die A11y-/SEO-
+        # Prüfregeln. So ändern sich die Regeln nur bei bewusstem Versions-Bump.
+        run: npx @lhci/cli@0.15.1 autorun
 
       - name: SEO/GEO audit
         run: npm run audit:seo
@@ -43,4 +48,8 @@ jobs:
         with:
           name: lighthouse-results
           path: .lighthouseci/
+          # .lighthouseci/ ist ein Dot-Verzeichnis; upload-artifact@v4 überspringt versteckte
+          # Dateien standardmäßig („No files were found") → hier explizit einschließen.
+          include-hidden-files: true
           retention-days: 14
+          if-no-files-found: warn
