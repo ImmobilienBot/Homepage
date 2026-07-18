@@ -494,6 +494,21 @@ function splitLine(line: string) {
   .notif:first-child {
     opacity: 1;
   }
+  /* „Der Ping wird ein Ereignis": Läuft JS UND ist Bewegung erlaubt UND Desktop
+     (≥768px — genau dort läuft die Notification-Endlosschleife, initHeroNotifications),
+     startet das Front-Phone OHNE sichtbare Karte. Die erste Karte trifft dann als
+     erstes Ping-Ereignis der Schleife ein (~1,2 s), statt statisch am Rand zu kleben.
+     Gate = derselbe dokumentierte Mechanismus wie beim Scroll-Cue (html.js synchron
+     im <head> + no-preference-Media-Query) → greift VOR dem ersten Paint = KEIN Flash.
+     Front-Phone (LCP-Anker) bleibt unangetastet — nur die Karte. Ohne JS /
+     reduced-motion / Mobile bleibt .notif:first-child sichtbar (CSS-Grundzustand =
+     Kernbotschaft, auch für Crawler/AI-Reader). Höhere Spezifität (html.js) schlägt
+     die Grundregel oben. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+    :global(html.js) .notif:first-child {
+      opacity: 0;
+    }
+  }
   .notif-icon {
     height: 2.25rem;
     width: 2.25rem;
