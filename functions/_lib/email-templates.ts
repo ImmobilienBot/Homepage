@@ -252,7 +252,7 @@ const CONFIRM_STRINGS: Record<
     topicLine: (label) => `Dein Anliegen: ${label}`,
     reassure: 'Wir lesen jede Nachricht persönlich und melden uns so schnell wie möglich.',
     nothingToDo: 'Du musst nichts weiter tun.',
-    signoff: 'Dein Immobilien-Bot-Team',
+    signoff: 'Dein Immobilien Bot Team',
   },
   en: {
     subject: 'We got your message · Immobilien Bot',

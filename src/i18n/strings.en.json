@@ -37,7 +37,7 @@
     "trust": {
       "rating": "4.6",
       "ratingLabel": "App Store",
-      "downloads": "5,000+ downloads"
+      "downloads": "{downloads} downloads"
     },
     "mockupAlt": "Screenshot of the Immobilien Bot app: listings feed with matching flats",
     "mapAlt": "Screenshot of the Immobilien Bot app: drawing a search area on the map",
@@ -78,7 +78,7 @@
         }
       ],
       "trustCancel": "Try free for 7 days, cancel anytime",
-      "moreLink": "We'll show you how"
+      "moreLink": "We’ll show you how"
     },
     "features": {
       "title": "Features",
@@ -101,7 +101,7 @@
             "Multiple search locations",
             "Rooms, size, price"
           ],
-          "alt": "Map of Berlin with a self-drawn, yellow-outlined search area over the city center; a „Radius\" and „Draw\" toggle at the top."
+          "alt": "Map of Berlin with a self-drawn, yellow-outlined search area over the city centre; a “Radius” and “Draw” toggle at the top."
         },
         {
           "num": "02",
@@ -119,28 +119,28 @@
           "h3": "Your feed instead of ten open tabs.",
           "body": "Every matching listing lands in one tidy list — sorted, filtered, under control.",
           "checks": [
-            "Favorites & status filters",
+            "Favourites & status filters",
             "Unseen / applied at a glance",
             "Share, delete, add notes"
           ],
-          "alt": "App listings feed with 18 results: flat cards showing photo, price, number of rooms and square meters, plus filters for favorites and applications."
+          "alt": "App listings feed with 18 results: flat cards showing photo, price, number of rooms and square metres, plus filters for favourites and applications."
         },
         {
           "num": "04",
           "h3": "Your application. One tap. Done.",
-          "body": "Save your cover letter once — tap a listing and it's automatically in your clipboard.",
+          "body": "Save your cover letter once — tap a listing and it’s automatically in your clipboard.",
           "checks": [
             "Save your cover letter",
             "Auto-copy on tap",
             "Paste, send, done"
           ],
-          "alt": "The app’s „cover letter\" view: a saved application text in a text field with „Back\" and „Save\" buttons."
+          "alt": "The app’s “cover letter” view: a saved application text in a text field with “Back” and “Save” buttons."
         }
       ],
-      "bentoTitle": "And there's more inside.",
+      "bentoTitle": "And there’s more inside.",
       "bentoMark": "more",
       "filter": {
-        "h4": "Filters the others don't have.",
+        "h4": "Filters the others don’t have.",
         "body": "Advanced criteria for the searches that are painful on the portals:",
         "chips": [
           "furnished",
@@ -154,7 +154,7 @@
       "darkmode": {
         "h4": "Light & dark mode",
         "body": "Easy on the eyes at night — right when new listings come in.",
-        "ariaChain": "Toggle this card's dark mode"
+        "ariaChain": "Toggle this card’s dark mode"
       },
       "telegram": {
         "h4": "Telegram integration",
@@ -263,11 +263,11 @@
       "checks": [
         "All portals in one app",
         "Real-time push, also via Telegram",
-        "Favorites, application letter & more",
+        "Favourites, application letter & more",
         "Cancel anytime in the store"
       ],
       "stat": "Over {rate}% find their home in the first month.",
-      "qrCaption": "Scan with your phone — you'll land in the right store automatically.",
+      "qrCaption": "Scan with your phone — you’ll land in the right store automatically.",
       "toggle": {
         "week": "Week",
         "month": "Month"
@@ -287,8 +287,8 @@
       "toggleAria": "Billing period"
     },
     "bewertungen": {
-      "headline": "Found — before the others did.",
-      "headlineMark": "Found",
+      "headline": "Dream flat found — before anyone else.",
+      "headlineMark": "found",
       "subline": "{total} reviews across three platforms · {downloads} downloads",
       "tileLabel": "{count} reviews",
       "starsSr": "{n} out of 5 stars",
@@ -343,7 +343,7 @@
             {
               "id": "faq-portale",
               "q": "Which real-estate portals are searched?",
-              "a": "Currently {portalCount} portals: the big nationwide ones like ImmobilienScout24, Immowelt, Kleinanzeigen and WG-Gesucht, plus regional providers and housing associations like Howoge, Gewobag or GAG Köln. In the app you switch portals on or off individually. You will find the full list in the portals section above."
+              "a": "Currently {portalCount} portals: the big nationwide ones like ImmoScout24, Immowelt, Kleinanzeigen and WG-Gesucht, plus regional providers and housing associations like Howoge, Gewobag or GAG Köln. In the app you switch portals on or off individually. You will find the full list in the portals section above."
             },
             {
               "id": "faq-stadt",
@@ -363,7 +363,7 @@
             {
               "id": "faq-filter-kriterien",
               "q": "Can I search for furnished flats, shared rooms or with a WBS?",
-              "a": "Yes. Besides rooms, size and price you filter by advanced criteria such as furnished, shared room (WG), WBS, flat swap or interim and sublet. Listings that are only visible with “Plus” on ImmobilienScout24 can be excluded on request."
+              "a": "Yes. Besides rooms, size and price you filter by advanced criteria such as furnished, shared room (WG), WBS, flat swap or interim and sublet. Listings that are only visible with “Plus” on ImmoScout24 can be excluded on request."
             },
             {
               "id": "faq-telegram",
@@ -379,7 +379,7 @@
         },
         {
           "id": "faq-preise",
-          "label": "Pricing & subscription",
+          "label": "Pricing & plans",
           "items": [
             {
               "id": "faq-preis",
@@ -394,12 +394,12 @@
             {
               "id": "faq-kuendigen",
               "q": "Can I cancel anytime?",
-              "a": "Yes. The subscription runs via your Apple App Store or Google Play and can be ended there anytime with a few clicks — no notice period, no phone call, no risk."
+              "a": "Yes. The plan runs via your Apple App Store or Google Play and can be ended there anytime with a few clicks — no notice period, no phone call, no risk."
             },
             {
               "id": "faq-versteckte-kosten",
               "q": "Are there hidden costs or premium tiers?",
-              "a": "No. Every plan includes all features — real-time push, Telegram connection, favorites, application letter and all portals. There are no extra costs and no stripped-down basic version."
+              "a": "No. Every plan includes all features — real-time push, Telegram connection, favourites, application letter and all portals. There are no extra costs and no stripped-down basic version."
             }
           ]
         },
@@ -436,7 +436,7 @@
       "kicker": "Contact",
       "headline": "Questions? Feedback? Missing a feature?",
       "headlineMark": "feature?",
-      "copy": "Just reach out – we're here for you and read every message personally. You decide how to get in touch.",
+      "copy": "Just reach out – we’re here for you and read every message personally. You decide how to get in touch.",
       "channels": {
         "email": "Email",
         "telegram": "Telegram",
@@ -471,13 +471,13 @@
       },
       "success": {
         "title": "Message sent!",
-        "copy": "We'll get back to you as soon as possible.",
+        "copy": "We’ll get back to you as soon as possible.",
         "again": "Write another message"
       },
-      "error": "That didn't work. Email us directly at {email}.",
+      "error": "That didn’t work. Email us directly at {email}.",
       "thanks": {
         "metaTitle": "Message sent – Immobilien Bot",
-        "metaDescription": "Thanks for your message to Immobilien Bot. We'll get back to you as soon as possible.",
+        "metaDescription": "Thanks for your message to Immobilien Bot. We’ll get back to you as soon as possible.",
         "back": "Back to homepage"
       }
     }
@@ -493,31 +493,31 @@
     "intro": {
       "lead": "You know the moment.",
       "p1": "The perfect flat. You tap “Enquire” — “This listing is no longer available.” Too late again.",
-      "p2": "And that's the good case. At least you <em>saw</em> this one. Many you never see: they go online at midday while you're at work — and they're gone before you next look. The market happens. Without you."
+      "p2": "And that’s the good case. At least you <em>saw</em> this one. Many you never see: they go online at midday while you’re at work — and they’re gone before you next look. The market happens. Without you."
     },
     "unfair": {
       "h2": "An unfair game",
-      "p1": "The housing market was never fair. Those with the right contacts get the flat — often before it even goes online. But it's not only about <em>who</em> you know. It's about <em>where</em> and <em>when</em> you search. And both work against you."
+      "p1": "The housing market was never fair. Those with the right contacts get the flat — often before it even goes online. But it’s not only about <em>who</em> you know. It’s about <em>where</em> and <em>when</em> you search. And both work against you."
     },
     "reasons": {
       "h2": "Two reasons you lose",
       "tempoLabel": "Speed.",
       "tempoBody": "Hundreds of people apply to the most sought-after rental flats every day on average — 373 in Berlin, 277 in Hamburg, 237 in Munich.¹ And ImmoScout24 automatically takes a free listing offline as soon as 10 enquiries come in.² So the good, affordable flat is often gone within minutes — vanished before you even saw it. No one who works and sleeps can sit there and refresh at exactly the right moment. And part of your competition has long been searching automatically.",
       "reachLabel": "Reach.",
-      "reachBody": "You search on two or three portals. But in the big cities the asking rent is often far above what searchers can pay — around 89 % higher in Berlin, 56 % in Hamburg.¹ The affordable flats do exist — they're just elsewhere: with the municipal housing associations, from Degewo in Berlin to GAG in Cologne. On portals most people don't even know exist.",
-      "close": "Being fast is useless on the wrong sites. Knowing every portal is useless if you're too slow. You'd have to be both: everywhere — and first. No human can do that."
+      "reachBody": "You search on two or three portals. But in the big cities the asking rent is often far above what searchers can pay — around 89% higher in Berlin, 56% in Hamburg.¹ The affordable flats do exist — they’re just elsewhere: with the municipal housing associations, from Degewo in Berlin to GAG in Cologne. On portals most people don’t even know exist.",
+      "close": "Being fast is useless on the wrong sites. Knowing every portal is useless if you’re too slow. You’d have to be both: everywhere — and first. No human can do that."
     },
     "stats": {
       "heading": "The housing market in numbers",
       "tiles": [
         {
-          "value": "54.4 %",
+          "value": "54.4%",
           "label": "search for longer than a year",
           "note": 3
         },
         {
           "value": "373",
-          "label": "contact enquiries per day on average for Berlin's most sought-after flats",
+          "label": "contact enquiries per day on average for Berlin’s most sought-after flats",
           "note": 1
         },
         {
@@ -529,7 +529,7 @@
     },
     "quote": [
       {
-        "t": "The flat doesn't go to whoever earns the most. It goes to whoever sees it"
+        "t": "The flat doesn’t go to whoever earns the most. It goes to whoever sees it"
       },
       {
         "t": "first",
@@ -554,14 +554,14 @@
       "p3bold": "{n} property portals at once",
       "p3post": ", around the clock — across all of Germany. The big nationwide ones — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. And the ones hardly anyone checks — the municipal housing associations in Berlin, Cologne and Hesse.",
       "p4": "From Berlin — for you.",
-      "p5": "The moment a flat appears that fits you, you get it straight away — by push, in the very minutes it's even visible. Not as number 200. As one of the first."
+      "p5": "The moment a flat appears that fits you, you get it straight away — by push, in the very minutes it’s even visible. Not as number 200. As one of the first."
     },
     "believe": {
       "h2": "What we believe",
       "p1": "Everyone deserves a home. Not just those with the right contacts. Not just those who refresh portals all day. Not just those who happen to know the right portal.",
       "p1Mark": "Everyone.",
       "p2": "Immobilien Bot is your edge — fast enough to be first, and wide enough to search everywhere. Whether you work full-time, have kids or are new to the city.",
-      "p3": "You've waited long enough. Time for the flat to come to you."
+      "p3": "You’ve waited long enough. Time for the flat to come to you."
     },
     "team": {
       "h2": "The team",
@@ -583,9 +583,9 @@
     "ratingsLine": "{rating}★ on the App Store · {downloads} downloads · as of {asOf}",
     "footnotesTitle": "Sources",
     "footnotes": [
-      "ImmoScout24 analysis “Germany’s most-searched rental flat”, Q1 2024, top 10 % of listings per region: on average 373 contact enquiries per listing per day in Berlin, 277 in Hamburg, 237 in Munich; asking rent around 89 % (Berlin) and 56 % (Hamburg) above searchers’ rent budget.",
+      "ImmoScout24 analysis “Germany’s most-searched rental flat”, Q1 2024, top 10% of listings per region: on average 373 contact enquiries per listing per day in Berlin, 277 in Hamburg, 237 in Munich; asking rent around 89% (Berlin) and 56% (Hamburg) above searchers’ rent budget.",
       "ImmoScout24, free basic listing (private landlords): runs for 14 days, maximum 10 contact enquiries; the listing ends automatically.",
-      "ImmoScout24 survey of 1,183 people with an active search request (flat or house, rent or buy), March–April 2024: 54.4 % search for longer than a year."
+      "ImmoScout24 survey of 1,183 people with an active search request (flat or house, rent or buy), March–April 2024: 54.4% search for longer than a year."
     ]
   },
   "cta": {
@@ -598,17 +598,15 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "contact": "Contact",
-    "blog": "Blog",
     "colLegal": "Legal",
-    "colMore": "More",
     "colLang": "Language",
     "colApp": "Get the app",
     "langSwitch": "Deutsch",
-    "copyright": "© 2026 JS Immobilien Bot GmbH",
+    "copyright": "© {year} JS Immobilien Bot GmbH",
     "signature": "The original. Faster than the rest.",
     "sources": [
       "Statistics: Berliner Zeitung.",
-      "Immobilien Bot user data. For comparison: 54% of home seekers search for more than a year (ImmobilienScout24, 2024)."
+      "Immobilien Bot user data. For comparison: 54% of home seekers search for more than a year (ImmoScout24, 2024)."
     ]
   },
   "legal": {
@@ -620,8 +618,7 @@
     },
     "terms": {
       "title": "Terms & Conditions"
-    },
-    "placeholder": "Content coming soon. [TODO: legal content from Artem]"
+    }
   },
   "blog": {
     "title": "Blog",

@@ -10,7 +10,7 @@
  */
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import type { Locale } from '../../data/site';
-import { portalCount, aggregateRating, downloads, ratingsAsOf } from '../../data/site';
+import { portalCount, aggregateRating, formatDownloads, ratingsAsOf } from '../../data/site';
 import StoreBadges from '../StoreBadges.astro';
 
 const lang: Locale = getLangFromUrl(Astro.url);
@@ -35,7 +35,7 @@ const ratingStr = new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-US', {
 }).format(aggregateRating.ratingValue);
 const ratingsLine = A.ratingsLine
   .replace('{rating}', ratingStr)
-  .replace('{downloads}', downloads)
+  .replace('{downloads}', formatDownloads(lang))
   .replace('{asOf}', ratingsAsOf[lang]);
 
 // Monogramm (Initialen) für die Team-Karten.

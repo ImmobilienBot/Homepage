@@ -12,7 +12,7 @@
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import {
   ratings,
-  downloads,
+  formatDownloads,
   totalReviewCount,
   storeLinks,
   googleMapsReviewsUrl,
@@ -42,7 +42,7 @@ const fmtScore = (v: number) =>
 
 const subline = B.subline
   .replace('{total}', String(totalReviewCount))
-  .replace('{downloads}', downloads);
+  .replace('{downloads}', formatDownloads(lang));
 
 // Rating-Kacheln → Links (App Store · Google Play · Google Maps). URLs aus site.ts.
 const tiles = [

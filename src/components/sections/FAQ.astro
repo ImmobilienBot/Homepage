@@ -16,7 +16,7 @@
  * (dokumentierte Ausnahme); reduced-motion / ohne JS = alles sofort im Endzustand.
  */
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { portals, portalCount, ratings, downloads, trialDays, pricing } from '../../data/site';
+import { portals, portalCount, ratings, formatDownloads, trialDays, pricing } from '../../data/site';
 import PillButton from '../ui/PillButton.astro';
 
 const lang = getLangFromUrl(Astro.url);
@@ -44,7 +44,7 @@ const monthPrice = nf(pricing.find((p) => p.id === 'month')!.priceValue, 2);
 const interpolate = (s: string): string =>
   s
     .replaceAll('{portalCount}', String(portalCount))
-    .replaceAll('{downloads}', downloads)
+    .replaceAll('{downloads}', formatDownloads(lang))
     .replaceAll('{appStoreRating}', fmtScore(ratings.appStore.stars))
     .replaceAll('{trialDays}', String(trialDays))
     .replaceAll('{price7d}', weekPrice)

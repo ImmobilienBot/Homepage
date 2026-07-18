@@ -37,11 +37,11 @@
     "trust": {
       "rating": "4,6",
       "ratingLabel": "App Store",
-      "downloads": "5.000+ Downloads"
+      "downloads": "{downloads} Downloads"
     },
-    "mockupAlt": "Screenshot der Immobilien-Bot-App: Angebotsliste mit passenden Wohnungen",
-    "mapAlt": "Screenshot der Immobilien-Bot-App: Suchbereich per Zeichnung auf der Karte festlegen",
-    "configAlt": "Screenshot der Immobilien-Bot-App: Suche mit Zimmern, Größe und Preis konfigurieren",
+    "mockupAlt": "Screenshot der Immobilien Bot App: Angebotsliste mit passenden Wohnungen",
+    "mapAlt": "Screenshot der Immobilien Bot App: Suchbereich per Zeichnung auf der Karte festlegen",
+    "configAlt": "Screenshot der Immobilien Bot App: Suche mit Zimmern, Größe und Preis konfigurieren",
     "notification": {
       "app": "Immobilien Bot",
       "time": "jetzt",
@@ -58,9 +58,9 @@
   "sections": {
     "problem": {
       "title": "Das Problem",
-      "stat": "Bewerber auf {flats} Wohnungen. Nach {minutes} Minuten war Schluss.",
+      "stat": "Bewerbungen auf {flats} Wohnungen. Nach {minutes} Minuten war Schluss.",
       "board": {
-        "applicants": "Bewerber",
+        "applicants": "Bewerbungen",
         "minutes": "Minuten",
         "flats": "Wohnungen"
       },
@@ -83,8 +83,8 @@
     "features": {
       "title": "Features",
       "eyebrow": "Features",
-      "h2": "Alles, um der Erste zu sein.",
-      "h2Mark": "der Erste",
+      "h2": "Alles, um zuerst da zu sein.",
+      "h2Mark": "zuerst da",
       "subline": "Von der Suche bis zur Bewerbung — alles in einer App.",
       "notif": {
         "app": "Immobilien Bot",
@@ -179,7 +179,7 @@
       "groupRegional": "Regional",
       "accordionTitle": "Alle {n} Portale",
       "accordionSub": "Bundesweit & regional",
-      "mobilePhoneAlt": "Immobilien-Bot-App-Screen „Suche konfigurieren\": eine Liste der Immobilienportale, alle ausgewählt.",
+      "mobilePhoneAlt": "Immobilien Bot App-Screen „Suche konfigurieren\": eine Liste der Immobilienportale, alle ausgewählt.",
       "pushTitle": "Immobilien Bot",
       "pushTemplate": "Neues Angebot: {flat} – via {portal}",
       "timeNow": "jetzt",
@@ -287,8 +287,8 @@
       "toggleAria": "Abrechnungszeitraum"
     },
     "bewertungen": {
-      "headline": "Gefunden, bevor es andere taten.",
-      "headlineMark": "Gefunden",
+      "headline": "Traumwohnung gefunden, bevor es andere taten.",
+      "headlineMark": "gefunden",
       "subline": "{total} Bewertungen auf drei Plattformen · {downloads} Downloads",
       "tileLabel": "{count} Bewertungen",
       "starsSr": "{n} von 5 Sternen",
@@ -343,7 +343,7 @@
             {
               "id": "faq-portale",
               "q": "Welche Immobilienportale werden durchsucht?",
-              "a": "Aktuell {portalCount} Portale: die großen bundesweiten wie ImmobilienScout24, Immowelt, Kleinanzeigen und WG-Gesucht sowie regionale Anbieter und Wohnungsbaugesellschaften wie Howoge, Gewobag oder GAG Köln. In der App wählst du Portale einzeln an oder ab. Die vollständige Liste findest du oben in der Portale-Sektion."
+              "a": "Aktuell {portalCount} Portale: die großen bundesweiten wie ImmoScout24, Immowelt, Kleinanzeigen und WG-Gesucht sowie regionale Anbieter und Wohnungsbaugesellschaften wie Howoge, Gewobag oder GAG Köln. In der App wählst du Portale einzeln an oder ab. Die vollständige Liste findest du oben in der Portale-Sektion."
             },
             {
               "id": "faq-stadt",
@@ -363,7 +363,7 @@
             {
               "id": "faq-filter-kriterien",
               "q": "Kann ich nach möblierten Wohnungen, WG-Zimmern oder mit WBS suchen?",
-              "a": "Ja. Neben Zimmern, Größe und Preis filterst du nach erweiterten Kriterien wie möbliert, WG-Zimmer, WBS, Tauschwohnung oder Zwischen- und Untermiete. Angebote, die bei ImmobilienScout24 nur mit „Plus\" sichtbar sind, kannst du auf Wunsch ausschließen."
+              "a": "Ja. Neben Zimmern, Größe und Preis filterst du nach erweiterten Kriterien wie möbliert, WG-Zimmer, WBS, Tauschwohnung oder Zwischen- und Untermiete. Angebote, die bei ImmoScout24 nur mit „Plus\" sichtbar sind, kannst du auf Wunsch ausschließen."
             },
             {
               "id": "faq-telegram",
@@ -485,7 +485,7 @@
   "about": {
     "meta": {
       "title": "Über uns – Immobilien Bot",
-      "description": "Warum es den Immobilien Bot gibt: aus Berlin gebaut, damit du bei der Wohnungssuche überall gleichzeitig suchst und als Erster von passenden Angeboten erfährst."
+      "description": "Warum es den Immobilien Bot gibt: aus Berlin gebaut, damit du bei der Wohnungssuche überall gleichzeitig suchst und als erstes von passenden Angeboten erfährst."
     },
     "kicker": "Manifest",
     "headline": "Warum es den Immobilien Bot gibt.",
@@ -505,7 +505,7 @@
       "tempoBody": "Auf die gefragtesten Mietwohnungen bewerben sich im Schnitt hunderte Menschen pro Tag — 373 in Berlin, 277 in Hamburg, 237 in München.¹ Und eine kostenlose Anzeige nimmt ImmoScout24 automatisch offline, sobald 10 Kontaktanfragen da sind.² Die gute, bezahlbare Wohnung ist also oft nach Minuten weg — verschwunden, bevor du sie überhaupt gesehen hast. Kein Mensch, der arbeitet und schläft, kann daneben sitzen und im richtigen Moment neu laden. Und ein Teil deiner Konkurrenz sucht längst automatisiert.",
       "reachLabel": "Reichweite.",
       "reachBody": "Du suchst auf zwei, drei Portalen. Aber in den Großstädten liegt die Angebotsmiete oft weit über dem, was Suchende zahlen können — in Berlin um 89 %, in Hamburg um 56 %.¹ Die bezahlbaren Wohnungen gibt es — sie stehen nur woanders: bei den kommunalen Wohnungsbaugesellschaften, von der Degewo in Berlin bis zur GAG in Köln. Auf Portalen, von denen die meisten nicht mal wissen, dass es sie gibt.",
-      "close": "Schnell sein bringt nichts auf den falschen Seiten. Alle Portale kennen bringt nichts, wenn du zu langsam bist. Du müsstest beides sein: überall — und als Erster. Kein Mensch schafft das."
+      "close": "Schnell sein bringt nichts auf den falschen Seiten. Alle Portale kennen bringt nichts, wenn du zu langsam bist. Du müsstest beides sein: überall — und zuerst da. Kein Mensch schafft das."
     },
     "stats": {
       "heading": "Der Wohnungsmarkt in Zahlen",
@@ -532,7 +532,7 @@
         "t": "Die Wohnung bekommt nicht, wer am meisten verdient. Sondern wer sie"
       },
       {
-        "t": "als Erster",
+        "t": "zuerst",
         "em": true
       },
       {
@@ -554,13 +554,13 @@
       "p3bold": "{n} Immobilienportale gleichzeitig",
       "p3post": "— in ganz Deutschland. Die großen bundesweiten — ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, Vonovia. Und die, die sonst kaum jemand prüft — die kommunalen Wohnungsbaugesellschaften in Berlin, Köln und Hessen.",
       "p4": "Aus Berlin — für dich.",
-      "p5": "Sobald eine Wohnung erscheint, die zu dir passt, bekommst du sie sofort — per Push, in genau den Minuten, in denen sie überhaupt zu sehen ist. Nicht als Nummer 200. Als einer der Ersten."
+      "p5": "Sobald eine Wohnung erscheint, die zu dir passt, bekommst du sie sofort — per Push, in genau den Minuten, in denen sie überhaupt zu sehen ist. Nicht als Nummer 200. Unter den Ersten."
     },
     "believe": {
       "h2": "Woran wir glauben",
       "p1": "Jeder Mensch verdient ein Zuhause. Nicht nur die mit den richtigen Kontakten. Nicht nur die, die den ganzen Tag Portale aktualisieren. Nicht nur die, die zufällig das richtige Portal kennen.",
       "p1Mark": "Alle.",
-      "p2": "Der Immobilien Bot ist dein Vorteil — schnell genug, um Erster zu sein, und weit genug, um überall zu suchen. Egal, ob du Vollzeit arbeitest, Kinder hast oder neu in der Stadt bist.",
+      "p2": "Der Immobilien Bot ist dein Vorteil — schnell genug, um zuerst da zu sein, und weit genug, um überall zu suchen. Egal, ob du Vollzeit arbeitest, Kinder hast oder neu in der Stadt bist.",
       "p3": "Du hast lange genug gewartet. Zeit, dass die Wohnung zu dir kommt."
     },
     "team": {
@@ -598,17 +598,15 @@
     "privacy": "Datenschutz",
     "terms": "AGB",
     "contact": "Kontakt",
-    "blog": "Blog",
     "colLegal": "Rechtliches",
-    "colMore": "Mehr",
     "colLang": "Sprache",
     "colApp": "App laden",
     "langSwitch": "English",
-    "copyright": "© 2026 JS Immobilien Bot GmbH",
+    "copyright": "© {year} JS Immobilien Bot GmbH",
     "signature": "Das Original. Schneller als die anderen.",
     "sources": [
       "Statistik: Berliner Zeitung.",
-      "Eigene Nutzerdaten Immobilien Bot. Zum Vergleich: 54 % der Wohnungssuchenden suchen länger als ein Jahr (ImmobilienScout24, 2024)."
+      "Eigene Nutzerdaten Immobilien Bot. Zum Vergleich: 54 % der Wohnungssuchenden suchen länger als ein Jahr (ImmoScout24, 2024)."
     ]
   },
   "legal": {
@@ -620,8 +618,7 @@
     },
     "terms": {
       "title": "AGB"
-    },
-    "placeholder": "Inhalte folgen. [TODO: juristische Inhalte von Artem]"
+    }
   },
   "blog": {
     "title": "Blog",

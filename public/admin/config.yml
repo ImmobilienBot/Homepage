@@ -1559,18 +1559,8 @@ collections:
                 widget: string
                 required: false
                 i18n: true
-              - name: blog
-                label: 'Blog'
-                widget: string
-                required: false
-                i18n: true
               - name: colLegal
                 label: 'Spalte Rechtliches'
-                widget: string
-                required: false
-                i18n: true
-              - name: colMore
-                label: 'Spalte Mehr'
                 widget: string
                 required: false
                 i18n: true
@@ -1651,11 +1641,6 @@ collections:
                     widget: string
                     required: false
                     i18n: true
-              - name: placeholder
-                label: 'Platzhalter-Text'
-                widget: string
-                required: false
-                i18n: true
           - name: blog
             label: 'Blog – Platzhalter'
             widget: object
