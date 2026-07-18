@@ -11,6 +11,8 @@ lh-*.json
 
 # visual self-check screenshots (shoot.mjs)
 .shots/
+# marquee guard screenshot series (check-marquee.mjs)
+.marquee-shots/
 
 # dependencies
 node_modules/

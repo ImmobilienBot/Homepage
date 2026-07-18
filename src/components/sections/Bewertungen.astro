@@ -334,8 +334,14 @@ const rows = [
     animation: bw-marquee var(--dur, 80s) linear infinite;
   }
   /* Klon-Wrapper ohne eigene Box → seine Karten werden direkte Flex-Items des Tracks
-     (uniformer Abstand via margin-right der Karte → nahtloser -50%-Loop über 2 Sets). */
-  .bw-clones {
+     (uniformer Abstand via margin-right der Karte → nahtloser -50%-Loop über 2 Sets).
+     :global ist PFLICHT, kein Stil-Zucker: das Klon-Set erzeugt initReviewMarquee()
+     clientseitig via document.createElement — dieses <div> trägt NICHT das
+     data-astro-cid, an das Astro eine skopte `.bw-clones`-Regel binden würde. Eine
+     skopte Regel griffe also nie, der Wrapper bliebe display:block → alle Klone
+     stapeln vertikal in EINER Track-Spalte (Reihe bläht auf ~2200px, Loop kaputt).
+     Global bindet die Regel an die Klasse allein → greift auch am JS-Knoten. */
+  :global(.bw-clones) {
     display: contents;
   }
   .bw-row--1 .bw-track {
@@ -425,7 +431,10 @@ const rows = [
     .bw-track {
       animation: none;
     }
-    .bw-clones {
+    /* Global (gleicher Grund wie oben: JS-erzeugter Klon-Knoten ohne data-astro-cid).
+       Unter reduced-motion ruft animations.ts initReviewMarquee() ohnehin nicht auf →
+       i. d. R. existiert gar kein Klon-Set; die Regel bleibt als Sicherung bestehen. */
+    :global(.bw-clones) {
       display: none;
     }
     .bw-row {

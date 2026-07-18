@@ -15,6 +15,7 @@
     "audit:lh": "tsx scripts/audit-lh.ts",
     "audit": "npm run build && npm run audit:seo && npm run audit:lh",
     "check:overflow": "node scripts/check-overflow.mjs",
+    "check:marquee": "node scripts/check-marquee.mjs",
     "shoot": "node scripts/shoot.mjs"
   },
   "dependencies": {
