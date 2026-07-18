@@ -6,7 +6,13 @@ dist/
 # audit / lighthouse artifacts
 .lighthouseci/
 .tmp-lh/
+.tmp-lh-median/
 lh-*.json
+
+# visual self-check screenshots (shoot.mjs)
+.shots/
+# marquee guard screenshot series (check-marquee.mjs)
+.marquee-shots/
 
 # dependencies
 node_modules/
@@ -28,3 +34,10 @@ Thumbs.db
 .vscode/
 !.vscode/extensions.json
 .idea/
+
+# i18n-migration text-diff (Wegwerf)
+.text-before.txt
+.text-after.txt
+
+# Sveltia CMS bundle (per postinstall/prebuild aus node_modules synchronisiert, ~2 MB)
+public/admin/sveltia-cms.js

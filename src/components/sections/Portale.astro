@@ -22,9 +22,23 @@ import type { Portal } from '../../data/site';
 
 import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
 import appIcon from '../../assets/images/immobilien-bot-app-icon.png';
+// Mobile-Bühne: App-Screen „Suche konfigurieren" (bester Match zur Portal-Auswahl).
+import screenConfig from '../../assets/images/immobilien-bot-suche-konfigurieren.png';
 
 const t = useTranslations(getLangFromUrl(Astro.url));
 const P = t.sections.portals;
+
+// Mobile „Quellen-Strom" (Block D): zwei gegenläufige Marquee-Zeilen, Bundesweit
+// 5+5 aufgeteilt. REIN DEKORATIV (aria-hidden) — die kanonische, vorlesbare Portal-Liste
+// ist das „Alle Portale"-Accordion darunter (jeder Name genau einmal hörbar).
+const streamRows = [nationalPortals.slice(0, 5), nationalPortals.slice(5)];
+
+// „Alle Portale"-Accordion: Titel + Unterzeile (Zahl aus site.ts) und Gruppen-Labels
+// (Bundesweit/Regional je mit abgeleiteter Anzahl). Alles buildseitig, nichts hart.
+const accordionTitle = P.accordionTitle.replace('{n}', String(portalCount));
+const accordionSub = P.accordionSub;
+const nationalLabel = `${P.groupNational} · ${nationalPortals.length}`;
+const regionalLabel = `${P.groupRegional} · ${regionalPortals.length}`;
 
 // Subline: {count} = portalCount (fett). Am Platzhalter splitten.
 const [subPre, subPost] = P.subline.split('{count}');
@@ -78,6 +92,106 @@ const feedData = {
         {subPre}<strong class="pf-count">{portalCount}</strong>{subPost}
       </p>
     </header>
+
+    {/* ===== Mobile „Quellen-Strom" (nur <lg) — ersetzt die Desktop-Spalten =====
+        Zwei gegenläufige Marquee-Zeilen mit den Bundesweit-Portalnamen laufen HINTER
+        dem angeschnittenen Phone durch (Quellen fließen ins Gerät), darunter das
+        animierte Regional-Accordion. Marquee = CSS-only (wie Bewertungen). */}
+    <div class="pf-mobile">
+      <div class="pf-stage">
+        {/* Quellen-Strom — REIN DEKORATIV (komplett aria-hidden). Die vorlesbare Liste
+            ist das „Alle Portale"-Accordion darunter (jeder Name genau einmal). */}
+        <div class="pf-stream" aria-hidden="true">
+          {
+            streamRows.map((row, ri) => (
+              <div class:list={['pf-stream-row', `pf-stream-row--${ri + 1}`]}>
+                <div class="pf-stream-track">
+                  {row.map((p) => (
+                    <span class="pf-chip">{p.name}</span>
+                  ))}
+                  <span class="pf-stream-clones" aria-hidden="true">
+                    {row.map((p) => (
+                      <span class="pf-chip">{p.name}</span>
+                    ))}
+                  </span>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        {/* Phone (z:1) — angeschnitten, „Suche konfigurieren" + Glow. */}
+        <div class="pf-mphone">
+          <div class="pf-mglow" aria-hidden="true"></div>
+          <div class="pf-mframe">
+            <Image
+              src={screenConfig}
+              alt={P.mobilePhoneAlt}
+              class="pf-mscreen"
+              sizes="(max-width: 1023px) 62vw, 300px"
+              loading="lazy"
+            />
+            <PhoneFrame class="pf-mframe-svg" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+
+      {/* „Alle Portale"-Accordion = kanonische, vorlesbare Portal-Liste (bundesweit +
+          regional, je Gruppe mit Anzahl). Default ZU. */}
+      <details class="pf-regional">
+        <summary class="pf-regional-sum">
+          <span class="pf-regional-head">
+            <span class="pf-regional-title">{accordionTitle}</span>
+            <span class="pf-regional-cities">{accordionSub}</span>
+          </span>
+          <svg
+            class="pf-regional-chev"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg
+          >
+        </summary>
+        {/* grid-template-rows 0fr→1fr (dokumentierte Ausnahme) für das Aufklappen. --k
+            läuft durchgehend (Labels + Chips) für einen sauberen, gedeckelten Stagger. */}
+        <div class="pf-regional-wrap">
+          <div class="pf-groups">
+            <div class="pf-group">
+              <h3 class="pf-mgroup-label" style="--k:0">{nationalLabel}</h3>
+              <ul class="pf-regional-list">
+                {
+                  nationalPortals.map((p, i) => (
+                    <li class="pf-regional-item" style={`--k:${1 + i}`}>
+                      <span class="pf-regional-name">{p.name}</span>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div class="pf-group">
+              <h3 class="pf-mgroup-label" style={`--k:${1 + nationalPortals.length}`}>
+                {regionalLabel}
+              </h3>
+              <ul class="pf-regional-list">
+                {
+                  regionalPortals.map((p, i) => (
+                    <li class="pf-regional-item" style={`--k:${2 + nationalPortals.length + i}`}>
+                      <span class="pf-regional-name">{p.name}</span>
+                      {cityTag(p) && <span class="pf-regional-city">{cityTag(p)}</span>}
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
 
     {/* --- Zweispaltig: links Pill-Feld (~55%), Flug-Korridor, rechts Phone --- */}
     <div class="pf-columns" data-pf-flightstage>
@@ -582,37 +696,285 @@ const feedData = {
   }
 
   /* =====================================================================
-     MOBILE (< 768px) — bewusst nur „sauber": gestapelt, kompaktere Chips,
-     Phone zentriert darunter. KEIN Ticker/Ping/Flug/Hover (JS-Gate).
+     MOBILE „Ein Feed"-Bühne (< lg = 1024px). Ersetzt die Desktop-Spalten:
+     schwebende Bundesweit-Pills + angeschnittenes Phone + gelber Störer,
+     darunter Regional-Accordion. Rein CSS/statisch (kein JS-Gate). Desktop
+     ≥1024px bleibt die zweispaltige .pf-columns unberührt.
      ===================================================================== */
-  @media (max-width: 767.98px) {
+  .pf-mobile {
+    display: none;
+  }
+  @media (max-width: 1023px) {
+    .pf-columns {
+      display: none;
+    }
+    .pf-mobile {
+      display: block;
+    }
     .pf-headline {
       font-size: clamp(1.85rem, 8vw, 2.5rem);
     }
-    .pf-columns {
+    /* Einheitlicher Kopf→Inhalt-Abstand (Mobile-Rhythmus, Block 7). */
+    .pf-head {
+      margin-bottom: var(--head-gap-mobile);
+    }
+
+    /* ---- Bühne: Quellen-Strom (z:0) hinter dem Phone (z:1) ---- */
+    .pf-stage {
+      position: relative;
+      margin-top: clamp(0.5rem, 3vw, 1.5rem);
+    }
+
+    /* --- Zwei gegenläufige Marquee-Zeilen, edge-bleed, IM FLUSS ÜBER dem Phone
+       (kein Overlay mehr → volle Lesbarkeit). Fade-Maske links/rechts bleibt. --- */
+    .pf-stream {
+      margin: 0 calc(-1 * var(--spacing-inset)) clamp(1.5rem, 6vw, 2.5rem);
+      display: flex;
       flex-direction: column;
-      align-items: stretch;
-      gap: 2.5rem;
+      gap: 10px;
+      pointer-events: none;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
     }
-    .pf-pills {
+    .pf-stream-row {
+      overflow: hidden;
+    }
+    .pf-stream-track {
+      display: flex;
+      width: max-content;
+      will-change: transform;
+      animation: pfMarquee 36s linear infinite;
+    }
+    /* Zweite Reihe gegenläufig. */
+    .pf-stream-row--2 .pf-stream-track {
+      animation-direction: reverse;
+    }
+    /* Klon-Set als direkte Flex-Kinder (display:contents) → gleichmäßiger Rhythmus;
+       die trailing margin am Chip macht den -50%-Loop nahtlos. aria-hidden bleibt. */
+    .pf-stream-clones {
+      display: contents;
+    }
+    .pf-chip {
       flex: none;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      margin-right: 7px; /* Rhythmus steckt im Chip → nahtloser -50%-Loop */
+      padding: 0 14px;
+      background: var(--color-offwhite);
+      border: 1px solid rgb(59 59 58 / 0.07);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 2px 6px rgb(59 59 58 / 0.06);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--color-black);
+      white-space: nowrap;
     }
-    /* Pills als kompakte flex-wrap-Chips (kein starres 2×5-Grid). */
-    .pf-grid {
+    @keyframes pfMarquee {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    /* --- Phone unter dem Strom, ~50–55 % sichtbar; Glow bleibt. Der harte Anschnitt
+       wird ein Dissolve (mask-image: unteres ~22 % läuft transparent aus). --- */
+    .pf-mphone {
+      position: relative;
+      width: min(60vw, 260px);
+      max-height: clamp(200px, 50vw, 260px);
+      margin: 0 auto;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
+      mask-image: linear-gradient(to bottom, #000 78%, transparent);
+    }
+    .pf-mglow {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      width: 160%;
+      height: 130%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(closest-side, #fff03c, rgba(255, 240, 60, 0) 74%);
+      filter: blur(58px);
+      opacity: 0.5;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .pf-mframe {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+    .pf-mframe-svg {
+      position: relative;
+      z-index: 2;
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .pf-mscreen {
+      position: absolute;
+      left: 2.4%;
+      top: 0.6%;
+      width: 95.4%;
+      height: 98.9%;
+      border-radius: 11.5% / 5.3%;
+      object-fit: cover;
+      object-position: top center;
+      z-index: 0;
+    }
+
+    /* --- Regional-Accordion (natives details, ganze Zeile ≥48px tappbar) --- */
+    .pf-regional {
+      margin-top: clamp(1.5rem, 5vw, 2.25rem);
+      border-top: 1px solid var(--color-darkgrey);
+    }
+    .pf-regional-sum {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 48px;
+      padding: 12px 2px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .pf-regional-sum::-webkit-details-marker {
+      display: none;
+    }
+    .pf-regional-head {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .pf-regional-title {
+      font-weight: 900;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-black);
+    }
+    .pf-regional-cities {
+      font-size: 12px;
+      color: var(--color-grey-text);
+    }
+    .pf-regional-chev {
+      flex: none;
+      color: var(--color-black);
+      transition: transform 0.3s ease;
+    }
+    .pf-regional[open] .pf-regional-chev {
+      transform: rotate(180deg);
+    }
+    /* Aufklapp-Mechanik: grid-template-rows 0fr→1fr (dokumentierte Ausnahme). Der
+       Wrapper wird per author-Regel dauerhaft gerendert (schlägt das UA-Verstecken
+       geschlossener <details>-Inhalte) → die Transition läuft ohne JS. */
+    .pf-regional-wrap {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 300ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+    .pf-regional[open] .pf-regional-wrap {
+      grid-template-rows: 1fr;
+    }
+    /* Der grid-rows-Kollaps klippt an .pf-groups (direktes Kind des Grid-Wrappers). */
+    .pf-groups {
+      overflow: hidden;
+      min-height: 0;
+      padding: 4px 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .pf-mgroup-label {
+      margin: 0 0 8px;
+      font-weight: 900;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-grey-text);
+    }
+    .pf-regional-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
-    .pf-pill {
-      height: 30px;
-      padding: 0 11px;
+    .pf-regional-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 12px;
+      background: var(--color-offwhite);
+      border: 1px solid rgb(59 59 58 / 0.07);
+      border-radius: var(--radius-pill);
+      font-weight: 700;
       font-size: 12px;
+      color: var(--color-black);
     }
-    .pf-phone-col {
-      justify-content: center;
+    /* Entrance-Stagger beim Aufklappen (Labels + Chips, nur opacity/transform). --k läuft
+       durchgehend; 16ms/Item deckelt den Gesamt-Stagger bei ~22 Elementen auf < 400ms. */
+    .pf-mgroup-label,
+    .pf-regional-item {
+      opacity: 0;
+      transform: translateY(6px);
+      transition:
+        opacity 250ms ease,
+        transform 250ms ease;
     }
-    .pf-phone-stage {
-      width: min(72vw, 260px);
+    .pf-regional[open] .pf-mgroup-label,
+    .pf-regional[open] .pf-regional-item {
+      opacity: 1;
+      transform: none;
+      transition-delay: calc(var(--k) * 16ms);
+    }
+    .pf-regional-city {
+      font-weight: 400;
+      font-size: 11px;
+      color: #9d9d9b;
+    }
+
+    /* reduced-motion: Marquee statisch als zwei umbrechende Zeilen (alle Namen lesbar,
+       Klone display:none); Accordion instant. */
+    @media (prefers-reduced-motion: reduce) {
+      .pf-stream {
+        position: static;
+        left: auto;
+        right: auto;
+        margin-bottom: 1.25rem;
+        -webkit-mask-image: none;
+        mask-image: none;
+      }
+      .pf-stream-row {
+        overflow: visible;
+      }
+      .pf-stream-track {
+        animation: none;
+        flex-wrap: wrap;
+        width: auto;
+        gap: 7px 0;
+      }
+      .pf-stream-clones {
+        display: none;
+      }
+      .pf-mphone {
+        margin-top: 0;
+      }
+      .pf-regional-wrap {
+        transition: none;
+      }
+      .pf-mgroup-label,
+      .pf-regional-item {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
     }
   }
 

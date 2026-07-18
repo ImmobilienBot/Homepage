@@ -269,25 +269,138 @@ const howToLd = {
   }
 
   /* =====================================================================
-     Mobile (< lg): Tickets stapeln; Perforation wird zur Unterkante, Stanz-Kreise
-     links/rechts. Radius: Ticket 1 oben, Ticket 4 unten.
+     Mobile (< lg): vertikaler Stepper. Links eine 2px-Progress-Rail (#d9dada) mit
+     Pfeilspitze unten, je Schritt ein gelber 32px-Dot mit Schrittnummer (CSS-Counter
+     → keine neuen Texte/kein Markup); Inhalt rechts der Rail. Karten-Strip/Perforation
+     entfallen. Rein statisch. Desktop ≥1024px (Ticket-Design) bleibt unverändert.
      ===================================================================== */
   @media (max-width: 1023.98px) {
     .ab-h2 {
       font-size: clamp(1.85rem, 8vw, 2.5rem);
     }
+    /* Einheitlicher Kopf→Inhalt-Abstand (Mobile-Rhythmus, Block 7). */
+    .ab-head {
+      margin-bottom: var(--head-gap-mobile);
+    }
+
+    /* Container: Karten-Strip-Optik auflösen, Rail + Counter aufsetzen. */
     .ab-tickets {
-      grid-template-columns: 1fr;
+      display: block;
+      grid-template-columns: none;
+      gap: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      position: relative;
+      counter-reset: abstep;
     }
-    .ab-ticket:first-child {
-      border-radius: 16px 16px 0 0;
+    /* Progress-Rail (2px) über alle Schritte. */
+    .ab-tickets::before {
+      content: '';
+      position: absolute;
+      left: 15px; /* Dot-Mitte (16px) − 1px */
+      top: 18px;
+      bottom: 18px;
+      width: 2px;
+      background: var(--color-darkgrey);
     }
+    /* Pfeilspitze unten. */
+    .ab-tickets::after {
+      content: '';
+      position: absolute;
+      left: 16px;
+      bottom: 4px;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid var(--color-darkgrey);
+    }
+
+    /* Schritt = KARTE rechts der Rail; Dot + Rail bleiben links außerhalb der Karte. */
+    .ab-ticket {
+      counter-increment: abstep;
+      position: relative;
+      display: block;
+      margin: 0 0 16px 56px; /* Platz für Rail/Dot links, einheitlicher Karten-Gap */
+      padding: 18px 20px;
+      background-color: var(--color-offwhite);
+      border: 0;
+      border-radius: 18px;
+      box-shadow: 0 14px 34px -26px rgb(59 59 58 / 0.4);
+    }
+    /* Desktop-Strip-Außenradien überschreiben (sonst nur eine Seite gerundet). */
+    .ab-ticket:first-child,
     .ab-ticket:nth-child(4) {
-      border-radius: 0 0 16px 16px;
+      border-radius: 18px;
     }
+    .ab-ticket:last-child {
+      margin-bottom: 0;
+    }
+    /* Desktop-Perforation (gestrichelter border-right, Spezifität 0,2,0) auf Mobile aus. */
     .ab-ticket:not(:last-child) {
       border-right: 0;
-      border-bottom: 2px dashed var(--color-darkgrey);
+    }
+
+    /* Dot mit Schrittnummer — auf der Rail (links außerhalb), an der Kartenoberkante. */
+    .ab-ticket::before {
+      content: counter(abstep);
+      position: absolute;
+      left: -56px;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--color-yellow);
+      color: var(--color-black);
+      font-weight: 900;
+      font-size: 15px;
+      z-index: 1;
+    }
+
+    /* BUGFIX: Schritt 4 = Karte wie 1–3 (voller gelber Dot, kein Pending-Umriss;
+       Texte/Pill regulär). Das frühere „noch nicht passiert"-Outline entfällt. */
+    .ab-ticket--dark {
+      background-color: var(--color-offwhite);
+    }
+    .ab-ticket--dark::before {
+      background: var(--color-yellow);
+      box-shadow: none;
+      color: var(--color-black);
+    }
+    .ab-ticket--dark .ab-ticket-title {
+      color: var(--color-black);
+    }
+    .ab-ticket--dark .ab-ticket-desc {
+      color: rgb(59 59 58 / 0.72);
+    }
+    .ab-ticket--dark .ab-pill {
+      background-color: var(--color-yellow);
+      border: 0;
+      color: var(--color-black);
+    }
+
+    /* „Schritt N"-Label ist redundant zur Dot-Nummer → aus. Die Timing-Pill wird als
+       Tag ÜBER dem Titel verankert (linksbündig; nichts schwebt mehr frei rechts). */
+    .ab-step {
+      display: none;
+    }
+    .ab-ticket-head {
+      display: block;
+      margin: 0 0 10px;
+    }
+    .ab-pill {
+      display: inline-block;
+      margin: 0;
+    }
+
+    /* Beschreibungstext auf 16px (volle Breite, Lesbarkeit). */
+    .ab-ticket-desc {
+      font-size: 1rem;
+      line-height: 1.5;
     }
   }
 </style>

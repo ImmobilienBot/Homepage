@@ -12,6 +12,7 @@
  * Aufruf: `tsx scripts/audit-seo.ts` (bzw. `npm run audit:seo`).
  */
 import * as cheerio from 'cheerio';
+import { load as loadYaml } from 'js-yaml';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import {
@@ -24,6 +25,7 @@ import {
   portalCount,
   ratings,
   totalReviewCount,
+  problemStat,
 } from '../src/data/site.ts';
 
 type Severity = 'error' | 'warn';
@@ -289,6 +291,15 @@ function auditPage(file: string) {
     }
     if (!vt.includes(String(totalReviewCount)))
       add('S12', 'error', page, `totalReviewCount „${totalReviewCount}" (aus site.ts) fehlt im sichtbaren HTML.`);
+    // Problem-Statistik (Berliner Zeitung) — die drei Zahlen aus site.ts problemStat
+    // (Desktop-Satz/Zahl + Mobile-Scoreboard rendern daraus).
+    const applicantsStr = new Intl.NumberFormat(loc === 'de' ? 'de-DE' : 'en-US').format(
+      problemStat.applicants,
+    );
+    for (const s of [applicantsStr, String(problemStat.minutes), String(problemStat.flats)]) {
+      if (!vt.includes(s))
+        add('S12', 'error', page, `Problem-Statistik „${s}" (aus site.ts) fehlt im sichtbaren HTML.`);
+    }
   }
 
   // --- S16: Kontakt-Fakten-Sync (nur Home) — sichtbare mailto-Adresse + JSON-LD ---
@@ -467,7 +478,124 @@ function auditGlobal() {
     for (const p of paths) {
       if (!urlPathToFile(p)) add('G3', 'error', G, `Sitemap-URL ohne Datei in dist: ${p}`);
     }
+    // /admin (CMS) darf NICHT in der Sitemap stehen.
+    for (const p of paths) {
+      if (p.startsWith('/admin')) add('G3', 'error', G, `Sitemap enthält die CMS-Route „${p}" (darf nicht indexiert werden).`);
+    }
   }
+
+  // --- G4: i18n-Key-Parität DE↔EN (bidirektional, rekursiv inkl. Array-Längen) ---
+  const i18nDe = join(ROOT, 'src', 'i18n', 'strings.de.json');
+  const i18nEn = join(ROOT, 'src', 'i18n', 'strings.en.json');
+  if (!existsSync(i18nDe) || !existsSync(i18nEn)) {
+    add('G4', 'error', G, 'strings.de.json und/oder strings.en.json fehlt.');
+  } else {
+    const kDe = i18nLeafPaths(JSON.parse(readFileSync(i18nDe, 'utf8')));
+    const kEn = i18nLeafPaths(JSON.parse(readFileSync(i18nEn, 'utf8')));
+    for (const k of kDe) if (!kEn.has(k)) add('G4', 'error', G, `i18n-Key nur in DE, fehlt in EN: „${k}".`);
+    for (const k of kEn) if (!kDe.has(k)) add('G4', 'error', G, `i18n-Key nur in EN, überzählig ggü. DE: „${k}".`);
+  }
+
+  // --- G5: Sveltia-config.yml deckt 100 % der i18n-Keys ab (sonst Datenverlust beim CMS-Speichern) ---
+  const cfgPath = join(ROOT, 'public', 'admin', 'config.yml');
+  if (!existsSync(cfgPath)) {
+    add('G5', 'error', G, 'public/admin/config.yml fehlt (Sveltia-CMS-Konfiguration).');
+  } else if (!existsSync(i18nDe)) {
+    add('G5', 'error', G, 'strings.de.json fehlt — Coverage-Abgleich nicht möglich.');
+  } else {
+    try {
+      const cfg = loadYaml(readFileSync(cfgPath, 'utf8')) as any;
+      const coll = (cfg?.collections ?? []).find((c: any) => c?.name === 'website-texte');
+      const fields = coll?.files?.[0]?.fields;
+      if (!Array.isArray(fields)) {
+        add('G5', 'error', G, 'config.yml: Collection „website-texte" (files[0].fields) nicht gefunden.');
+      } else {
+        const cCfg = cmsSchemaPaths(fields);
+        const cJson = i18nSchemaPaths(JSON.parse(readFileSync(i18nDe, 'utf8')));
+        for (const k of cJson) if (!cCfg.has(k)) add('G5', 'error', G, `i18n-Key „${k}" ist NICHT in config.yml abgebildet (beim CMS-Speichern ginge er verloren → gen-cms-config.mjs neu ausführen).`);
+        for (const k of cCfg) if (!cJson.has(k)) add('G5', 'error', G, `config.yml enthält veraltetes Feld „${k}" (kein i18n-Key mehr → gen-cms-config.mjs neu ausführen).`);
+      }
+    } catch (e) {
+      add('G5', 'error', G, `config.yml konnte nicht geparst werden: ${(e as Error).message}`);
+    }
+  }
+
+  // --- G6: kein i18n-String-Wert mit Randleerzeichen (Sveltia trimmt sie beim Speichern) ---
+  // Wortabstände gehören ins Markup, nie an die String-Ränder. Verhindert dauerhaft, dass ein
+  // CMS-Save (oder Handedit) Inline-Verkettungen zerlegt — egal ob DE, EN, CMS oder CC.
+  for (const [loc, file] of [['DE', i18nDe], ['EN', i18nEn]] as const) {
+    if (!existsSync(file)) continue;
+    for (const { path, value } of i18nStringLeaves(JSON.parse(readFileSync(file, 'utf8')))) {
+      if (value !== value.trim())
+        add('G6', 'error', G, `${loc}: i18n-Wert „${path}" hat führendes/nachgestelltes Leerzeichen (${JSON.stringify(value.slice(0, 40))}) — Wortabstand gehört ins Markup, nicht an den String-Rand.`);
+    }
+  }
+}
+
+/** Alle String-Blätter eines i18n-Objekts mit Pfad (rekursiv, inkl. Arrays). */
+function i18nStringLeaves(o: unknown, prefix = ''): { path: string; value: string }[] {
+  const out: { path: string; value: string }[] = [];
+  if (Array.isArray(o)) {
+    o.forEach((v, i) => out.push(...i18nStringLeaves(v, `${prefix}[${i}]`)));
+  } else if (o && typeof o === 'object') {
+    for (const k of Object.keys(o as Record<string, unknown>))
+      out.push(...i18nStringLeaves((o as Record<string, unknown>)[k], prefix ? `${prefix}.${k}` : k));
+  } else if (typeof o === 'string') {
+    out.push({ path: prefix, value: o });
+  }
+  return out;
+}
+
+/** Kanonische Schema-Pfade eines i18n-Objekts (Arrays auf Struktur reduziert, Keys über Items vereint). */
+function i18nSchemaPaths(o: unknown, prefix = ''): Set<string> {
+  const s = new Set<string>();
+  if (Array.isArray(o)) {
+    const objs = o.filter((x) => x && typeof x === 'object' && !Array.isArray(x)) as Record<string, unknown>[];
+    if (objs.length) {
+      const keys = new Set<string>();
+      for (const it of objs) for (const k of Object.keys(it)) keys.add(k);
+      for (const k of keys) {
+        const rep = objs.find((it) => k in it)![k];
+        i18nSchemaPaths(rep, prefix ? `${prefix}.${k}` : k).forEach((x) => s.add(x));
+      }
+    } else {
+      s.add(prefix); // Array von Skalaren = ein Listen-Leaf
+    }
+  } else if (o && typeof o === 'object') {
+    for (const k of Object.keys(o as Record<string, unknown>))
+      i18nSchemaPaths((o as Record<string, unknown>)[k], prefix ? `${prefix}.${k}` : k).forEach((x) => s.add(x));
+  } else {
+    s.add(prefix);
+  }
+  return s;
+}
+
+/** Kanonische Schema-Pfade der Sveltia-Feldliste (object→rekursiv, list+fields→rekursiv, sonst Leaf). */
+function cmsSchemaPaths(fields: any[], prefix = ''): Set<string> {
+  const s = new Set<string>();
+  for (const f of fields) {
+    const p = prefix ? `${prefix}.${f.name}` : f.name;
+    if (f.widget === 'object') cmsSchemaPaths(f.fields ?? [], p).forEach((x) => s.add(x));
+    else if (f.widget === 'list') {
+      if (Array.isArray(f.fields)) cmsSchemaPaths(f.fields, p).forEach((x) => s.add(x));
+      else s.add(p); // Liste von Skalaren
+    } else s.add(p);
+  }
+  return s;
+}
+
+/** Alle Leaf-Pfade eines i18n-Objekts (inkl. Array-Indizes) — für Paritäts-/Coverage-Checks. */
+function i18nLeafPaths(o: unknown, prefix = ''): Set<string> {
+  const s = new Set<string>();
+  if (Array.isArray(o)) {
+    o.forEach((v, i) => i18nLeafPaths(v, `${prefix}[${i}]`).forEach((k) => s.add(k)));
+  } else if (o && typeof o === 'object') {
+    for (const k of Object.keys(o as Record<string, unknown>))
+      i18nLeafPaths((o as Record<string, unknown>)[k], prefix ? `${prefix}.${k}` : k).forEach((x) => s.add(x));
+  } else {
+    s.add(prefix);
+  }
+  return s;
 }
 
 // ============================================================================

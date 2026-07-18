@@ -434,6 +434,73 @@ const IC_INSTAGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none
   }
 
   /* =====================================================================
+     Block G — Mobile (< lg): Kanäle als 3er-Kachel-Reihe. Icon oben, Kanalname
+     darunter (KEINE Adresse → keine Overflow-Falle bei 320px). Ganze Kachel = Link
+     (stretched link). Dark-Card-Stil. Nur <lg; Desktop-Liste unverändert.
+     ===================================================================== */
+  @media (max-width: 1023.98px) {
+    .kt-channels {
+      max-width: none;
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .kt-channel {
+      position: relative;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 88px;
+      padding: 16px 8px;
+      border-top: 0;
+      border-radius: 14px;
+      background: rgb(246 246 246 / 0.06);
+      border: 1px solid rgb(246 246 246 / 0.12);
+      text-align: center;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+    }
+    .kt-ch-ic :global(svg) {
+      width: 24px;
+      height: 24px;
+    }
+    .kt-ch-link {
+      align-items: center;
+    }
+    /* Stretched link → ganze Kachel klickbar (Icon ist aria-hidden). */
+    .kt-ch-link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+    }
+    .kt-ch-label {
+      font-size: 12.5px;
+    }
+    .kt-ch-sub {
+      display: none;
+    }
+    .kt-ch-link:focus-visible {
+      outline: none;
+    }
+    .kt-channel:focus-within {
+      border-color: var(--color-yellow);
+    }
+  }
+  @media (max-width: 1023.98px) and (hover: hover) and (pointer: fine) {
+    .kt-channel:hover {
+      background: rgb(246 246 246 / 0.1);
+      border-color: rgb(255 240 60 / 0.4);
+    }
+    .kt-channel:hover .kt-ch-label {
+      color: var(--color-yellow);
+    }
+  }
+
+  /* =====================================================================
      Rechts — Push-Karte (hell auf Dunkel, weiche große Elevation).
      ===================================================================== */
   .kt-card {
@@ -612,6 +679,18 @@ const IC_INSTAGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none
     resize: vertical;
     min-height: 120px;
     line-height: 1.5;
+  }
+
+  /* Mobile-Pass (< 1024px): iOS zoomt Felder mit <16px beim Fokus → Eingabe-
+     Schrift auf 16px; Themen-Chips auf volle 44px-Tap-Höhe. Desktop ≥1024px
+     unverändert (Input 15px, Chip 40px). */
+  @media (max-width: 1023.98px) {
+    .kt-input {
+      font-size: 16px;
+    }
+    .kt-chip-label {
+      min-height: 44px;
+    }
   }
 
   /* ---- Submit + DSGVO + Status ---- */

@@ -16,7 +16,9 @@ module.exports = {
         'http://localhost:4321/en/about/',
         'http://localhost:4321/2025/09/19/bewerbungsschreiben-fur-wohnung-vorlage/',
       ],
-      numberOfRuns: 3,
+      // 5 statt 3 Läufe → stabilerer Median gegen VM-Streuung der CI-Runner (Kaltstart-
+      // Ausreißer ziehen den 3er-Median sonst unter die Schwelle; siehe CLAUDE.md).
+      numberOfRuns: 5,
     },
     assert: {
       assertions: {

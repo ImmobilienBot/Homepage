@@ -1,15 +1,23 @@
 /**
  * reviews.ts — echte Store-/Maps-Rezensionen (verbatim).
  *
- * BEWUSSTE AUSNAHME von der i18n-Regel (siehe CLAUDE.md): Die Review-TEXTE liegen
- * hier beidsprachig, damit Zitat, Autor, Plattform und Sterne nie auseinanderlaufen
- * (eine untrennbare Einheit). Kürzungen sind mit […] markiert und bleiben so.
- * Jeder Eintrag existiert genau EINMAL.
+ * DÜNNER WRAPPER: Die Rezensionen liegen ab jetzt in `testimonials.json`
+ * (CMS-editierbar via Sveltia unter /admin). Diese Datei importiert das JSON und
+ * exportiert die bisherige API (`reviews`, `Review`, `ReviewPlatform`,
+ * `reviewPlatformLabel`) UNVERÄNDERT — kein Komponenten-Import ändert sich.
  *
- * Der Google-Maps-Rezensionslink (cid) ist ein FAKT und lebt in site.ts
- * (`googleMapsReviewsUrl`); die Store-Links ebenfalls (site.ts `storeLinks`).
+ * BEWUSSTE AUSNAHME von der i18n-Regel (siehe CLAUDE.md): Die Review-TEXTE bleiben
+ * beidsprachig (`text.de` / `text.en`) am Datensatz, damit Zitat, Autor, Plattform und
+ * Sterne nie auseinanderlaufen (eine untrennbare Einheit). Locale-Verhalten exakt wie
+ * bisher (Bewertungen rendert `text[lang]`). Kürzungen `[…]` bleiben so.
+ *
+ * FAKTEN bleiben in site.ts: die Aggregat-Zahlen (4,6★ / Anzahl) sowie der Google-Maps-
+ * Rezensionslink (`googleMapsReviewsUrl`) und die Store-Links (`storeLinks`).
  */
 import { ratings } from './site';
+// testimonials.json ist als { testimonials: [...] } (Objekt-Root) abgelegt, damit die
+// Sveltia-„files"-Collection die Liste editieren kann (bare-Array-Root wird nicht unterstützt).
+import testimonialsData from './testimonials.json';
 
 export type ReviewPlatform = 'appstore' | 'googleplay' | 'googlemaps';
 
@@ -20,6 +28,18 @@ export interface Review {
   platform: ReviewPlatform;
   rating: 4 | 5;
   text: { de: string; en: string };
+  /** Optionaler Ort (CMS-Feld); aktuell für keine Rezension gesetzt. */
+  city?: string;
+}
+
+/** JSON-Rohform (CMS-Feldnamen: name statt author). */
+interface Testimonial {
+  id: string;
+  name: string;
+  platform: ReviewPlatform;
+  rating: 4 | 5;
+  text: { de: string; en: string };
+  city?: string;
 }
 
 /** Plattform-Anzeigename (identisch zu den Rating-Kachel-Pills, aus site.ts). */
@@ -29,215 +49,12 @@ export const reviewPlatformLabel: Record<ReviewPlatform, string> = {
   googlemaps: ratings.googleMaps.label,
 };
 
-export const reviews: Review[] = [
-  {
-    id: 'sebastiansoftware',
-    author: 'SebastianSoftware',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Ich bin selbst Softwareentwickler […]. Am Anfang war ich etwas skeptisch, […] aber nach 3 Tagen Testen bin ich immer wieder erstaunt, wenn ich die erste Person auf der Anzeige bin. Sehr simpel, aber effektiv.',
-      en: "I'm a software developer myself […]. At first I was a bit skeptical, […] but after 3 days of testing I'm amazed again and again when I'm the first person on a listing. Very simple, but effective.",
-    },
-  },
-  {
-    id: 'noyustmedia',
-    author: 'NoyusTMedia',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Ich bin begeistert, dass ich mit der App so viele Angebote bekomme — über 100 am Tag. Und das für 8 €.',
-      en: "I'm thrilled that I get so many listings with the app — over 100 a day. And all that for 8 €.",
-    },
-  },
-  {
-    id: 'finndeg',
-    author: 'Finndeg',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Sehr schnell eine Wohnung gefunden. Sehr einfach und übersichtlich!',
-      en: 'Found an apartment really quickly. Very simple and clear!',
-    },
-  },
-  {
-    id: 'stolzheise',
-    author: 'stolzheise',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Übersichtlich, schnell, sehr hilfreich! Spart viel Zeit bei der Wohnungssuche in Berlin.',
-      en: 'Clear, fast, very helpful! Saves a lot of time when flat-hunting in Berlin.',
-    },
-  },
-  {
-    id: 'apfelkirscheis',
-    author: 'apfelkirscheis',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Ich war schon ein großer Fan von der Vorgängervariante auf Telegram, die App ist aber nochmal um ein Vielfaches besser. […] Da hier die Anzeigen oft nach 5 Minuten schon wieder offline geschaltet werden, ist der Immo Bot wirklich Gold wert.',
-      en: 'I was already a big fan of the earlier Telegram version, but the app is many times better. […] Since listings here often go offline again after just 5 minutes, the Immo Bot is truly worth its weight in gold.',
-    },
-  },
-  {
-    id: 'stine-2309',
-    author: 'Stine 23.09',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Gamechanger. Hatte vorher lange nach einer Wohnung gesucht und war durch die Push-Benachrichtigung endlich schnell genug und hab die Wohnung sogar innerhalb der kostenfreien Test-Zeit bekommen. Kann ich nur weiterempfehlen.',
-      en: 'Gamechanger. I’d been searching for an apartment for a long time and with the push notification I was finally fast enough — I even got the apartment within the free trial period. Can only recommend it.',
-    },
-  },
-  {
-    id: 'ergo5959',
-    author: 'Ergo5959',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Die Bedienung dieser Immobilien-App ist ein Traum! Alles ist logisch aufgebaut und leicht verständlich. […] Eine wirklich nutzerfreundliche App!',
-      en: 'Using this real-estate app is a dream! Everything is logically structured and easy to understand. […] A truly user-friendly app!',
-    },
-  },
-  {
-    id: 'oder',
-    author: 'oder?',
-    platform: 'appstore',
-    rating: 5,
-    text: {
-      de: 'Besonders beeindruckt hat mich, dass alle neuen Mietanzeigen aus verschiedenen Internetportalen automatisch gebündelt und übersichtlich in einer einzigen App dargestellt werden. […] Ein weiteres großes Plus ist die vorausgefüllte Bewerbungsmappe. […] Klare 5 Sterne!',
-      en: 'What impressed me most is that all new rental listings from various portals are automatically bundled and clearly presented in one single app. […] Another big plus is the pre-filled application folder. […] A clear 5 stars!',
-    },
-  },
-  {
-    id: 'markus-hahn',
-    author: 'Markus Hahn',
-    platform: 'googleplay',
-    rating: 4,
-    text: {
-      de: 'Die App ist super. Ich habe nach zwei Monaten Suche meine Traumwohnung gefunden, das war es wert.',
-      en: 'The app is great. After two months of searching I found my dream apartment — it was worth it.',
-    },
-  },
-  {
-    id: 'victoria',
-    author: 'Victoria',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Bei der Immobiliensuche ist Schnelligkeit der Schlüssel zum Erfolg. […] Ich war mit dieser Funktion schon mehr als nur einmal erfolgreich, dadurch, dass ich einfach die Erste war, die sich meldete. Naja, bleibt wohl erstmal ein Geheimtipp.',
-      en: "In apartment hunting, speed is the key to success. […] I've been successful with this feature more than once, simply because I was the first to respond. Well, I guess it'll stay a hidden gem for now.",
-    },
-  },
-  {
-    id: 'a-s',
-    author: 'A. S.',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Man erhält sofort alle Angebote von jeder Seite, die man sonst mühsam einzeln durchsucht. Eine super hilfreiche App, die viel Zeit erspart.',
-      en: "You instantly get all the listings from every site you'd otherwise have to comb through one by one. A super helpful app that saves a lot of time.",
-    },
-  },
-  {
-    id: 'jonathan-jablonski',
-    author: 'Jonathan Jablonski',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Die App benachrichtigt einen immer etwas schneller als die Suchbenachrichtigungen der gängigen Immobilien-Apps. Das gibt einem oft einen Vorteil bei der Bewerbung.',
-      en: 'The app always notifies you a little faster than the search alerts of the usual real-estate apps. That often gives you an edge when applying.',
-    },
-  },
-  {
-    id: 'm',
-    author: 'M',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Super App, die aktiv weiterentwickelt wird. Während meiner Nutzung gab es ein Update, das mir mehr Filteroptionen gegeben hat. Die App hat mir sehr viel Zeit gespart. Definitiv den Preis wert.',
-      en: 'Great app that’s actively being developed. During my time using it, an update added more filter options. The app has saved me a lot of time. Definitely worth the price.',
-    },
-  },
-  {
-    id: 'till-jacobi-von-wangelin',
-    author: 'Till Jacobi von Wangelin',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Super App, danke, dass sich jemand die Mühe gemacht hat, etwas zu entwickeln, was dabei hilft, diesen Wohnungssuchhustle etwas erträglicher zu gestalten. […] Kann ich echt empfehlen — für alle, die auch angenervt sind, diese ganzen Portale zu durchforsten.',
-      en: "Great app — thanks to whoever took the trouble to build something that makes this whole apartment-hunting hustle a bit more bearable. […] Can really recommend it — for everyone who's fed up with combing through all these portals.",
-    },
-  },
-  {
-    id: 'isommer-nacht',
-    author: 'Isommer Nacht',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Wir haben mit der App nach einer Wohnung in Berlin für meine Schwiegermutter gesucht. Die Bedienung war super einfach und die App ist generell sehr benutzerfreundlich. […] Die App kann ich nur empfehlen.',
-      en: 'We used the app to find an apartment in Berlin for my mother-in-law. It was super easy to use and the app is very user-friendly overall. […] I can only recommend it.',
-    },
-  },
-  {
-    id: 'speed-design',
-    author: 'Speed Design',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Eigentlich schreibe ich keine Rezensionen, aber ich bin vom ersten Eindruck echt sehr überzeugt! […] Update: Habe mit Hilfe von der App tatsächlich eine Wohnung gefunden. Vielen Dank für diese tolle App!',
-      en: "I don't usually write reviews, but the first impression really won me over! […] Update: I actually found an apartment with the help of the app. Thank you for this great app!",
-    },
-  },
-  {
-    id: 'julia-oertzen',
-    author: 'Julia Oertzen',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Einfache Handhabung und gute Ergebnisse.',
-      en: 'Easy to use and good results.',
-    },
-  },
-  {
-    id: 'denis-koal',
-    author: 'Denis Koal',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Ich muss ehrlich sagen, eine Top-Anwendung. Nach der Testphase habe ich mich dafür entschieden, das monatliche Abo abzuschließen. Für 7,99 € kann man nichts falsch machen.',
-      en: "I have to say, honestly, a top application. After the trial I decided to take out the monthly subscription. At 7.99 € you can't go wrong.",
-    },
-  },
-  {
-    id: 'paul-hanlon',
-    author: 'Paul Hanlon',
-    platform: 'googleplay',
-    rating: 5,
-    text: {
-      de: 'Ich finde die App sehr gut. Sie liefert jeden Tag viele brandneue Angebote auf dem Mietmarkt, die man sonst selber suchen müsste.',
-      en: "I think the app is very good. It delivers lots of brand-new rental listings every day that you'd otherwise have to hunt for yourself.",
-    },
-  },
-  {
-    id: 'maren-w',
-    author: 'Maren W.',
-    platform: 'googlemaps',
-    rating: 5,
-    text: {
-      de: 'Super einfache Bedienung und mir wurden sofort passende Angebote angezeigt — viel mehr Auswahl und mehr Einladungen für Besichtigungstermine konnten wir dadurch erreichen!',
-      en: 'Super easy to use, and matching listings were shown to me right away — we got far more options and more invitations to viewings as a result!',
-    },
-  },
-  {
-    id: 'bianca-koch',
-    author: 'Bianca Koch',
-    platform: 'googlemaps',
-    rating: 5,
-    text: {
-      de: 'Lange dachte ich, dass in Berlin kaum neue Wohnungen angeboten werden, bis ich gemerkt habe, dass viele Anzeigen nach wenigen Minuten wieder offline gestellt werden. Mit dem Immobilien-Bot werde ich nun sofort benachrichtigt, wenn etwas Neues mit meinen Präferenzen (kann man über Filter einstellen) reinkommt. Sehr, sehr praktisch.',
-      en: 'For a long time I thought hardly any new apartments were being listed in Berlin — until I realized that many listings go offline again after just a few minutes. With Immobilien Bot I now get notified immediately whenever something new matching my preferences (adjustable via filters) comes in. Very, very practical.',
-    },
-  },
-];
+/** CMS-Datensatz (name) → bisherige Review-Form (author) — Bewertungen bleibt unverändert. */
+export const reviews: Review[] = (testimonialsData.testimonials as Testimonial[]).map((t) => ({
+  id: t.id,
+  author: t.name,
+  platform: t.platform,
+  rating: t.rating,
+  text: t.text,
+  ...(t.city ? { city: t.city } : {}),
+}));

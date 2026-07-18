@@ -47,11 +47,20 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-// Scroll-Text-Fill: Segmente → Wort-Spans (tf-w), Emphasis-Segmente → tf-em.
+// Wortabstände entstehen IM TEMPLATE, nie als Randleerzeichen im JSON — die trimmt das CMS
+// beim Speichern weg (siehe Guard G6 / CLAUDE.md). `joinSpace` liefert das Trennzeichen vor
+// einem Folgesegment: ein Leerzeichen, außer das Segment beginnt mit anschließendem Satzzeichen
+// (Punkt, Komma …). Der Gedankenstrich „—" gilt NICHT als anschließend (braucht Abstand).
+const joinSpace = (next: string) => (/^[.,;:!?)\]}…”»]/.test(next.trim()) ? '' : ' ');
+
+// Scroll-Text-Fill: Segmente → Wort-Spans (tf-w), Emphasis-Segmente → tf-em. Der Abstand
+// ZWISCHEN Segmenten kommt als eigenes Leerzeichen-Token (kein Randleerzeichen in `t`).
 type Seg = { t: string; em?: boolean };
-const quoteTokens = (A.quote as Seg[]).flatMap((seg) =>
-  seg.t.split(/(\s+)/).map((tok) => ({ tok, em: !!seg.em })),
-);
+const quoteTokens = (A.quote as Seg[]).flatMap((seg, i) => {
+  const trimmed = seg.t.trim();
+  const sep = i > 0 && joinSpace(trimmed) === ' ' ? [{ tok: ' ', em: false }] : [];
+  return [...sep, ...trimmed.split(/(\s+)/).map((tok) => ({ tok, em: !!seg.em }))];
+});
 ---
 
 <section class="ab" data-about aria-labelledby="ab-h1">
@@ -134,7 +143,7 @@ const quoteTokens = (A.quote as Seg[]).flatMap((seg) =>
       <div class="ab-prose">
         <p>{A.origin.p1}</p>
         <p>{A.origin.p2}</p>
-        <p>{A.origin.p3pre}<strong>{p3bold}</strong>{A.origin.p3post}</p>
+        <p>{A.origin.p3pre}{' '}<strong>{p3bold}</strong>{joinSpace(A.origin.p3post)}{A.origin.p3post}</p>
         <p class="ab-origin-line">{A.origin.p4}</p>
         <p>{A.origin.p5}</p>
       </div>
@@ -145,7 +154,7 @@ const quoteTokens = (A.quote as Seg[]).flatMap((seg) =>
       <h2 class="ab-h2">{A.believe.h2}</h2>
       <div class="ab-prose ab-believe">
         <p class="ab-believe-lead">
-          {A.believe.p1}<span class="marker"
+          {A.believe.p1}{' '}<span class="marker"
             ><span class="marker__bg" data-about-mark aria-hidden="true"></span><span class="marker__label"
               >{A.believe.p1Mark}</span
             ></span

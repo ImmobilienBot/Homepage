@@ -214,7 +214,10 @@ function splitLine(line: string) {
     border-radius: 12px;
     pointer-events: none;
   }
-  @media (prefers-reduced-motion: no-preference) {
+  /* Nur Desktop (≥1024px): der Scroll-Cue ist mobil überflüssig (Touch-Scroll ist
+     selbsterklärend) → <lg komplett aus. An dieselbe 1024px-Grenze wie der JS-Gate
+     (initHeroScrollCue) gekoppelt: kein totes Fixed-Element, keine Listener mobil. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
     :global(html.js) .hero-scroll-cue {
       display: block;
     }

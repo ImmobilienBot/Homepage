@@ -482,8 +482,19 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
     scheitert auf dem Windows-Setup am chrome-launcher-EPERM (Temp-Cleanup) — `audit:lh` liest das von
     Lighthouse trotzdem geschriebene JSON und bleibt so lauffähig.
   - **CI** ist für **Performance maßgeblich:** die GitHub Action fährt weiter `lhci autorun`
-    (Median aus 3 Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). Der CI-Workflow bleibt
-    bewusst unverändert.
+    (Median aus **5** Läufen, alle 4 Schwellen **hart**; `lighthouserc.cjs`). **Schwellen/Assertions
+    werden nie gesenkt, URLs nie aus der Prüfung genommen — Ursachen heilen, nie das Thermometer.**
+    (`numberOfRuns: 5` statt 3 → der Median ist robuster gegen VM-Streuung/Kaltstart-Ausreißer der
+    Runner, die einen 3er-Median an der Kante unter die Schwelle ziehen können.)
+  - **Werkzeug-Pinning (gegen Prüfregel-/Rendering-Drift):** Die A11y-/SEO-Prüfregeln stecken in
+    **axe-core → Lighthouse → `@lhci/cli`**. Deshalb ist `@lhci/cli` **exakt gepinnt** (kein `^`, in
+    `package.json` **und** im Workflow via `npx @lhci/cli@<version> autorun`), und der Runner läuft
+    auf einem **gepinnten Image** (`ubuntu-24.04`, nicht `ubuntu-latest`) → das vorinstallierte
+    Chrome (Rendering) bleibt stabil. **Update = bewusster Bump** beider Stellen (`@lhci/cli` in
+    package.json + Workflow-`npx`-Version, ggf. Runner-Image) + lokaler `npm run audit`-Gegencheck;
+    danach die vier Scores neu bewerten. Nie ungepinnt zurückdrehen — sonst ändern sich Prüfregeln
+    unbemerkt. Der Artefakt-Upload nutzt `include-hidden-files: true` (das `.lighthouseci/`-Dot-
+    Verzeichnis wird von `upload-artifact@v4` sonst übersprungen).
 - **`audit:seo`-Errors werden wie Build-Fehler behandelt:** sofort fixen, nie ignorieren.
   **Warnings** (z. B. das bekannte `og:image`-TODO) gesammelt an Artem melden.
 - Das SEO-Skript auditiert nur **indexierbare** Seiten (`noindex`-Rechts-/Redirect-Seiten und
@@ -491,7 +502,9 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
   Title/Description, Canonical, hreflang (de/en/x-default, reziprok), OG/Twitter, `img alt`,
   JSON-LD-Validität + Pflichttypen, **Fakten-Sync** (Preise/Portale/Rating aus `site.ts` müssen
   im HTML + JSON-LD stehen), interne Links/Anker, GEO-Klartext ohne JS, sowie global
-  `llms.txt` / `robots.txt` (AI-Crawler offen) / Sitemap.
+  `llms.txt` / `robots.txt` (AI-Crawler offen) / Sitemap. **Globale i18n-/CMS-Guards:** DE↔EN-
+  Key-Parität (**G4**), `config.yml`-Deckung aller i18n-Keys (**G5**), keine Randleerzeichen in
+  i18n-Strings (**G6**, gegen Sveltias Trim-Verhalten).
 - Die **GitHub Action** (`.github/workflows/audit.yml`) prüft dasselbe bei jedem Push — ein
   **Wächter**, der den Cloudflare-Deploy **nicht** blockiert (separate Pipeline), aber
   Performance-/SEO-/GEO-Regressionen sichtbar macht. `concurrency` bricht ältere Läufe ab.
@@ -510,17 +523,46 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 
 ## Konventionen & Regeln
 
-- **Alle Texte** in i18n-Dateien (`src/i18n/de.ts` + `en.ts`), **nie** hart in Komponenten —
-  hält DE/EN synchron. **Bewusste Ausnahme:** die Review-Texte liegen beidsprachig in
-  `src/data/reviews.ts` (nicht in den i18n-Dateien), damit Zitat, Autor, Plattform und Sterne
-  eines Eintrags eine untrennbare Einheit bleiben und nie auseinanderlaufen. Der Google-Maps-
-  Rezensionslink ist ein Fakt und steht in `site.ts` (`googleMapsReviewsUrl`).
+- **Alle Texte** in i18n-Dateien, **nie** hart in Komponenten — hält DE/EN synchron. Die Strings
+  liegen als **JSON** in `src/i18n/strings.de.json` + `strings.en.json` (Sveltia-CMS-editierbar);
+  `src/i18n/de.ts` + `en.ts` sind **dünne Wrapper** mit unveränderter API (kein Komponenten-Import
+  ändert sich). `en.ts` prüft die Struktur zur **Buildzeit** (rekursiver Guard) → fehlender oder
+  überzähliger EN-Key **bricht den Build**; `audit:seo` (**G4**) erzwingt zusätzlich DE↔EN-Parität.
+  **Bewusste Ausnahme:** die Review-Texte liegen beidsprachig in `src/data/testimonials.json`
+  (`{ testimonials: [...] }`, via `reviews.ts`-Wrapper), damit Zitat, Autor, Plattform und Sterne
+  eines Eintrags eine untrennbare Einheit bleiben. Der Google-Maps-Rezensionslink ist ein Fakt und
+  steht in `site.ts` (`googleMapsReviewsUrl`).
+- **Text-CMS (Sveltia) unter `/admin`** — pflegt `strings.{de,en}.json`, `testimonials.json` und die
+  Ratgeber-Artikel; ändert am **öffentlichen** Output nichts (kein Skript/Request/Markup auf `/`,
+  `/en/`, Ratgeber). Das Bundle kommt aus der **exakt gepinnten** devDependency `@sveltia/cms`
+  (**kein CDN, kein „latest"**) via `scripts/sync-cms.mjs` (postinstall + prebuild → gitignored
+  `public/admin/sveltia-cms.js`); ein Update ist ein bewusster Versions-Bump + Smoke-Test.
+  `public/admin/config.yml` wird von **`scripts/gen-cms-config.mjs`** aus `strings.de.json`
+  generiert und deckt **100 %** der Keys ab. **Neuer i18n-Key ⇒ `node scripts/gen-cms-config.mjs`
+  laufen lassen und committen** — sonst schlägt `audit:seo` (**G5**) fehl und der Key ginge beim
+  CMS-Speichern verloren. **Jedes generierte Feld ist `required: false`** (bewusst): leere Strings
+  sind bei uns legitimer Inhalt (z. B. `sections.bewertungen.transNote` — **legitim leer in DE**,
+  gefüllt in EN, weil der Hinweis „All reviews translated…" nur im EN-Output sinnvoll ist und
+  konditional gerendert wird). Die Existenz-Garantie liefern der `en.ts`-Buildzeit-Guard + G4/G5,
+  **nicht** Sveltias `required`-Validierung — sonst blockiert das CMS das Speichern legitim leerer
+  Felder. Sveltia schreibt leere optionale Felder als `""` (nicht weggelassen), G4/G5 bleiben grün.
+- **Wortabstände gehören ins Markup, NIE an die String-Ränder.** Sveltia **trimmt** beim Speichern
+  führende/nachgestellte Leerzeichen jedes String-Feldes weg. i18n-Werte, die Teile eines Satzes
+  sind (Inline-Verkettung wie `about.quote`-Segmente, `about.origin.p3pre/p3post`,
+  `about.believe.p1`), dürfen ihren Trennabstand daher **nicht** als Randleerzeichen tragen — der
+  Abstand wird explizit im Template/Markup gesetzt (z. B. `{p3pre}{' '}<strong>…</strong>`, oder ein
+  eigenes Leerzeichen-Token bei der Segment-Verkettung). `audit:seo` (**G6**) erzwingt das: **kein**
+  String-Wert in `strings.{de,en}.json` (rekursiv) darf mit Whitespace beginnen oder enden — so kann
+  ein CMS-Save (oder Handedit) diese Fehlerklasse nie wieder unbemerkt einschleusen.
 - **Alle Produkt-Fakten** (Store-Links, Preise, Bewertungen, Portale) in `src/data/site.ts` —
   eine Quelle der Wahrheit.
 - **Bilder** immer über `astro:assets` / `<Image>` (WebP/AVIF, responsive).
 - **Keine Fake-Live-Zähler** und keine erfundenen Daten (z. B. „gerade X Angebote online").
   Eine gezeigte Push-Benachrichtigung ist ok (echte Funktion), erfundene Marktzahlen nicht.
 - **Keine Portal-Logos** (rechtlich) — nur Text-Namen.
+- **Abgesenkter Text auf MainBlack (`#3b3b3a`)** nutzt den Weiß-Token (`#f6f6f6`) mit **mindestens
+  `0.6` Deckkraft** — darunter reißt der WCAG-Kontrast von 4,5:1 (Referenzfall `.p3-row-label`:
+  `0.6` = 4,88:1, `0.55` = 4,38:1 ✗).
 - **Mobile-first**; mobiler Lighthouse-Score ~100 halten (Animationen mit Performance-Budget).
 - **`prefers-reduced-motion`** respektieren (Animationen reduzieren/abschalten).
 - **Secrets:** GTM-ID darf ins Repo (öffentlich). Echte Keys/Tokens **nie** ins Repo — in

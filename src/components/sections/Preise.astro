@@ -58,8 +58,12 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
 <section id="preise" aria-labelledby="preise-h" class="pr2-section" data-pr2-section>
   <div class="pr2-inner">
     <div class="pr2-grid">
-      {/* ================= LINKS: Argumente ================= */}
-      <div class="pr2-left">
+      {/* ================= INTRO (Eyebrow · H2 · Copy) =================
+          DOM-Reihenfolge = mobile Lesereihenfolge: Intro → Karte → Rest. Desktop
+          (≥960px) setzt die Blöcke per grid-template-areas zurück in die alte
+          zweispaltige Anordnung (Intro+Rest links, Karte rechts, mittig) → visuell
+          unverändert. Mobil steht so der Preis früh (H2 → Toggle/Karte → Vorteile). */}
+      <div class="pr2-left pr2-intro">
         <p class="pr2-eyebrow" data-pr2-reveal>{P.eyebrow}</p>
 
         <h2 id="preise-h" class="pr2-h2">
@@ -77,49 +81,9 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
         </h2>
 
         <p class="pr2-copy" data-pr2-reveal>{P.copy}</p>
-
-        <ul class="pr2-checks">
-          {
-            P.checks.map((c) => (
-              <li class="pr2-check" data-pr2-reveal>
-                <span class="pr2-check-ic" aria-hidden="true" set:html={CHECK_ICON} />
-                <span class="pr2-check-tx">{c}</span>
-              </li>
-            ))
-          }
-        </ul>
-
-        <p class="pr2-stat" data-pr2-reveal>
-          {stat}
-          <sup class="pr2-fn"><a href="#quellen" aria-label={fnLabel}>2</a></sup>
-        </p>
-
-        {/* App laden — Desktop: gemeinsame Floating-Karte (QR links · Hinweis + Badges
-            rechts). Mobile: KEINE Karte, nur die Store-Badges (QR + Hinweis ausgeblendet). */}
-        <div class="pr2-getapp" data-pr2-reveal>
-          <div class="pr2-dlcard">
-            <div class="pr2-qr">
-              <QrCode
-                campaign="preise_cta"
-                size={116}
-                surface="white"
-                ariaLabel={
-                  lang === 'en'
-                    ? 'QR code: get the app — takes you to the right app store'
-                    : 'QR-Code: App laden — führt zum passenden App-Store'
-                }
-              />
-            </div>
-            <div class="pr2-dlcard-right">
-              <p class="pr2-dlhint">{P.qrCaption}</p>
-              {/* Tracking pro Platzierung: iOS ct=Homepage_Pricing · Android utm_content=pricing. */}
-              <StoreBadges position="Homepage_Pricing" androidPosition="pricing" class="pr2-badges" />
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* ================= RECHTS: die Karte ================= */}
+      {/* ================= KARTE („Der Schalter") ================= */}
       <div class="pr2-card" data-pr2-card data-pr2 data-plan="month">
         {/* Schalter — Default MONAT (ohne JS vollständig korrekt). */}
         <div class="pr2-toggle" role="group" aria-label={P.toggleAria}>
@@ -161,6 +125,49 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
 
         {/* Buildzeit-Strings für den Schalter (kein Zahl-JS). */}
         <script type="application/json" data-pr2-config is:inline set:html={JSON.stringify(toggleConfig)} />
+      </div>
+
+      {/* ================= REST (Vorteile · Stat · App laden) ================= */}
+      <div class="pr2-rest">
+        <ul class="pr2-checks">
+          {
+            P.checks.map((c) => (
+              <li class="pr2-check" data-pr2-reveal>
+                <span class="pr2-check-ic" aria-hidden="true" set:html={CHECK_ICON} />
+                <span class="pr2-check-tx">{c}</span>
+              </li>
+            ))
+          }
+        </ul>
+
+        <p class="pr2-stat" data-pr2-reveal>
+          {stat}
+          <sup class="pr2-fn"><a href="#quellen" aria-label={fnLabel}>2</a></sup>
+        </p>
+
+        {/* App laden — Desktop: gemeinsame Floating-Karte (QR links · Hinweis + Badges
+            rechts). Mobile: KEINE Karte, nur die Store-Badges (QR + Hinweis ausgeblendet). */}
+        <div class="pr2-getapp" data-pr2-reveal>
+          <div class="pr2-dlcard">
+            <div class="pr2-qr">
+              <QrCode
+                campaign="preise_cta"
+                size={116}
+                surface="white"
+                ariaLabel={
+                  lang === 'en'
+                    ? 'QR code: get the app — takes you to the right app store'
+                    : 'QR-Code: App laden — führt zum passenden App-Store'
+                }
+              />
+            </div>
+            <div class="pr2-dlcard-right">
+              <p class="pr2-dlhint">{P.qrCaption}</p>
+              {/* Tracking pro Platzierung: iOS ct=Homepage_Pricing · Android utm_content=pricing. */}
+              <StoreBadges position="Homepage_Pricing" androidPosition="pricing" class="pr2-badges" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -220,22 +227,43 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
   }
   .pr2-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    /* minmax(0,1fr): der einspaltige Track darf unter die Content-Min-Größe
+       schrumpfen. Sonst bläht der H2-Marker (nowrap) den Track auf < 960px auf
+       (v. a. EN „Everything included." als Phrasen-Marker) → horizontaler Overflow.
+       Ab 960px überschreibt der Zwei-Spalten-Query diese Deklaration. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 40px;
     align-items: center;
   }
-  /* Desktop: zwei Spalten (Argumente | Karte ~440px), vertikal zentriert. */
+  /* Desktop: zwei Spalten (Argumente | Karte ~440px), vertikal zentriert. Intro und
+     Rest liegen (via grid-areas) wieder gestapelt in der linken Spalte, die Karte
+     rechts über beide Zeilen → optisch die alte einspaltige Argument-Kolumne. Der
+     Row-Gap 18px entspricht exakt dem früheren .pr2-left-Flex-Gap → unverändert. */
   @media (min-width: 960px) {
     .pr2-grid {
       grid-template-columns: 1fr minmax(0, 440px);
-      gap: 72px;
+      grid-template-areas:
+        'intro card'
+        'rest card';
+      column-gap: 72px;
+      row-gap: 18px;
+    }
+    .pr2-intro {
+      grid-area: intro;
+    }
+    .pr2-rest {
+      grid-area: rest;
+    }
+    .pr2-card {
+      grid-area: card;
     }
   }
 
   /* =====================================================================
-     Links — Argument-Stack.
+     Links — Argument-Stack (Intro + Rest teilen dieselbe Spalten-Optik).
      ===================================================================== */
-  .pr2-left {
+  .pr2-left,
+  .pr2-rest {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -538,6 +566,27 @@ const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff03c" stroke
   @media (max-width: 767.98px) {
     .pr2-card {
       padding: 24px;
+    }
+    /* „Preis zuerst": Preisbetrag mobil dominanter (moderat angehoben), da die Karte
+       jetzt früh (direkt nach der H2) steht und der Preis der Ankerpunkt ist. */
+    .pr2-price {
+      font-size: clamp(52px, 15vw, 64px);
+    }
+    /* Backstop: H2 nie breiter als seine (einspaltige) Spalte — die Zeilen-Masks
+       klippen etwaigen Rest. Greift nur, falls ein Zeilen-Marker die Spalte
+       überragt (s. u. Font-Reduktion auf sehr schmalen Screens). */
+    .pr2-h2 {
+      max-width: 100%;
+    }
+  }
+  /* Sehr schmale Phones (≤360px): der Phrasen-Marker der H2-Zeile 2 ist nowrap
+     (Marker-Geometrie) — in EN „Everything included." ~297px bei 33,6px Schrift und
+     sprengt die 272px-Spalte bei 320px. Headline hier dezent kleiner setzen, damit
+     die längste Marker-Zeile in die Spalte passt (statt geklippt zu werden). DE
+     („Alles drin.") ist kurz und bleibt ohnehin unauffällig. Ab 361px volle Größe. */
+  @media (max-width: 360px) {
+    .pr2-h2 {
+      font-size: 1.75rem;
     }
   }
 

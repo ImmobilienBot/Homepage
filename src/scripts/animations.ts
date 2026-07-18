@@ -46,6 +46,8 @@ function initSmoothScroll() {
     lenis.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
+  // Für das Mobile-Menü-Overlay (Header): Scroll-Lock via lenis.stop()/start().
+  (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
   return lenis;
 }
 
@@ -127,72 +129,20 @@ function initHeroReveal() {
  * Die Ruhelage der hinteren Phones steht auch in Hero.astro-CSS (Fallback);
  * die Werte hier MÜSSEN dazu passen.
  */
-const FAN_REST = {
-  // Exakt spiegelgleich (nur Vorzeichen von xPercent unterschiedlich): identischer
-  // vertikaler Versatz, identische Skalierung. transform-origin OBEN (siehe Tween)
-  // + POSITIVER yPercent → hintere Phones sitzen tiefer; Oberkanten unter der Notch.
-  // Größerer Außen-Versatz (±44) → mehr Fläche sichtbar UND klarer Spalt zwischen
-  // den hinteren Phones. yPercent +12 (statt 16) hält die Unterkanten INNERHALB des
-  // Front-Phones (bottom ≈ 98 %) → keine überstehenden/gekreuzten Rahmen unten.
-  // MUSS exakt zur CSS-Ruhelage in Hero.astro passen.
-  left: { xPercent: -44, yPercent: 12, scale: 0.86 },
-  right: { xPercent: 44, yPercent: 12, scale: 0.86 },
-} as const;
-
 // Gesamt-Start der Phone-Cluster-/Notification-Sequenz nach hinten schieben
 // (kurze Ruhe am Anfang). Reihenfolge/Dauern/Easings bleiben unverändert; NUR
 // der Cluster + Notifications — die Headline/Text-Reveal ist davon unberührt.
 const HERO_START_DELAY = 0.5;
 
 function initPhoneCluster() {
-  const backs = gsap.utils.toArray<HTMLElement>('#hero [data-phone-back]');
-
-  // a) Front-Phone = LCP-Element (größtes Bild, loading=eager + fetchpriority=high).
-  //    Es wird BEWUSST NICHT mehr per gsap.from(autoAlpha:0) versteckt: das hielt
-  //    den Contentful Paint bis zum JS-Lauf zurück und schob den LCP ~1 s über den
-  //    FCP (Lighthouse: LCP-Render-Delay). Es bleibt ab dem First Paint sichtbar;
-  //    die Auftritts-Choreografie spielt UM den Anker herum (Notifications, Glow,
-  //    hintere Phones) — der Look bleibt erhalten.
-
-  // NUR Desktop: mobil sind die hinteren Phones ausgeblendet (hidden md:block).
-  if (!isDesktopHero) return;
-
-  // Reveal-Reihenfolge: 1) mittleres Phone (oben) → 2) gelber Glow dahinter →
-  //    3) die zwei seitlichen Phones. b) Der Glow fadet NACH dem Haupt-Phone ein
-  //    (Endzustand = CSS-Ruhe-Opacity, additiv via gsap.from → kein CLS).
-  const glow = document.querySelector<HTMLElement>('#hero .phone-glow');
-  if (glow) {
-    gsap.from(glow, {
-      autoAlpha: 0,
-      duration: 0.6,
-      ease: 'power3.out',
-      delay: HERO_START_DELAY + 0.55, // nach dem mittleren Phone
-    });
-  }
-
-  // c) DANACH (nach dem Glow) die hinteren Phones aufrecht seitlich hervorfahren
-  //    (gestaffelt). Start = deckungsgleich hinter dem Front-Phone (xPercent 0),
-  //    aufrecht. transform-origin OBEN (50% 0%) → beim Skalieren bleibt die Oberkante
-  //    verankert; mit positivem yPercent liegen die Oberkanten unter der Notch.
-  //    Muss zur Hero.astro-CSS passen. x:0/y:0 neutralisieren geerbten px-Versatz.
-  backs.forEach((el, i) => {
-    const rest = FAN_REST[el.dataset.fan as keyof typeof FAN_REST];
-    if (!rest) return;
-    gsap.fromTo(
-      el,
-      { x: 0, y: 0, xPercent: 0, yPercent: 0, scale: 1, autoAlpha: 0, transformOrigin: '50% 0%' },
-      {
-        xPercent: rest.xPercent,
-        yPercent: rest.yPercent,
-        scale: rest.scale,
-        autoAlpha: 1,
-        transformOrigin: '50% 0%',
-        duration: 0.8,
-        ease: 'power3.out',
-        delay: HERO_START_DELAY + 1.1 + i * 0.15, // nach dem Glow, gestaffelt
-      },
-    );
-  });
+  // HERO-KANDIDAT V2: KEIN Auffächern mehr. Alle drei Phones (Front + die zwei
+  // hinteren) und der gelbe Glow stehen ab dem Erstrender STATISCH in ihrer CSS-
+  // Ruhelage (Fallback-Positionen, die es ohnehin schon gab). Diese Funktion
+  // animiert daher nichts — nur die Push-Karten treten noch gestaffelt auf
+  // (initHeroNotifications). Front-Phone bleibt LCP-Anker (nie autoAlpha-versteckt).
+  // Mobil sind die hinteren Phones ausgeblendet (hidden md:block); dort war nie ein
+  // Fächer. Ohne JS / reduced-motion war der Cluster schon immer statisch = identisch.
+  return;
 }
 
 /**
@@ -281,6 +231,9 @@ function initHeroChoreography() {
  */
 function initHeroCanvas() {
   if (!window.matchMedia('(pointer: fine)').matches) return;
+  // Mobile-Pass: Konstellations-Canvas unterhalb lg GAR NICHT initialisieren
+  // (das weiche gelbe CSS-Glow trägt die Tiefe). Desktop ≥1024px unverändert.
+  if (!window.matchMedia('(min-width: 1024px)').matches) return;
   const canvas = document.querySelector<HTMLCanvasElement>('#hero [data-hero-canvas]');
   const hero = document.querySelector<HTMLElement>('#hero');
   if (!canvas || !hero) return;
@@ -582,6 +535,9 @@ function initCursor() {
  * damit er nicht stört. Nur Opacity (scrub). CSS-Loop (Punkt) läuft separat.
  */
 function initHeroScrollCue() {
+  // Mobile-Pass: der Scroll-Cue erscheint nur ≥1024px (CSS ebenso gegated) → mobil
+  // gar kein Fixed-Element, kein ScrollTrigger/Listener.
+  if (!window.matchMedia('(min-width: 1024px)').matches) return;
   const cue = document.querySelector<HTMLElement>('#hero [data-hero-cue]');
   if (!cue) return;
   gsap.to(cue, {
@@ -611,6 +567,72 @@ function initHeroScrollCue() {
  * FONT-GATE beibehalten. reduced-motion / ohne JS: KEINE Fläche, KEIN Effekt — statische
  * „43.000" (DOM) auf dunklem BG + alles sofort sichtbar. DPR ≤ 2. Vom Hero-Canvas entkoppelt.
  */
+/**
+ * Problem — sequentieller Count-up der Mobile-„Anzeigetafel" (< 1024px). Desktop
+ * (Scrub/Partikel) bleibt initProblem3c vorbehalten. Läuft im !prefersReducedMotion-
+ * Bündel → unter reduced-motion gar nicht erst aufgerufen (statische Endwerte). Sequenz
+ * beim Betreten (IntersectionObserver, once): 43.000 ~1,2s easeOutExpo → 30 ~0,5s →
+ * 288 ~0,5s, Startversatz ~150ms, gesamt < 2s. Ziel/Locale aus data-Attributen (aus
+ * site.ts problemStat gerendert) — keine zweite Zahlenquelle; Endwerte = statisches DOM.
+ */
+function initProblemMobile() {
+  if (window.matchMedia('(min-width: 1024px)').matches) return; // Desktop = initProblem3c
+  const board = document.querySelector<HTMLElement>('#problem [data-p3-board]');
+  if (!board) return;
+  const section = document.querySelector<HTMLElement>('#problem.problem3c');
+  if (!section) return;
+  const nums = Array.from(board.querySelectorAll<HTMLElement>('[data-p3-board-num]'));
+  if (!nums.length) return;
+  const nf = new Intl.NumberFormat(board.dataset.p3Locale === 'en' ? 'en-US' : 'de-DE');
+  const easeOutExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
+
+  const countOne = (el: HTMLElement, target: number, dur: number) =>
+    new Promise<void>((resolve) => {
+      let start: number | null = null;
+      const step = (ts: number) => {
+        if (start === null) start = ts;
+        const p = Math.min((ts - start) / dur, 1);
+        el.textContent = nf.format(Math.round(target * easeOutExpo(p)));
+        if (p < 1) requestAnimationFrame(step);
+        else {
+          el.textContent = nf.format(target); // exakter Endwert
+          resolve();
+        }
+      };
+      requestAnimationFrame(step);
+    });
+
+  const durations = [1200, 500, 500]; // 43.000 → 30 → 288
+  const runSequence = () => {
+    // Jede nächste Zahl startet ~150ms VOR dem Ende der vorigen (fließend, gesamt <2s:
+    // 1200 + (500−150) + (500−150) = 1900ms).
+    let startAt = 0;
+    for (let i = 0; i < nums.length; i++) {
+      const target = parseInt(nums[i].dataset.target || '0', 10);
+      const dur = durations[i] ?? 500;
+      window.setTimeout(() => void countOne(nums[i], target, dur), startAt);
+      startAt += Math.max(dur - 150, 0);
+    }
+  };
+
+  // Late-Setup-Garde: liegt die Sektion beim (verzögerten) Setup schon an/über der
+  // Startlinie, NICHT auf 0 zurücksetzen → statischer Endzustand steht sofort.
+  if (isPastRevealStart(section, 0.65)) return;
+  for (const el of nums) el.textContent = nf.format(0); // below-fold, unsichtbar
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          io.disconnect();
+          runSequence();
+        }
+      }
+    },
+    { threshold: 0.35 },
+  );
+  io.observe(section);
+}
+
 async function initProblem3c() {
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
   const stage = document.querySelector<HTMLElement>('[data-p3-stage]');
@@ -625,6 +647,10 @@ async function initProblem3c() {
   // per gsap.set(autoAlpha:0) versteckt. Dann gar nicht erst verstecken/formen: das
   // statische Fallback (sichtbare DOM-„43.000" + Headline) steht wie bei reduced-motion.
   if (isPastRevealStart(section, 0.85)) return;
+  // Mobile-Pass: Partikel-Canvas unterhalb lg GAR NICHT initialisieren. Ohne die
+  // Formung bleibt die statische DOM-„43.000" + Headline/Statistik sofort sichtbar
+  // (identisch zum reduced-motion-/No-JS-Fallback). Desktop ≥1024px unverändert.
+  if (!window.matchMedia('(min-width: 1024px)').matches) return;
 
   const fine = window.matchMedia('(pointer: fine)').matches;
   const YELLOW = '#fff03c';
@@ -1050,8 +1076,10 @@ function initPortale() {
       tl.from(phoneStage, { autoAlpha: 0, xPercent: isDesktop ? 10 : 0, y: isDesktop ? 0 : 20, duration: 0.85 }, 0.45);
   }
 
-  // Flug-Choreografie nur am Desktop-Breakpoint (unabhängig vom Entry-Reveal).
-  if (isDesktop) setupPortaleFlight(section, pills, fine);
+  // Flug-Choreografie (rAF + SVG-Overlay + Ping) erst ab lg — Mobile-Pass: unterhalb
+  // 1024px GAR NICHT initialisieren (Phone zeigt die 2 statischen Pushes). Desktop
+  // ≥1024px unverändert; das Entry-Reveal oben bleibt an beiden Breakpoints.
+  if (window.matchMedia('(min-width: 1024px)').matches) setupPortaleFlight(section, pills, fine);
 }
 
 /**
@@ -1462,6 +1490,35 @@ function initBewertungen() {
   if (tiles.length)
     tl.to(tiles, { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.12, clearProps: 'transform' }, 0.45);
   if (rows.length) tl.to(rows, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.15 }, 0.7);
+}
+
+/**
+ * Marquee-Klone der Bewertungen-Reihen ERST clientseitig, nach First Paint/LCP
+ * (läuft im Idle-Bündel). Das Server-HTML enthält jedes Testimonial nur EINMAL
+ * (halbe Marquee-DOM-Last im kritischen Pfad → weniger Style-Recalc über das
+ * Gesamt-DOM). Hier hängt je Reihe genau EIN aria-hidden-Klon-Set an den Track
+ * (nahtloser -50%-Loop) und markiert die Reihe als `.is-marquee` → der CSS-Loop
+ * startet erst JETZT (nie ohne Klone → kein Sprung/keine Lücke). Klonen ist rein
+ * horizontal (gleiche Reihenhöhe) → kein Layout-Shift/CLS. Idempotent. Unter
+ * `prefers-reduced-motion` wird die Funktion NICHT aufgerufen (Reihe bleibt eine
+ * nativ scrollbare Einzelreihe ohne Autoplay — wie bisher).
+ */
+function initReviewMarquee() {
+  const rows = gsap.utils.toArray<HTMLElement>('#bewertungen [data-bw-marquee]');
+  rows.forEach((row) => {
+    const track = row.querySelector<HTMLElement>('.bw-track');
+    if (!track || track.querySelector('.bw-clones')) return; // idempotent
+    // Klon-Set aufbauen und EINMAL anhängen (ein Reflow statt N).
+    const clones = document.createElement('div');
+    clones.className = 'bw-clones';
+    clones.setAttribute('aria-hidden', 'true');
+    for (const card of Array.from(track.children)) {
+      clones.appendChild(card.cloneNode(true));
+    }
+    track.appendChild(clones);
+    // Loop erst freigeben, wenn das Klon-Set steht.
+    row.classList.add('is-marquee');
+  });
 }
 
 /**
@@ -2181,10 +2238,12 @@ runIdle(() => {
     });
     if (lenis) safeInit('AnchorScroll', () => initAnchorScroll(lenis!));
     safeInit('Problem3c', () => initProblem3c());
+    safeInit('ProblemMobile', () => initProblemMobile());
     safeInit('BenefitLottie', () => initBenefitLottie());
     safeInit('Portale', () => initPortale());
     safeInit('Ablauf', () => initAblauf());
     safeInit('Bewertungen', () => initBewertungen());
+    safeInit('ReviewMarquee', () => initReviewMarquee());
     safeInit('Preise', () => initPreise());
     safeInit('Faq', () => initFaq());
     safeInit('Kontakt', () => initKontakt());

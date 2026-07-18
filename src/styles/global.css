@@ -70,6 +70,22 @@
   /* ---- Radien ---- */
   --radius-pill: 9999px; /* Buttons: Pill-Form */
   --radius-card: 1rem;   /* Karten/Container: dezent abgerundet */
+
+  /* Einheitlicher Kopf→Inhalt-Abstand (Eyebrow/Headline → Sektionsinhalt) auf Mobile.
+     Sektionen referenzieren ihn im <lg-Zweig statt eigener Sonderwerte. */
+  --head-gap-mobile: 2.25rem; /* 36px */
+}
+
+/* =====================================================================
+   Mobile-Rhythmus (< lg): EIN einheitlicher vertikaler Sektionsabstand statt der
+   clamp-Skala — zentrales Ordnungsprinzip auf kleinen Screens. Alle Standard-
+   Sektionen erben ihn über --spacing-section (padding-block); keine Sonderabstände.
+   Desktop ≥1024px bleibt bei der clamp-Skala (unverändert).
+   ===================================================================== */
+@media (max-width: 1023.98px) {
+  :root {
+    --spacing-section: 4.75rem; /* 76px — einheitlicher Mobile-Sektionsrhythmus */
+  }
 }
 
 @layer base {

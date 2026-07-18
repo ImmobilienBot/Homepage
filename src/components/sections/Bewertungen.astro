@@ -141,6 +141,10 @@ const rows = [
       rows.map((row) => (
         <div class:list={['bw-row', row.mod]} data-bw-marquee>
           <div class="bw-track">
+            {/* Jedes Testimonial GENAU EINMAL im Server-HTML (halbe DOM-Last im
+                kritischen Pfad). Das nahtlose Klon-Set für den -50%-Loop erzeugt
+                initReviewMarquee() clientseitig NACH dem First Paint/LCP und setzt
+                erst dann .is-marquee auf die Reihe (→ Loop startet nie ohne Klone). */}
             {row.items.map((r) => (
               <QuoteCard
                 quote={r.text[lang]}
@@ -150,18 +154,6 @@ const rows = [
                 srText={B.starsSr.replace('{n}', String(r.rating))}
               />
             ))}
-            {/* Genau EIN Klon-Set (aria-hidden) → nahtloser -50%-Loop, halbe DOM-Last. */}
-            <div class="bw-clones" aria-hidden="true">
-              {row.items.map((r) => (
-                <QuoteCard
-                  quote={r.text[lang]}
-                  author={r.author}
-                  platform={reviewPlatformLabel[r.platform]}
-                  stars={r.rating}
-                  srText={B.starsSr.replace('{n}', String(r.rating))}
-                />
-              ))}
-            </div>
           </div>
         </div>
       ))
@@ -296,14 +288,30 @@ const rows = [
     gap: 16px;
   }
   .bw-row {
-    overflow: hidden;
+    /* Standard (kein .is-marquee → ohne JS UND unter reduced-motion): horizontal
+       scrollbar → JEDES Testimonial bleibt erreichbar (die einfache, ungeklonte
+       Reihe würde von reinem overflow:hidden geclippt). overflow-y bleibt hidden
+       (Schatten-Clipping wie gehabt). Sobald JS die Klone erzeugt + .is-marquee
+       setzt, kippt die Reihe auf reines overflow:hidden (Loop, keine Scrollbar). */
+    overflow-x: auto;
+    overflow-y: hidden;
     /* 4f: großzügiges Innen-Padding → overflow:hidden clippt NICHT die Karten-Schatten
        und die Sprechblasen-Spitze. Die negative margin-block kompensiert exakt (Netto
        ±10px wie zuvor) → Sektions-Rhythmus + Zeilenabstand bleiben identisch. */
     padding-block: 40px;
     margin-block: -30px;
-    /* Isoliert Layout/Paint der breiten Reihe vom Rest (kein Reflow-Ping-Pong). */
-    contain: layout paint;
+    /* PERF (LCP-Render-Delay-Fix): Die zwei Marquee-Reihen sind ~49 % des gesamten
+       Homepage-DOM (21 Karten × Klon-Set je Reihe) und liegen IMMER below-the-fold.
+       `content-visibility: auto` überspringt Style/Layout/Paint der off-screen Reihe
+       bis sie in Viewport-Nähe kommt → kappt den größten Brocken der initialen
+       Style-&-Layout-Arbeit, die sonst den First Paint des LCP-Elements (Hero-Phone)
+       blockiert. Ersetzt das frühere `contain: layout paint` (impliziert es). Rein
+       CSS, kein JS; die Reihe hat KEINEN ScrollTrigger-Reveal (nur CSS-Marquee) →
+       keine „leere Sektion"-Gefahr. `contain-intrinsic-size: auto` reserviert einen
+       Platzhalter, merkt sich aber nach dem ersten Rendern die echte Höhe (self-
+       correcting) → CLS bleibt 0. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
@@ -311,11 +319,29 @@ const rows = [
     display: flex;
     width: max-content;
     will-change: transform;
+  }
+  /* Der Loop läuft ERST, wenn initReviewMarquee() clientseitig das Klon-Set erzeugt
+     UND die Reihe als .is-marquee markiert hat — nie ein laufender Loop ohne Klone
+     (sonst Sprung/Lücke). Ohne JS/vor dem Klonen: statische Reihe (via <noscript>
+     bzw. reduced-motion horizontal scrollbar → alle Testimonials erreichbar). */
+  /* Marquee aktiv (Klone da): reines overflow:hidden — keine Scrollbar, sauberer
+     Loop. Höhere Spezifität als die Standard-Reihe → gewinnt, wenn JS .is-marquee
+     setzt. Off-screen (content-visibility-Platzhalter) gesetzt → kein CLS. */
+  .bw-row.is-marquee {
+    overflow: hidden;
+  }
+  .bw-row.is-marquee .bw-track {
     animation: bw-marquee var(--dur, 80s) linear infinite;
   }
   /* Klon-Wrapper ohne eigene Box → seine Karten werden direkte Flex-Items des Tracks
-     (uniformer Abstand via margin-right der Karte → nahtloser -50%-Loop über 2 Sets). */
-  .bw-clones {
+     (uniformer Abstand via margin-right der Karte → nahtloser -50%-Loop über 2 Sets).
+     :global ist PFLICHT, kein Stil-Zucker: das Klon-Set erzeugt initReviewMarquee()
+     clientseitig via document.createElement — dieses <div> trägt NICHT das
+     data-astro-cid, an das Astro eine skopte `.bw-clones`-Regel binden würde. Eine
+     skopte Regel griffe also nie, der Wrapper bliebe display:block → alle Klone
+     stapeln vertikal in EINER Track-Spalte (Reihe bläht auf ~2200px, Loop kaputt).
+     Global bindet die Regel an die Klasse allein → greift auch am JS-Knoten. */
+  :global(.bw-clones) {
     display: contents;
   }
   .bw-row--1 .bw-track {
@@ -323,6 +349,10 @@ const rows = [
   }
   .bw-row--2 .bw-track {
     --dur: 74s;
+  }
+  /* Gegenläufige zweite Reihe — Richtung im is-marquee-Scope (gleiche Spezifität wie
+     die Animation, danach in der Quelle → überschreibt animation-direction:normal). */
+  .bw-row--2.is-marquee .bw-track {
     animation-direction: reverse;
   }
   @keyframes bw-marquee {
@@ -330,24 +360,66 @@ const rows = [
       transform: translateX(-50%);
     }
   }
-  /* Hover UND Tastatur-Fokus in der Reihe pausieren die Bewegung. */
-  .bw-row:hover .bw-track,
-  .bw-row:focus-within .bw-track {
+  /* Hover UND Tastatur-Fokus in der Reihe pausieren die Bewegung. Unter .is-marquee
+     gescoped: (a) semantisch korrekt (Pause zählt nur bei laufendem Loop), (b) nötig,
+     damit die Regel die gleich-scoped `animation`-Shorthand-Deklaration (die
+     play-state implizit auf running setzt) in der Spezifität schlägt. */
+  .bw-row.is-marquee:hover .bw-track,
+  .bw-row.is-marquee:focus-within .bw-track {
     animation-play-state: paused;
   }
 
   /* =====================================================================
      Mobile — Kacheln untereinander, kompakter.
      ===================================================================== */
+  /* Mobile (< 768px): drei Aggregat-Kacheln NEBENEINANDER (kompakt). Die volle
+     5-Sterne-Reihe wäre in ~85px-Kacheln bei 320px zu breit → ausgeblendet und durch
+     Zahl + EINEN Stern ersetzt (Score bleibt im aria-label der Kachel). Plattform-
+     Label klein/eng, damit „GOOGLE MAPS" bei 320px passt. 768–1023px behalten die
+     Basis (3 Kacheln mit voller Sterne-Reihe). */
   @media (max-width: 767.98px) {
     .bw-h2 {
       font-size: clamp(1.85rem, 8vw, 2.5rem);
     }
+    /* Einheitlicher Kopf→Inhalt-Abstand (Mobile-Rhythmus, Block 7). */
+    .bw-head {
+      margin-bottom: var(--head-gap-mobile);
+    }
     .bw-tiles {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
     .bw-tile {
-      padding: 16px;
+      align-items: center;
+      text-align: center;
+      gap: 5px;
+      padding: 12px 6px;
+      border-radius: 12px;
+    }
+    .bw-tpill {
+      padding: 3px 6px;
+      font-size: 9px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    /* Volle Sterne-Reihe raus; stattdessen Score + ein Stern (prominent). */
+    .bw-tile :global(.star-rating) {
+      display: none;
+    }
+    .bw-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: clamp(1.25rem, 6.5vw, 1.6rem);
+    }
+    .bw-score::after {
+      content: '★';
+      font-size: 0.66em;
+      line-height: 1;
+      color: var(--color-black);
+    }
+    .bw-count {
+      font-size: 11px;
     }
   }
 
@@ -359,7 +431,10 @@ const rows = [
     .bw-track {
       animation: none;
     }
-    .bw-clones {
+    /* Global (gleicher Grund wie oben: JS-erzeugter Klon-Knoten ohne data-astro-cid).
+       Unter reduced-motion ruft animations.ts initReviewMarquee() ohnehin nicht auf →
+       i. d. R. existiert gar kein Klon-Set; die Regel bleibt als Sicherung bestehen. */
+    :global(.bw-clones) {
       display: none;
     }
     .bw-row {

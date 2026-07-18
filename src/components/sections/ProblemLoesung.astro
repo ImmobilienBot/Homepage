@@ -20,7 +20,7 @@
  * alles sofort sichtbar. Genau EINE H1 bleibt im Hero; hier H2. Fakten aus site.ts.
  */
 import { getLangFromUrl, useTranslations } from '../../i18n';
-import { portalCount } from '../../data/site';
+import { portalCount, problemStat } from '../../data/site';
 import type { Locale } from '../../data/site';
 
 const lang: Locale = getLangFromUrl(Astro.url);
@@ -37,6 +37,23 @@ const headSuffix = headIdx >= 0 ? P.headline.slice(headIdx + headMark.length) : 
 const benefits = P.benefits.map((b) => ({
   label: b.label.replace('{n}', String(portalCount)),
 }));
+
+// EINE Zahlenquelle: site.ts problemStat, locale-formatiert. Der Desktop-Satz UND das
+// Mobile-Scoreboard rendern daraus — keine zweite Zahlenquelle, keine abweichende
+// Formatierung. Ohne JS / reduced-motion stehen die Endwerte statisch im DOM.
+const nf = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'de-DE');
+const bigNumber = nf.format(problemStat.applicants); // „43.000" / „43,000"
+const statText = P.stat
+  .replace('{flats}', nf.format(problemStat.flats))
+  .replace('{minutes}', nf.format(problemStat.minutes));
+const countLocale = lang === 'en' ? 'en' : 'de';
+
+// Mobile-Scoreboard: drei uniforme Stat-Zeilen (Zahl groß + Label). 43.000 = Emphasis.
+const boardRows = [
+  { value: problemStat.applicants, display: bigNumber, label: P.board.applicants, accent: true },
+  { value: problemStat.minutes, display: nf.format(problemStat.minutes), label: P.board.minutes, accent: false },
+  { value: problemStat.flats, display: nf.format(problemStat.flats), label: P.board.flats, accent: false },
+];
 
 // Lottie-Animationen je Vorteil (lazy via animations.ts geladen). Reihenfolge =
 // benefits: Glocke (Push) · Globus (Portale) · Stift (Bewerbung). Als ?url →
@@ -71,18 +88,40 @@ const ICONS = [
         Zahl dort). Ohne JS/reduced-motion: statische DOM-„43.000" sichtbar. */}
     <div class="p3-stat-block">
       <div class="p3-stage" data-p3-stage>
-        <span class="p3-num" data-p3-num>{P.bigNumber}</span>
+        {/* Desktop: Partikel-Fallback-Zahl. Mobile: sr-only (das Scoreboard zeigt sie). */}
+        <span class="p3-num" data-p3-num>{bigNumber}</span>
       </div>
 
-      {/* 2 · Statistik-Satz — kleiner, gedämpft, ENG unter der Zahl. Während der grauen
-          Fläche verborgen (data-p3-reveal), sonst würde Text auf der Fläche „schweben". */}
+      {/* Statistik-Satz — Desktop sichtbar; auf Mobile sr-only, damit der Zusammenhang
+          (inkl. 43.000 aus der Zahl darüber) vorlesbar bleibt, während das Scoreboard
+          ihn visuell ersetzt. data-p3-reveal wie bisher. */}
       <p class="p3-stat" data-p3-reveal>
-        {P.stat}<a
-          href="#quelle-statistik"
-          class="p3-ast"
-          aria-label="Quelle der Statistik (Fußnote)">1</a
-        >
+        {statText}<a href="#quelle-statistik" class="p3-ast" aria-label="Quelle der Statistik (Fußnote)">1</a>
       </p>
+
+      {/* Mobile-Scoreboard (nur <lg, aria-hidden — der sr-only Satz oben trägt die
+          Aussage). EIN typografisches System: drei uniforme Zeilen, Zahl groß
+          (tabular-nums) + Label klein uppercase. Sequentieller Count-up per JS
+          (initProblemMobile); ohne JS/reduced-motion stehen die Endwerte statisch. */}
+      <div class="p3-board" data-p3-board data-p3-locale={countLocale} aria-hidden="true">
+        {
+          boardRows.map((row) => (
+            <div class="p3-row">
+              <span
+                class:list={['p3-row-num', row.accent && 'is-accent']}
+                data-p3-board-num
+                data-target={row.value}
+              >
+                {row.display}
+              </span>
+              {/* Quellen-Fußnote (klein) an der Emphasis-Zahl; der reale Link steckt im
+                  sr-only Satz. Geschwister des Count-up-Spans → wird nicht überschrieben. */}
+              {row.accent && <sup class="p3-row-fn" aria-hidden="true">1</sup>}
+              <span class="p3-row-label">{row.label}</span>
+            </div>
+          ))
+        }
+      </div>
     </div>
 
     {/* 3 · Umkehr-Headline (H2) — groß, voller Kontrast, Marker nur auf „du".
@@ -392,8 +431,14 @@ const ICONS = [
     }
   }
 
-  /* Partikel-Canvas + Übergangs-Fläche nur mit JS + erlaubter Bewegung sichtbar. */
-  @media (prefers-reduced-motion: no-preference) {
+  /* Partikel-Canvas + Übergangs-Fläche nur mit JS + erlaubter Bewegung UND ab lg
+     sichtbar. WICHTIG (Mobile-Guardrail): Formung und Wisch werden ausschließlich
+     ≥1024px per JS (initProblem3c) getrieben — unterhalb lg kehrt der Init früh
+     zurück. Würde die graue .section-wipe hier per CSS eingeblendet, bliebe sie
+     mangels JS-Wisch DAUERHAFT als grauer Vorhang (z-5) über der Sektion stehen =
+     unsichtbare Problem-Sektion. Darum an dieselbe 1024px-Grenze wie der JS-Gate
+     koppeln → mobil kein Canvas/Vorhang, der statische DOM-Inhalt steht sofort. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
     :global(html.js) .p3-canvas,
     :global(html.js) .section-wipe {
       display: block;
@@ -408,5 +453,79 @@ const ICONS = [
     .p3-benefits {
       gap: 0.75rem 1.25rem;
     }
+  }
+
+  /* =====================================================================
+     Block 3 (Runde 4) — Mobile-„Anzeigetafel". EIN typografisches System: drei
+     uniforme Stat-Zeilen (Zahl groß, tabular-nums, EINE Größe · Label klein
+     uppercase). Nur <lg sichtbar; ≥lg bleibt der Desktop (Partikel-Zahl + Satz)
+     unverändert. Auf Mobile werden die Desktop-Zahl (.p3-num) und der Satz
+     (.p3-stat) sr-only → Aussage bleibt vorlesbar, Scoreboard trägt sie visuell.
+     ===================================================================== */
+  .p3-board {
+    display: none; /* ≥lg: aus (Desktop nutzt Partikel-Zahl + Satz) */
+    width: 100%;
+    max-width: 22rem;
+    margin: clamp(0.75rem, 3vw, 1.5rem) auto 0;
+    text-align: left;
+  }
+  @media (max-width: 1023.98px) {
+    /* Desktop-Zahl + Satz sr-only (Position kollabiert). */
+    .p3-stage {
+      min-height: 0;
+      height: 0;
+    }
+    .p3-num,
+    .p3-stat {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+    }
+    .p3-board {
+      display: block;
+    }
+  }
+  .p3-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    padding-block: clamp(0.55rem, 2.4vw, 0.95rem);
+    border-top: 1px solid rgb(246 246 246 / 0.1);
+  }
+  .p3-row:last-of-type {
+    border-bottom: 1px solid rgb(246 246 246 / 0.1);
+  }
+  .p3-row-num {
+    font-weight: 900;
+    font-size: clamp(3rem, 13vw, 3.75rem); /* EINE Größe für alle drei Zeilen */
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; /* kein Breiten-Zappeln beim Count-up */
+    color: var(--color-offwhite);
+  }
+  .p3-row-num.is-accent {
+    color: var(--color-yellow); /* nur 43.000 = Emphasis */
+  }
+  .p3-row-fn {
+    align-self: flex-start;
+    margin-left: -0.15rem;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: rgb(246 246 246 / 0.5);
+  }
+  .p3-row-label {
+    margin-left: auto; /* Label rechts, Zahlen an EINER linken Kante */
+    font-size: clamp(0.72rem, 3vw, 0.85rem);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(246 246 246 / 0.6); /* Weiß-Token @ 0.6 = 4.88:1 auf #3b3b3a (WCAG 4.5:1) */
   }
 </style>
