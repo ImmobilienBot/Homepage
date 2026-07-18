@@ -15,6 +15,11 @@ import '@fontsource/roboto/latin-900.css';
 // Das für die Hero-Headline genutzte Gewicht (900/Black) preloaden → Font ist
 // vor dem First Paint da, der swap verursacht KEINEN Layout-Shift (Desktop-CLS ~0).
 import robotoBlackWoff2 from '@fontsource/roboto/files/roboto-latin-900-normal.woff2?url';
+// Roboto Regular (400) — Body-/Fließtext-Gewicht. NUR auf Text-LCP-Seiten preloaden
+// (Über-uns): dort ist das LCP-Element ein Fließtext-Absatz in 400; ohne Preload
+// verzögert der Font-Swap dessen finalen Paint (LCP-Render-Delay). Auf der Startseite
+// bewusst NICHT (LCP = Hero-Bild → 400-Preload würde nur mit dem Bild konkurrieren).
+import robotoRegularWoff2 from '@fontsource/roboto/files/roboto-latin-400-normal.woff2?url';
 import '../styles/global.css';
 import SEO from '../components/seo/SEO.astro';
 import Header from '../components/sections/Header.astro';
@@ -34,11 +39,17 @@ interface Props {
   standalone?: boolean;
   /** Zusätzliche JSON-LD-Knoten (z. B. AboutPage) → an den @graph. */
   extraJsonLd?: unknown[];
+  /**
+   * Roboto 400 (Body) zusätzlich preloaden — nur für Seiten, deren LCP-Element
+   * Fließtext ist (Über-uns). Default false (Startseite: LCP = Hero-Bild).
+   */
+  preloadBodyFont?: boolean;
 }
 
 const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd } = Astro.props;
+const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd, preloadBodyFont } =
+  Astro.props;
 ---
 
 <!doctype html>
@@ -56,6 +67,19 @@ const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd
       type="font/woff2"
       crossorigin="anonymous"
     />
+    {/* Roboto Regular (400) nur auf Text-LCP-Seiten (Über-uns) → Font-Swap des
+        LCP-Absatzes vermeiden. */}
+    {
+      preloadBodyFont && (
+        <link
+          rel="preload"
+          href={robotoRegularWoff2}
+          as="font"
+          type="font/woff2"
+          crossorigin="anonymous"
+        />
+      )
+    }
 
     {/* Markiert JS-Verfügbarkeit synchron (vor dem ersten Paint), damit
         Animations-Anfangszustände nur bei aktivem JS versteckt werden —

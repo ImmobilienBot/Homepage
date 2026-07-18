@@ -13,6 +13,6 @@ const A = t.about;
 const jsonLd = buildAboutJsonLd('en', A.meta.title, A.meta.description, A.team.members);
 ---
 
-<BaseLayout title={A.meta.title} description={A.meta.description} extraJsonLd={jsonLd}>
+<BaseLayout title={A.meta.title} description={A.meta.description} extraJsonLd={jsonLd} preloadBodyFont>
   <UeberUns />
 </BaseLayout>
