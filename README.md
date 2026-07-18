@@ -67,6 +67,27 @@ Ist rein optional; die Vorübersetzung immer gegenlesen.
 
 ---
 
+## Freigeben (für Artem) 🚀
+
+Änderungen aus dem `staging`-Branch live schalten – in fünf Schritten, ganz ohne Terminal:
+
+1. **Vorschau prüfen:** [staging.homepage-4f3.pages.dev](https://staging.homepage-4f3.pages.dev)
+   öffnen und schauen, ob die Änderung passt.
+2. **Pull Request öffnen:**
+   [github.com/ImmobilienBot/Homepage/compare/main...staging](https://github.com/ImmobilienBot/Homepage/compare/main...staging)
+   aufrufen.
+   - Steht dort **„There isn't anything to compare"**, ist nichts Offenes da – dann bist du fertig.
+   - Sonst auf **„Create pull request"** klicken und den PR anlegen (Titel/Text sind egal).
+3. **Grün abwarten → mergen:** Unten im PR laufen automatische Prüfungen. Erst wenn alle **grün**
+   sind, auf **„Merge pull request"** und dann **„Confirm merge"** klicken. Cloudflare baut danach
+   automatisch die Live-Seite neu.
+4. **NIEMALS „Delete branch" klicken.** `staging` ist unser dauerhafter Arbeitsbranch und muss
+   bestehen bleiben.
+5. **Live gegenchecken:** Nach ein paar Minuten die echte Website kurz aufrufen und prüfen, dass
+   die Änderung angekommen ist.
+
+---
+
 ## CMS technisch (für Entwickler)
 
 - **Sveltia CMS** liegt ausschließlich unter **`/admin`** (noindex, `Disallow` in `robots.txt`,
