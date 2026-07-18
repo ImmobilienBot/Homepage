@@ -32,10 +32,17 @@ export type Locale = (typeof site.locales)[number];
  * ausschließlich in der Pages Function `functions/api/contact.ts`. Hier stehen nur
  * öffentliche Fakten. Facts-Sync prüft `email` gegen HTML/JSON-LD/llms.txt.
  */
+/** WhatsApp-Nummer im internationalen wa.me-Format (ohne „+"/Leerzeichen). EINE Quelle. */
+const WHATSAPP_NUMBER = '4915567516790';
+
 export const contact = {
   email: 'support@immobilien-bot.de',
   telegramSupport: 'https://t.me/ImmobilienBot_support',
   instagram: 'https://www.instagram.com/immobilienbot/',
+  /** Reine Ziffern-Nummer (Fakt). */
+  whatsapp: WHATSAPP_NUMBER,
+  /** Klick-Ziel des WhatsApp-Kanals — aus `whatsapp` abgeleitet, nie separat hart codieren. */
+  waUrl: `https://wa.me/${WHATSAPP_NUMBER}`,
 } as const;
 
 /* ------------------------------------------------------------------ */

@@ -179,7 +179,7 @@
       "groupRegional": "Regional",
       "accordionTitle": "All {n} portals",
       "accordionSub": "Nationwide & regional",
-      "mobilePhoneAlt": "Immobilien Bot app screen \"Configure search\": a list of property portals, all selected.",
+      "mobilePhoneAlt": "Immobilien Bot app screen “Configure search”: a list of property portals, all selected.",
       "pushTitle": "Immobilien Bot",
       "pushTemplate": "New listing: {flat} – via {portal}",
       "timeNow": "now",
@@ -441,6 +441,9 @@
         "email": "Email",
         "telegram": "Telegram",
         "telegramSub": "The app’s support channel",
+        "whatsapp": "WhatsApp",
+        "whatsappSub": "Support chat",
+        "whatsappAria": "Message us on WhatsApp",
         "instagram": "Instagram",
         "instagramSub": "@immobilienbot"
       },

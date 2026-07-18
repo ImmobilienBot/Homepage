@@ -64,8 +64,8 @@
         "minutes": "Minuten",
         "flats": "Wohnungen"
       },
-      "headline": "Einer davon ist zuerst da: du.",
-      "headlineMark": "du.",
+      "headline": "Eine davon ist zuerst da: deine.",
+      "headlineMark": "deine.",
       "benefits": [
         {
           "label": "Echtzeit-Push"
@@ -441,6 +441,9 @@
         "email": "E-Mail",
         "telegram": "Telegram",
         "telegramSub": "Support-Kanal der App",
+        "whatsapp": "WhatsApp",
+        "whatsappSub": "Support-Chat",
+        "whatsappAria": "Schreib uns bei WhatsApp",
         "instagram": "Instagram",
         "instagramSub": "@immobilienbot"
       },

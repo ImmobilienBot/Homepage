@@ -1,6 +1,6 @@
 ---
-title: "Ablösevereinbarung Nachmieter Vorlage für Deine Wohnung"
-metaTitle: "Ablösevereinbarung Nachmieter Vorlage für Deine Wohnung – Immobilien Bot"
+title: "Ablösevereinbarung Nachmieter Vorlage für deine Wohnung"
+metaTitle: "Ablösevereinbarung Nachmieter Vorlage für deine Wohnung – Immobilien Bot"
 description: "Ablösevereinbarung für den Nachmieter: Was hineingehört, wie du den Zeitwert deiner Küche berechnest und typische Fehler vermeidest – inklusive Vorlage."
 path: "2025/09/24/ablosevereinbarung-nachmieter-vorlage"
 pubDate: "24. September 2025"
