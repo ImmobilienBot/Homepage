@@ -170,9 +170,15 @@ function initHeroNotifications() {
     return;
   }
 
-  // Start nach Haupt-Phone (a) + hinteren Phones (b), damit es nicht unruhig wird.
-  // Um HERO_START_DELAY mitverschoben (gleiche Ruhe am Anfang wie der Cluster).
-  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, delay: 1.8 + HERO_START_DELAY });
+  // „Ping als Ereignis": die erste Karte trifft ~1,2 s nach Init ein (delay 1.1 s +
+  // die 0.1 s Timeline-Position unten). Früher wartete der Start auf das Auffächern
+  // der Phones (1.8 + HERO_START_DELAY ≈ 2,3 s); seit HERO V2 stehen die Phones aber
+  // statisch ab dem Erstrender (initPhoneCluster ist ein No-op) → diese Wartezeit war
+  // ein Rest der alten Fächer-Choreografie. Jetzt an dieselbe Verzögerungslogik wie die
+  // Mobile-Karte angelehnt (HERO_START_DELAY + 0.6). Stagger/Halten/Wiederholung unten
+  // unverändert. Der versteckte Startzustand (keine sichtbare Karte) kommt aus dem
+  // CSS-Gate in Hero.astro (html.js + no-preference + ≥768px) → kein Flash.
+  const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, delay: HERO_START_DELAY + 0.6 });
 
   // Zyklusstart: Stapel leeren.
   tl.set(cards, { autoAlpha: 0, y: -14, scale: 0.96 });
