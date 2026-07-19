@@ -308,6 +308,10 @@ function auditPage(file: string) {
     const hasMailto = $(`a[href="mailto:${contact.email}"]`).length > 0;
     if (!hasMailto)
       add('S16', 'error', page, `mailto:${contact.email} (site.ts contact.email) fehlt als Link im HTML.`);
+    // Sichtbarer WhatsApp-Link auf den Support-Chat (Kontakt-Sektion).
+    const hasWa = $(`a[href="${contact.waUrl}"]`).length > 0;
+    if (!hasWa)
+      add('S16', 'error', page, `${contact.waUrl} (site.ts contact.waUrl) fehlt als Link im HTML.`);
     // JSON-LD: Organization/ContactPoint-E-Mail muss der Kontaktadresse entsprechen.
     const org = ld.find((n) => typeOf(n).includes('Organization')) as Record<string, any> | undefined;
     const cp = org?.contactPoint;
@@ -437,11 +441,15 @@ function auditGlobal(htmlFiles: string[]) {
     }
     if (!llms.includes(String(portalCount)))
       add('G1', 'error', G, `llms.txt nennt die Portalanzahl ${portalCount} nicht.`);
-    // Kontakt-Fakten (E-Mail + Telegram-Support) aus site.ts.
+    // Kontakt-Fakten (alle Kanäle: E-Mail + Telegram + WhatsApp + Instagram) aus site.ts.
     if (!llms.includes(contact.email))
       add('G1', 'error', G, `llms.txt nennt die Kontaktadresse „${contact.email}" nicht.`);
     if (!llms.includes(contact.telegramSupport))
       add('G1', 'error', G, `llms.txt nennt den Telegram-Support-Link nicht.`);
+    if (!llms.includes(contact.waUrl))
+      add('G1', 'error', G, `llms.txt nennt den WhatsApp-Support-Link nicht.`);
+    if (!llms.includes(contact.instagram))
+      add('G1', 'error', G, `llms.txt nennt den Instagram-Kanal-Link nicht.`);
   }
 
   // --- G2: robots.txt ---

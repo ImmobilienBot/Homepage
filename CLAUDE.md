@@ -458,7 +458,7 @@ Entdeckungs- und Empfehlungsschicht.
   `aggregateRating`), `Organization`, `WebSite`, sowie wo sinnvoll `FAQPage` (aus der FAQ-Sektion)
   und `BreadcrumbList`. Strukturierte Fakten decken sich mit `src/data/site.ts`.
 - **`public/llms.txt`:** kompakte, faktische Kurzbeschreibung der App für KI-Systeme (was sie tut,
-  Kernfeatures, Preise, Store-Links, Sprachen) — Fakten aus `site.ts`, konsistent zu JSON-LD.
+  Kernfeatures, Preise, Store-Links, Sprachen, alle Kontaktkanäle) — Fakten aus `site.ts`, konsistent zu JSON-LD.
   Bei Faktenänderungen (`site.ts`) **mitpflegen**.
 
 ---
