@@ -44,6 +44,8 @@ const topicKeys = ['app', 'feedback', 'problem', 'presse', 'sonstiges'] as const
 const IC_MAIL = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff03c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>`;
 const IC_TELEGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff03c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4.5 2.8 11.4c-.6.2-.6 1.1 0 1.3l4.7 1.5 1.8 5.4c.2.5.8.6 1.2.2l2.6-2.5 4.6 3.4c.4.3 1 .1 1.1-.4L21.9 5.2c.1-.6-.4-1-.9-.7Z"/><path d="m7.5 14.2 9-6.4-6.5 7.1"/></svg>`;
 const IC_INSTAGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff03c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="#fff03c" stroke="none"/></svg>`;
+// Generisches Chat-Bubble-Icon (KEIN WhatsApp-Logo — Markenrichtlinien), gleicher Line-Stil.
+const IC_WHATSAPP = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff03c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 20.5l1.6-5.2A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg>`;
 ---
 
 <section id="kontakt" aria-labelledby="kontakt-heading" class="kt-section" data-cursor-dark>
@@ -81,6 +83,19 @@ const IC_INSTAGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none
             >
               <span class="kt-ch-label">{C.channels.telegram}</span>
               <span class="kt-ch-sub">{C.channels.telegramSub}</span>
+            </a>
+          </li>
+          <li class="kt-channel">
+            <span class="kt-ch-ic" aria-hidden="true" set:html={IC_WHATSAPP} />
+            <a
+              class="kt-ch-link"
+              href={contact.waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={C.channels.whatsappAria}
+            >
+              <span class="kt-ch-label">{C.channels.whatsapp}</span>
+              <span class="kt-ch-sub">{C.channels.whatsappSub}</span>
             </a>
           </li>
           <li class="kt-channel">
@@ -434,16 +449,16 @@ const IC_INSTAGRAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none
   }
 
   /* =====================================================================
-     Block G — Mobile (< lg): Kanäle als 3er-Kachel-Reihe. Icon oben, Kanalname
-     darunter (KEINE Adresse → keine Overflow-Falle bei 320px). Ganze Kachel = Link
-     (stretched link). Dark-Card-Stil. Nur <lg; Desktop-Liste unverändert.
+     Block G — Mobile (< lg): Kanäle als Kachel-Grid (2×2 bei vier Kanälen). Icon oben,
+     Kanalname darunter (KEINE Adresse → keine Overflow-Falle bei 320px). Ganze Kachel =
+     Link (stretched link). Dark-Card-Stil. Nur <lg; Desktop-Liste unverändert.
      ===================================================================== */
   @media (max-width: 1023.98px) {
     .kt-channels {
       max-width: none;
       margin-top: 24px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
     .kt-channel {

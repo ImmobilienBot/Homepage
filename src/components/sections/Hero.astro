@@ -20,6 +20,7 @@
 import { Image, getImage } from 'astro:assets';
 import { getLangFromUrl, useTranslations } from '../../i18n';
 import type { Locale } from '../../data/site';
+import { formatDownloads } from '../../data/site';
 import StoreBadges from '../StoreBadges.astro';
 
 import PhoneFrame from '../../assets/images/smartphone-rahmen.svg';
@@ -32,6 +33,9 @@ const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 
 const { headlineLines, markKeyword, notification } = t.hero;
+
+// Downloads-Zahl locale-bewusst aus site.ts (kein Literal in i18n).
+const trustDownloads = t.hero.trust.downloads.replace('{downloads}', formatDownloads(lang));
 
 // Höchstens 4 Karten im Stapel (i18n liefert mehr Meldungen als gezeigt werden).
 const notifItems = notification.items.slice(0, 4);
@@ -98,7 +102,7 @@ function splitLine(line: string) {
         <span class="trust-rating">{t.hero.trust.rating}</span>
         <span class="trust-label">{t.hero.trust.ratingLabel}</span>
         <span class="trust-sep" aria-hidden="true"></span>
-        <span class="trust-downloads">{t.hero.trust.downloads}</span>
+        <span class="trust-downloads">{trustDownloads}</span>
       </div>
     </div>
 

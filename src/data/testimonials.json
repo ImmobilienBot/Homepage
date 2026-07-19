@@ -27,7 +27,7 @@
       "rating": 5,
       "text": {
         "de": "Sehr schnell eine Wohnung gefunden. Sehr einfach und übersichtlich!",
-        "en": "Found an apartment really quickly. Very simple and clear!"
+        "en": "Found a flat really quickly. Very simple and clear!"
       }
     },
     {
@@ -57,7 +57,7 @@
       "rating": 5,
       "text": {
         "de": "Gamechanger. Hatte vorher lange nach einer Wohnung gesucht und war durch die Push-Benachrichtigung endlich schnell genug und hab die Wohnung sogar innerhalb der kostenfreien Test-Zeit bekommen. Kann ich nur weiterempfehlen.",
-        "en": "Gamechanger. I’d been searching for an apartment for a long time and with the push notification I was finally fast enough — I even got the apartment within the free trial period. Can only recommend it."
+        "en": "Gamechanger. I’d been searching for a flat for a long time and with the push notification I was finally fast enough — I even got the flat within the free trial period. Can only recommend it."
       }
     },
     {
@@ -87,7 +87,7 @@
       "rating": 4,
       "text": {
         "de": "Die App ist super. Ich habe nach zwei Monaten Suche meine Traumwohnung gefunden, das war es wert.",
-        "en": "The app is great. After two months of searching I found my dream apartment — it was worth it."
+        "en": "The app is great. After two months of searching I found my dream flat — it was worth it."
       }
     },
     {
@@ -97,7 +97,7 @@
       "rating": 5,
       "text": {
         "de": "Bei der Immobiliensuche ist Schnelligkeit der Schlüssel zum Erfolg. […] Ich war mit dieser Funktion schon mehr als nur einmal erfolgreich, dadurch, dass ich einfach die Erste war, die sich meldete. Naja, bleibt wohl erstmal ein Geheimtipp.",
-        "en": "In apartment hunting, speed is the key to success. […] I've been successful with this feature more than once, simply because I was the first to respond. Well, I guess it'll stay a hidden gem for now."
+        "en": "In flat hunting, speed is the key to success. […] I've been successful with this feature more than once, simply because I was the first to respond. Well, I guess it'll stay a hidden gem for now."
       }
     },
     {
@@ -137,7 +137,7 @@
       "rating": 5,
       "text": {
         "de": "Super App, danke, dass sich jemand die Mühe gemacht hat, etwas zu entwickeln, was dabei hilft, diesen Wohnungssuchhustle etwas erträglicher zu gestalten. […] Kann ich echt empfehlen — für alle, die auch angenervt sind, diese ganzen Portale zu durchforsten.",
-        "en": "Great app — thanks to whoever took the trouble to build something that makes this whole apartment-hunting hustle a bit more bearable. […] Can really recommend it — for everyone who's fed up with combing through all these portals."
+        "en": "Great app — thanks to whoever took the trouble to build something that makes this whole flat-hunting hustle a bit more bearable. […] Can really recommend it — for everyone who's fed up with combing through all these portals."
       }
     },
     {
@@ -147,7 +147,7 @@
       "rating": 5,
       "text": {
         "de": "Wir haben mit der App nach einer Wohnung in Berlin für meine Schwiegermutter gesucht. Die Bedienung war super einfach und die App ist generell sehr benutzerfreundlich. […] Die App kann ich nur empfehlen.",
-        "en": "We used the app to find an apartment in Berlin for my mother-in-law. It was super easy to use and the app is very user-friendly overall. […] I can only recommend it."
+        "en": "We used the app to find a flat in Berlin for my mother-in-law. It was super easy to use and the app is very user-friendly overall. […] I can only recommend it."
       }
     },
     {
@@ -157,7 +157,7 @@
       "rating": 5,
       "text": {
         "de": "Eigentlich schreibe ich keine Rezensionen, aber ich bin vom ersten Eindruck echt sehr überzeugt! […] Update: Habe mit Hilfe von der App tatsächlich eine Wohnung gefunden. Vielen Dank für diese tolle App!",
-        "en": "I don't usually write reviews, but the first impression really won me over! […] Update: I actually found an apartment with the help of the app. Thank you for this great app!"
+        "en": "I don't usually write reviews, but the first impression really won me over! […] Update: I actually found a flat with the help of the app. Thank you for this great app!"
       }
     },
     {
@@ -206,8 +206,8 @@
       "platform": "googlemaps",
       "rating": 5,
       "text": {
-        "de": "Lange dachte ich, dass in Berlin kaum neue Wohnungen angeboten werden, bis ich gemerkt habe, dass viele Anzeigen nach wenigen Minuten wieder offline gestellt werden. Mit dem Immobilien-Bot werde ich nun sofort benachrichtigt, wenn etwas Neues mit meinen Präferenzen (kann man über Filter einstellen) reinkommt. Sehr, sehr praktisch.",
-        "en": "For a long time I thought hardly any new apartments were being listed in Berlin — until I realized that many listings go offline again after just a few minutes. With Immobilien Bot I now get notified immediately whenever something new matching my preferences (adjustable via filters) comes in. Very, very practical."
+        "de": "Lange dachte ich, dass in Berlin kaum neue Wohnungen angeboten werden, bis ich gemerkt habe, dass viele Anzeigen nach wenigen Minuten wieder offline gestellt werden. Mit dem Immobilien Bot werde ich nun sofort benachrichtigt, wenn etwas Neues mit meinen Präferenzen (kann man über Filter einstellen) reinkommt. Sehr, sehr praktisch.",
+        "en": "For a long time I thought hardly any new flats were being listed in Berlin — until I realized that many listings go offline again after just a few minutes. With Immobilien Bot I now get notified immediately whenever something new matching my preferences (adjustable via filters) comes in. Very, very practical."
       }
     }
   ]

@@ -1044,6 +1044,21 @@ collections:
                         widget: string
                         required: false
                         i18n: true
+                      - name: whatsapp
+                        label: 'Whatsapp'
+                        widget: string
+                        required: false
+                        i18n: true
+                      - name: whatsappSub
+                        label: 'Whatsapp Sub'
+                        widget: string
+                        required: false
+                        i18n: true
+                      - name: whatsappAria
+                        label: 'Whatsapp Aria'
+                        widget: string
+                        required: false
+                        i18n: true
                       - name: instagram
                         label: 'Instagram'
                         widget: string
@@ -1559,18 +1574,8 @@ collections:
                 widget: string
                 required: false
                 i18n: true
-              - name: blog
-                label: 'Blog'
-                widget: string
-                required: false
-                i18n: true
               - name: colLegal
                 label: 'Spalte Rechtliches'
-                widget: string
-                required: false
-                i18n: true
-              - name: colMore
-                label: 'Spalte Mehr'
                 widget: string
                 required: false
                 i18n: true
@@ -1651,11 +1656,6 @@ collections:
                     widget: string
                     required: false
                     i18n: true
-              - name: placeholder
-                label: 'Platzhalter-Text'
-                widget: string
-                required: false
-                i18n: true
           - name: blog
             label: 'Blog – Platzhalter'
             widget: object

@@ -308,6 +308,10 @@ function auditPage(file: string) {
     const hasMailto = $(`a[href="mailto:${contact.email}"]`).length > 0;
     if (!hasMailto)
       add('S16', 'error', page, `mailto:${contact.email} (site.ts contact.email) fehlt als Link im HTML.`);
+    // Sichtbarer WhatsApp-Link auf den Support-Chat (Kontakt-Sektion).
+    const hasWa = $(`a[href="${contact.waUrl}"]`).length > 0;
+    if (!hasWa)
+      add('S16', 'error', page, `${contact.waUrl} (site.ts contact.waUrl) fehlt als Link im HTML.`);
     // JSON-LD: Organization/ContactPoint-E-Mail muss der Kontaktadresse entsprechen.
     const org = ld.find((n) => typeOf(n).includes('Organization')) as Record<string, any> | undefined;
     const cp = org?.contactPoint;
@@ -419,7 +423,7 @@ function CSS_escape(s: string): string {
 // ============================================================================
 // GLOBALE CHECKS
 // ============================================================================
-function auditGlobal() {
+function auditGlobal(htmlFiles: string[]) {
   const G = '(global)';
 
   // --- G1: llms.txt ---
@@ -437,11 +441,15 @@ function auditGlobal() {
     }
     if (!llms.includes(String(portalCount)))
       add('G1', 'error', G, `llms.txt nennt die Portalanzahl ${portalCount} nicht.`);
-    // Kontakt-Fakten (E-Mail + Telegram-Support) aus site.ts.
+    // Kontakt-Fakten (alle Kanäle: E-Mail + Telegram + WhatsApp + Instagram) aus site.ts.
     if (!llms.includes(contact.email))
       add('G1', 'error', G, `llms.txt nennt die Kontaktadresse „${contact.email}" nicht.`);
     if (!llms.includes(contact.telegramSupport))
       add('G1', 'error', G, `llms.txt nennt den Telegram-Support-Link nicht.`);
+    if (!llms.includes(contact.waUrl))
+      add('G1', 'error', G, `llms.txt nennt den WhatsApp-Support-Link nicht.`);
+    if (!llms.includes(contact.instagram))
+      add('G1', 'error', G, `llms.txt nennt den Instagram-Kanal-Link nicht.`);
   }
 
   // --- G2: robots.txt ---
@@ -530,6 +538,48 @@ function auditGlobal() {
         add('G6', 'error', G, `${loc}: i18n-Wert „${path}" hat führendes/nachgestelltes Leerzeichen (${JSON.stringify(value.slice(0, 40))}) — Wortabstand gehört ins Markup, nicht an den String-Rand.`);
     }
   }
+
+  // --- G7: Marke „Immobilien Bot" ohne Binnen-Bindestrich ---
+  // Die Marke schreibt sich „Immobilien Bot" (mit Leerzeichen). „Immobilien-Bot"
+  // (Binnen-Bindestrich, case-sensitive) ist verboten in strings.*, testimonials,
+  // Ratgeber, functions/, llms.txt UND gerendertem HTML. AUSGENOMMEN sind URLs,
+  // E-Mail-Adressen, Domain (immobilien-bot.de) und Code-Bezeichner — die werden vor
+  // der Prüfung maskiert (immer lowercase → kollidieren nie mit dem Marken-Muster).
+  const rel = (p: string) => p.slice(ROOT.length + 1).split(sep).join('/');
+  const maskAllowed = (s: string) =>
+    s
+      .replace(/https?:\/\/[^\s"'<>)]+/g, ' ') // absolute URLs
+      .replace(/[^\s"'<>()]+@[^\s"'<>()]+/g, ' ') // E-Mail-Adressen
+      .replace(/immobilien-bot\.de/gi, ' '); // Domain (auch in mailto:/Fließtext)
+  const scanBrand = (label: string, text: string) => {
+    if (/Immobilien-Bot/.test(maskAllowed(text)))
+      add(
+        'G7',
+        'error',
+        G,
+        `„Immobilien-Bot" (Binnen-Bindestrich) in ${label} — die Marke ist „Immobilien Bot" (mit Leerzeichen); Ausnahme nur URL/E-Mail/Domain.`,
+      );
+  };
+  // Quelldateien: i18n, Testimonials, Ratgeber-.md, functions/**.ts.
+  const brandTargets: string[] = [i18nDe, i18nEn, join(ROOT, 'src', 'data', 'testimonials.json')];
+  const ratgeberDir = join(ROOT, 'src', 'content', 'ratgeber');
+  if (existsSync(ratgeberDir))
+    for (const e of readdirSync(ratgeberDir)) if (e.endsWith('.md')) brandTargets.push(join(ratgeberDir, e));
+  const collectTs = (dir: string, acc: string[]): string[] => {
+    if (!existsSync(dir)) return acc;
+    for (const e of readdirSync(dir)) {
+      const abs = join(dir, e);
+      if (statSync(abs).isDirectory()) collectTs(abs, acc);
+      else if (e.endsWith('.ts')) acc.push(abs);
+    }
+    return acc;
+  };
+  for (const f of collectTs(join(ROOT, 'functions'), [])) brandTargets.push(f);
+  for (const f of brandTargets) if (existsSync(f)) scanBrand(rel(f), readFileSync(f, 'utf8'));
+  // Gebautes llms.txt + gerendertes HTML (dist, ohne bot/ — htmlFiles ist bereits gefiltert).
+  const llmsBuilt = join(DIST, 'llms.txt');
+  if (existsSync(llmsBuilt)) scanBrand('dist/llms.txt', readFileSync(llmsBuilt, 'utf8'));
+  for (const f of htmlFiles) scanBrand(toUrlPath(f), readFileSync(f, 'utf8'));
 }
 
 /** Alle String-Blätter eines i18n-Objekts mit Pfad (rekursiv, inkl. Arrays). */
@@ -614,7 +664,7 @@ function main() {
     const r = auditPage(f);
     (r.skipped ? skipped : audited).push(r.page);
   }
-  auditGlobal();
+  auditGlobal(files);
 
   // ---- Report (pro Seite gruppiert) ----
   const RED = '\x1b[31m';

@@ -1,0 +1,20 @@
+# Security-Header für Cloudflare Pages (Pages wertet diese Datei am Edge aus).
+# Wird von Astro 1:1 aus public/ nach dist/ kopiert (wie public/_redirects).
+#
+# BEWUSST OHNE Content-Security-Policy: Google Tag Manager + CookieYes sind noch
+# nicht final scharfgeschaltet (siehe CLAUDE.md → „Tracking & Consent"). Eine CSP
+# müsste deren – aktuell noch wechselnde – Inline-/Remote-Skripte exakt erlauben;
+# zu früh gesetzt bräche sie das Tracking oder das Consent-Banner. Die CSP kommt
+# als EIGENE Runde, sobald GTM/CookieYes final stehen.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# /admin (Sveltia CMS) zusätzlich als noindex markieren (Doppelschutz neben
+# robots.txt-Disallow + Sitemap-Ausschluss). Cloudflare wendet ALLE passenden
+# Regeln an → /admin/* erbt zusätzlich die /*-Header oben.
+/admin/*
+  X-Robots-Tag: noindex

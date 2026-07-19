@@ -56,6 +56,10 @@ jobs:
         with:
           name: marquee-shots
           path: .marquee-shots/
+          # .marquee-shots/ ist ein Dot-Verzeichnis; upload-artifact@v4 überspringt
+          # versteckte Dateien standardmäßig („No files were found") → explizit
+          # einschließen (gleiche Ursache/Fix wie bei .lighthouseci/ unten).
+          include-hidden-files: true
           retention-days: 14
           if-no-files-found: warn
 

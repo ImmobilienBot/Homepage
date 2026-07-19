@@ -36,6 +36,8 @@
 
 - [support@immobilien-bot.de](mailto:support@immobilien-bot.de): E-Mail-Kontakt.
 - [Telegram-Support](https://t.me/ImmobilienBot_support): Support-Kanal der App.
+- [WhatsApp-Support](https://wa.me/4915567516790): Support-Chat via WhatsApp.
+- [Instagram](https://www.instagram.com/immobilienbot/): Offizieller Instagram-Kanal.
 
 ## What the app does
 
@@ -73,12 +75,12 @@ user first, in real time, when a listing matches their criteria.
 - Google Play: 4.3 stars (48 ratings)
 - Google Maps: 5.0 stars (33 ratings)
 - 167 reviews across all platforms
-- 5.000+ downloads
+- 20.000+ downloads
 - As of July 2026 (store-page snapshot)
 
 ## Portals monitored (20)
 
-Nationwide (10): Immobilienscout24.de (immobilienscout24.de), Immobilien.de (immobilien.de),
+Nationwide (10): ImmoScout24 (immobilienscout24.de), Immobilien.de (immobilien.de),
 Immowelt.de (immowelt.de), Kleinanzeigen.de (kleinanzeigen.de), LEG-wohnen.de (leg-wohnen.de),
 Ohne-Makler.net (ohne-makler.net), Quoka.de (quoka.de), Vonovia.de (vonovia.de),
 WG-Gesucht.de (wg-gesucht.de), Wohnungsboerse.net (wohnungsboerse.net).

@@ -32,10 +32,17 @@ export type Locale = (typeof site.locales)[number];
  * ausschließlich in der Pages Function `functions/api/contact.ts`. Hier stehen nur
  * öffentliche Fakten. Facts-Sync prüft `email` gegen HTML/JSON-LD/llms.txt.
  */
+/** WhatsApp-Nummer im internationalen wa.me-Format (ohne „+"/Leerzeichen). EINE Quelle. */
+const WHATSAPP_NUMBER = '4915567516790';
+
 export const contact = {
   email: 'support@immobilien-bot.de',
   telegramSupport: 'https://t.me/ImmobilienBot_support',
   instagram: 'https://www.instagram.com/immobilienbot/',
+  /** Reine Ziffern-Nummer (Fakt). */
+  whatsapp: WHATSAPP_NUMBER,
+  /** Klick-Ziel des WhatsApp-Kanals — aus `whatsapp` abgeleitet, nie separat hart codieren. */
+  waUrl: `https://wa.me/${WHATSAPP_NUMBER}`,
 } as const;
 
 /* ------------------------------------------------------------------ */
@@ -116,8 +123,18 @@ export const ratingsAsOf: Record<Locale, string> = {
   en: 'July 2026',
 };
 
-/** Nicht als Live-Zähler behandeln — statischer, belegbarer Wert. */
-export const downloads = '5.000+';
+/**
+ * Download-Zahl — statischer, belegbarer Wert (NICHT als Live-Zähler behandeln).
+ * EINE Quelle als Zahl; die sichtbare Formatierung ist locale-bewusst (DE „20.000+"
+ * / EN „20,000+") — analog zur Preis-Lokalisierung. Alle {downloads}-Interpolationen
+ * laufen über `formatDownloads(locale)`, nie über ein hart formatiertes Literal.
+ */
+export const downloadsValue = 20000;
+
+/** „20.000+" (de) / „20,000+" (en) — locale-korrekter Tausendertrenner + „+". */
+export function formatDownloads(locale: Locale): string {
+  return `${new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'de-DE').format(downloadsValue)}+`;
+}
 
 /**
  * Gesamtzahl der Bewertungen über alle Plattformen — IMMER abgeleitet (Summe der
@@ -236,7 +253,7 @@ export interface Portal {
 
 export const portals: Portal[] = [
   // Bundesweite Portale
-  { name: 'Immobilienscout24.de', domain: 'immobilienscout24.de', scope: 'national' },
+  { name: 'ImmoScout24', domain: 'immobilienscout24.de', scope: 'national' },
   { name: 'Immobilien.de', domain: 'immobilien.de', scope: 'national' },
   { name: 'Immowelt.de', domain: 'immowelt.de', scope: 'national' },
   { name: 'Kleinanzeigen.de', domain: 'kleinanzeigen.de', scope: 'national' },
