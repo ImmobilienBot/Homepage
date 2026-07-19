@@ -600,6 +600,7 @@
     "imprint": "Imprint",
     "privacy": "Privacy",
     "terms": "Terms",
+    "accountDelete": "Delete account",
     "contact": "Contact",
     "colLegal": "Legal",
     "colLang": "Language",
@@ -622,6 +623,41 @@
     "terms": {
       "title": "Terms & Conditions"
     }
+  },
+  "verifyEmail": {
+    "metaTitle": "Email verification – Immobilien Bot",
+    "metaDescription": "Confirm your email address for your Immobilien Bot account.",
+    "title": "Email Verification",
+    "verifying": "Verifying your email …",
+    "successTitle": "Email verified successfully!",
+    "successBody": "You can close this window and log in to the app.",
+    "errorTitle": "Verification failed",
+    "errorBody": "The link may have expired or already been used.",
+    "invalidTitle": "Invalid verification link",
+    "invalidBody": "This verification link is invalid or incomplete.",
+    "noscript": "JavaScript must be enabled to verify your email."
+  },
+  "accountDelete": {
+    "metaTitle": "Delete account – Immobilien Bot",
+    "metaDescription": "Delete your Immobilien Bot user account: send us your user ID from the app and a contact email; we aim to delete your account within 24 hours.",
+    "title": "Delete account",
+    "lead": "Sorry to see you go.",
+    "body": "Please send us your user ID from the app and an email address where we can reach you for questions. We aim to delete your account within 24 hours. Please log out of the app.",
+    "form": {
+      "userId": "User ID",
+      "userIdPlaceholder": "Your user ID from the app",
+      "email": "Email address",
+      "emailPlaceholder": "name@example.com",
+      "consent": "Yes, I want my account deleted as soon as possible.",
+      "submit": "Send",
+      "sending": "Sending …"
+    },
+    "success": {
+      "title": "Request received",
+      "copy": "Thanks — we've received your deletion request and aim to delete your account within 24 hours.",
+      "again": "Send another request"
+    },
+    "error": "Sending failed. Please try again or email us at {email}."
   },
   "blog": {
     "title": "Blog",

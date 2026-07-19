@@ -63,7 +63,14 @@ export const translatedRoutes: { de: string; en: string }[] = [
  * führt für die jeweils andere Sprache auf die Sprach-Root. (Normalisiert ohne
  * Trailing-Slash.)
  */
-export const standaloneRoutes = new Set(['/impressum', '/datenschutz', '/agb', '/contact']);
+export const standaloneRoutes = new Set([
+  '/impressum',
+  '/datenschutz',
+  '/agb',
+  '/contact',
+  '/account-loeschen',
+  '/verify-email',
+]);
 
 /**
  * DE-only-Ratgeber (`/YYYY/MM/DD/slug`) — ebenfalls kein Sprach-Pendant, aber

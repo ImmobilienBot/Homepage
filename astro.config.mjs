@@ -31,12 +31,15 @@ export default defineConfig({
   integrations: [
     sitemap({
       // Aus der Sitemap ausschließen: /go/app (Redirect-Weiche), die noindex-Danke-
-      // Seiten des Kontaktformulars (/danke, /en/thanks) sowie die Blog-Platzhalter-Route.
+      // Seiten des Kontaktformulars (/danke, /en/thanks), die Blog-Platzhalter-Route
+      // sowie die noindex-Utility-Seiten (/verify-email, /account-loeschen).
       filter: (page) =>
         !page.includes('/go/') &&
         !page.includes('/danke') &&
         !page.includes('/thanks') &&
-        !page.includes('/blog'),
+        !page.includes('/blog') &&
+        !page.includes('/verify-email') &&
+        !page.includes('/account-loeschen'),
       i18n: {
         defaultLocale: 'de',
         locales: {

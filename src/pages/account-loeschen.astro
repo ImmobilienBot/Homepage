@@ -1,0 +1,407 @@
+---
+/**
+ * /account-loeschen/ — Account-Löschanfrage (DE-only, standalone, noindex).
+ * Vom Play Store als öffentlich auffindbare Lösch-Seite verlangt (im Footer verlinkt).
+ * Utility-Seite auf der schlanken Layout-Schiene (UtilityLayout).
+ *
+ * Formular im Stil des Kontaktformulars: User ID (Pflicht) · E-Mail (Pflicht) ·
+ * Pflicht-Einwilligung. OHNE JS voll nutzbar (natives POST /api/account-delete →
+ * Function antwortet 303 auf /danke). Mit JS: fetch (Accept: application/json),
+ * Pending-/Success-/Error-States (wie Kontakt.astro).
+ */
+import UtilityLayout from '../layouts/UtilityLayout.astro';
+import { useTranslations } from '../i18n';
+import { contact } from '../data/site';
+import PillButton from '../components/ui/PillButton.astro';
+
+const A = useTranslations('de').accountDelete;
+---
+
+<UtilityLayout title={A.metaTitle} description={A.metaDescription} lang="de">
+  <div class="ad" data-ad data-error={A.error.replace('{email}', contact.email)}>
+    <div class="ad-card">
+      <h1 class="ad-title">{A.title}</h1>
+      <p class="ad-lead">{A.lead}</p>
+      <p class="ad-body">{A.body}</p>
+
+      {/* ---- Formularbereich (No-JS: natives POST → Function → 303 Danke) ---- */}
+      <div class="ad-formwrap" data-ad-formwrap>
+        <form class="ad-form" method="POST" action="/api/account-delete" data-ad-form>
+          <input type="hidden" name="lang" value="de" />
+          {/* Honeypot — visuell versteckt, aus dem A11y-Baum genommen. */}
+          <input
+            type="text"
+            name="website"
+            class="ad-hp"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+          />
+
+          <div class="ad-field">
+            <label class="ad-label" for="ad-userid">{A.form.userId}</label>
+            <input
+              class="ad-input"
+              id="ad-userid"
+              name="userId"
+              type="text"
+              required
+              maxlength="200"
+              autocomplete="off"
+              placeholder={A.form.userIdPlaceholder}
+            />
+          </div>
+
+          <div class="ad-field">
+            <label class="ad-label" for="ad-email">{A.form.email}</label>
+            <input
+              class="ad-input"
+              id="ad-email"
+              name="email"
+              type="email"
+              required
+              maxlength="200"
+              autocomplete="email"
+              placeholder={A.form.emailPlaceholder}
+            />
+          </div>
+
+          <label class="ad-consent">
+            <input class="ad-consent-input" type="checkbox" name="consent" value="ja" required />
+            <span class="ad-consent-box" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b3b3a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+            </span>
+            <span class="ad-consent-label">{A.form.consent}</span>
+          </label>
+
+          <PillButton
+            type="submit"
+            surface="light"
+            size="md"
+            block
+            class="ad-submit"
+            data-ad-submit
+            data-sending={A.form.sending}
+          >
+            {A.form.submit}
+          </PillButton>
+
+          <div class="ad-status" role="status" aria-live="polite" data-ad-status></div>
+        </form>
+      </div>
+
+      {/* ---- Success-State (Zustands-UI, initial versteckt) ---- */}
+      <div class="ad-success is-hidden" data-ad-success hidden>
+        <span class="ad-success-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#3b3b3a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+        </span>
+        <p class="ad-success-title">{A.success.title}</p>
+        <p class="ad-success-copy">{A.success.copy}</p>
+        <button type="button" class="ad-again" data-ad-again>{A.success.again}</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Account-Löschen-Island: Progressive Enhancement (Muster: Kontakt.astro) ----
+    const root = document.querySelector<HTMLElement>('[data-ad]');
+    const form = root?.querySelector<HTMLFormElement>('[data-ad-form]');
+    if (root && form) {
+      const formwrap = root.querySelector<HTMLElement>('[data-ad-formwrap]');
+      const success = root.querySelector<HTMLElement>('[data-ad-success]');
+      const status = root.querySelector<HTMLElement>('[data-ad-status]');
+      const submit = root.querySelector<HTMLButtonElement>('[data-ad-submit]');
+      const again = root.querySelector<HTMLButtonElement>('[data-ad-again]');
+      const submitLabel = submit?.querySelector<HTMLElement>('.pill-btn__label');
+      const t = {
+        sending: submit?.getAttribute('data-sending') || 'Wird gesendet …',
+        submit: submitLabel?.textContent?.trim() || 'Senden',
+        error: root.getAttribute('data-error') || '',
+      };
+      // Kontaktadresse aus dem Fehlertext ableiten (für den mailto-Link im Status).
+      const emailMatch = t.error.match(/[^\s]+@[^\s]+/);
+      const email = emailMatch ? emailMatch[0] : '';
+
+      const setStatus = (msg: string) => {
+        if (!status) return;
+        status.textContent = '';
+        if (!msg) return;
+        const i = email && msg.includes(email) ? msg.indexOf(email) : -1;
+        if (i >= 0) {
+          status.append(document.createTextNode(msg.slice(0, i)));
+          const a = document.createElement('a');
+          a.href = `mailto:${email}`;
+          a.textContent = email;
+          a.className = 'ad-status-link';
+          status.append(a, document.createTextNode(msg.slice(i + email.length)));
+        } else {
+          status.textContent = msg;
+        }
+      };
+
+      const setSending = (on: boolean) => {
+        if (!submit) return;
+        submit.disabled = on;
+        if (submitLabel && submitLabel.childNodes[0])
+          submitLabel.childNodes[0].textContent = on ? t.sending : t.submit;
+      };
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setStatus('');
+        setSending(true);
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: new FormData(form),
+          });
+          let ok = res.ok;
+          try {
+            const data = await res.clone().json();
+            ok = !!data.ok;
+          } catch {
+            /* kein JSON → Status entscheidet */
+          }
+          if (ok) {
+            formwrap?.setAttribute('hidden', '');
+            formwrap?.classList.add('is-hidden');
+            success?.removeAttribute('hidden');
+            success?.classList.remove('is-hidden');
+          } else {
+            setSending(false);
+            setStatus(t.error);
+          }
+        } catch {
+          setSending(false);
+          setStatus(t.error);
+        }
+      });
+
+      again?.addEventListener('click', () => {
+        form.reset();
+        setStatus('');
+        setSending(false);
+        success?.setAttribute('hidden', '');
+        success?.classList.add('is-hidden');
+        formwrap?.removeAttribute('hidden');
+        formwrap?.classList.remove('is-hidden');
+        form.querySelector<HTMLElement>('input[name="userId"]')?.focus();
+      });
+    }
+  </script>
+</UtilityLayout>
+
+<style>
+  .ad {
+    width: 100%;
+    max-width: 560px;
+  }
+  .ad-card {
+    background: var(--color-offwhite);
+    border-radius: 20px;
+    padding: 32px 28px;
+    box-shadow: 0 20px 50px rgb(0 0 0 / 0.08);
+  }
+  @media (max-width: 639.98px) {
+    .ad-card {
+      padding: 24px 20px;
+    }
+  }
+  .ad-title {
+    margin: 0 0 10px;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 5vw, 2.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+  .ad-lead {
+    margin: 0 0 8px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-black);
+  }
+  .ad-body {
+    margin: 0 0 24px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-grey-text);
+  }
+
+  /* ---- Formular ---- */
+  .ad-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .ad-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .ad-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ad-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6f6f6d;
+  }
+  .ad-input {
+    width: 100%;
+    background: var(--color-grey);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--color-black);
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+  .ad-input::placeholder {
+    color: #9a9a98;
+  }
+  .ad-input:focus-visible {
+    outline: none;
+    border-color: var(--color-yellow);
+    background: #fff;
+  }
+
+  /* ---- Einwilligung (Pflicht-Checkbox) ---- */
+  .ad-consent {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--color-black);
+  }
+  .ad-consent-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .ad-consent-box {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 2px solid rgb(59 59 58 / 0.3);
+    border-radius: 8px;
+    background: var(--color-grey);
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease;
+  }
+  .ad-consent-box svg {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .ad-consent-input:checked + .ad-consent-box {
+    background: var(--color-yellow);
+    border-color: var(--color-yellow);
+  }
+  .ad-consent-input:checked + .ad-consent-box svg {
+    opacity: 1;
+  }
+  .ad-consent-input:focus-visible + .ad-consent-box {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  .ad-submit {
+    margin-top: 4px;
+  }
+  .ad-status {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #b4342e;
+  }
+  .ad-status:empty {
+    display: none;
+  }
+  .ad-status-link {
+    color: inherit;
+    font-weight: 700;
+  }
+
+  /* ---- Success-State ---- */
+  .is-hidden {
+    display: none !important;
+  }
+  .ad-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding-block: 8px;
+  }
+  .ad-success-badge {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    background: var(--color-yellow);
+    margin-bottom: 4px;
+  }
+  .ad-success-title {
+    margin: 0;
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: var(--color-black);
+  }
+  .ad-success-copy {
+    margin: 0;
+    max-width: 40ch;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+  .ad-again {
+    margin-top: 4px;
+    border: 0;
+    background: none;
+    padding: 6px 4px;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--color-black);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .ad-again:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ad-input,
+    .ad-consent-box,
+    .ad-consent-box svg {
+      transition: none;
+    }
+  }
+</style>
