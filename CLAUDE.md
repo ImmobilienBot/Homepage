@@ -586,10 +586,42 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - **Static bleiben** (SSG). **Einzige Server-Ausnahme:** Cloudflare Pages Functions unter
   `functions/` für den Formular-Endpoint `/api/contact` (Resend-REST-API per `fetch`, **keine**
   weiteren Runtime-Abhängigkeiten). Client-seitiges JS für `/go/app` ist ok.
-- **Auto-Commit & -Push:** Nach jeder abgeschlossenen Aufgabe und **erfolgreichem `npm run build`**
-  alle Änderungen mit kurzer, beschreibender Commit-Message committen und auf `main` pushen
-  (Cloudflare deployt automatisch). **Nur bei grünem Build pushen** — schlägt der Build fehl, erst
-  fixen, dann committen.
+- **Auto-Commit & -Push (immer `staging`):** Nach jeder abgeschlossenen Aufgabe und
+  **erfolgreichem `npm run build`** alle Änderungen mit kurzer, beschreibender Commit-Message
+  committen und auf **`staging`** pushen. **Nur bei grünem Build pushen** — schlägt der Build fehl,
+  erst fixen, dann committen. **Direkter Push auf `main` ist verboten** (siehe **Release-Protokoll**);
+  `main` wird ausschließlich per PR-Merge aktualisiert.
+
+---
+
+## Release-Protokoll (staging → main)
+
+**Die GitHub-Release-Mechanik (PR erstellen, Checks lesen, mergen, Läufe überwachen) übernimmt
+Claude Code (CC).** Artems Rolle: Review auf der **staging-Preview** + **explizites Go in der
+Session**. Verbindlich, ausnahmslos:
+
+1. **Jede Arbeit endet auf `staging`.** **Direkter Push auf `main` ist verboten** — ausnahmslos.
+   `main` wird nur durch PR-Merge aktualisiert (Cloudflare deployt `main` → Produktion).
+2. **PR + Merge macht CC — aber NUR wenn ALLE drei gelten:**
+   (a) **explizites Go von Artem** in der laufenden Session,
+   (b) **grüne Required Checks auf exakt dem Head-Commit** — per API verifiziert (SHA-genau),
+   **nicht angenommen**,
+   (c) **ohne jede Admin-/Bypass-Option** (kein „merge without waiting", kein Force, kein
+   Übergehen der Branch-Protection — auch wenn das Token Admin-Rechte hat).
+3. **Vor der Go-Anfrage: Paket-Inventar vorlegen** — alle Commits, die `staging` vor `main`
+   voraus hat; **fremde Commits explizit markieren** (z. B. CMS-Saves von Juri/Sveltia); Checks-
+   Status; relevante Messwerte (z. B. Perf-Mediane). **Ein Go gilt für exakt diesen Head-Commit;
+   jeder weitere Push auf `staging` lässt das Go verfallen** → neues Inventar, neues Go.
+4. **Rote Checks:** Befund in **Laiensprache** an Artem (was rot, wo, mutmaßlich warum, Optionen).
+   **Kein Merge bei Rot.** **Kein Re-Run bei wiederholt gleichem Rot** (Ursache heilen, nicht
+   würfeln). **Keine Fixes über den Rundenauftrag hinaus** ohne Freigabe.
+5. **Nach jedem Merge:** den **`main`-Workflow-Lauf überwachen** und das Ergebnis berichten.
+   **`staging` nie löschen**; „Delete branch"-Angebote **ignorieren**.
+
+**Werkzeug-Anbindung:** `gh` CLI ist auf diesem Setup **nicht** installiert (nichts installieren).
+CC nutzt die **GitHub REST API** mit dem vorhandenen Git-Credential (`git credential fill`,
+Host `github.com`). **Das Token wird NIE ausgegeben, geloggt oder committet.** Repo:
+`ImmobilienBot/Homepage`, Default-Branch `main`.
 
 ---
 
