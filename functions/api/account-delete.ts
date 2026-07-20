@@ -11,7 +11,7 @@
  * Env:
  *  - RESEND_API_KEY     (Secret, Pflicht — NUR aus env, nie im Repo)
  *  - CONTACT_FROM       (Absender; Fallback = Resend-Sandbox, Testmodus lauffähig)
- *  - ACCOUNT_DELETE_TO  (Empfänger; Fallback = mail@immobilien-bot.de)
+ *  - ACCOUNT_DELETE_TO  (Empfänger; Fallback = site.ts contact.email, s. u.)
  *
  * Zwei Antwort-Modi (wie contact.ts): Accept: application/json → JSON ({ok:boolean});
  * sonst (No-JS-Formular-POST) → 303-Redirect auf /danke bzw. zurück auf die Seite.
@@ -31,10 +31,14 @@ interface Ctx {
 
 /** Absender-Fallback (Resend-Sandbox) → Testmodus bleibt ohne Env lauffähig. */
 const FROM_FALLBACK = 'Immobilien Bot <onboarding@resend.dev>';
-/** Empfänger der Löschanfrage (Play-Console-Vorgabe). */
-const TO_FALLBACK = 'mail@immobilien-bot.de';
-/** Öffentliche Kontaktadresse (nur für die No-JS-Fehlerseite). */
-const PUBLIC_EMAIL = 'mail@immobilien-bot.de';
+/**
+ * Empfänger der Löschanfrage. Selbe Mechanik wie das Kontaktformular
+ * (Env-Override + Code-Fallback); der Fallback spiegelt `site.ts` `contact.email`
+ * (Functions können `src/` nicht importieren → 1:1-Wert, keine neue Adresse).
+ */
+const TO_FALLBACK = 'support@immobilien-bot.de';
+/** Öffentliche Kontaktadresse (nur für die No-JS-Fehlerseite; = site.ts contact.email). */
+const PUBLIC_EMAIL = 'support@immobilien-bot.de';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 

@@ -21,8 +21,11 @@ const A = useTranslations('de').accountDelete;
   <div class="ad" data-ad data-error={A.error.replace('{email}', contact.email)}>
     <div class="ad-card">
       <h1 class="ad-title">{A.title}</h1>
-      <p class="ad-lead">{A.lead}</p>
-      <p class="ad-body">{A.body}</p>
+      {/* Intro (Lead + Erklärung) — bei JS-Erfolg mit dem Formular ausgeblendet. */}
+      <div class="ad-intro" data-ad-intro>
+        <p class="ad-lead">{A.lead}</p>
+        <p class="ad-body">{A.body}</p>
+      </div>
 
       {/* ---- Formularbereich (No-JS: natives POST → Function → 303 Danke) ---- */}
       <div class="ad-formwrap" data-ad-formwrap>
@@ -107,6 +110,7 @@ const A = useTranslations('de').accountDelete;
     const root = document.querySelector<HTMLElement>('[data-ad]');
     const form = root?.querySelector<HTMLFormElement>('[data-ad-form]');
     if (root && form) {
+      const intro = root.querySelector<HTMLElement>('[data-ad-intro]');
       const formwrap = root.querySelector<HTMLElement>('[data-ad-formwrap]');
       const success = root.querySelector<HTMLElement>('[data-ad-success]');
       const status = root.querySelector<HTMLElement>('[data-ad-status]');
@@ -164,6 +168,9 @@ const A = useTranslations('de').accountDelete;
             /* kein JSON → Status entscheidet */
           }
           if (ok) {
+            // Erfolg: Intro-Texte + Formular ausblenden — nur H1 + Erfolgskarte bleiben.
+            intro?.setAttribute('hidden', '');
+            intro?.classList.add('is-hidden');
             formwrap?.setAttribute('hidden', '');
             formwrap?.classList.add('is-hidden');
             success?.removeAttribute('hidden');
@@ -184,6 +191,8 @@ const A = useTranslations('de').accountDelete;
         setSending(false);
         success?.setAttribute('hidden', '');
         success?.classList.add('is-hidden');
+        intro?.removeAttribute('hidden');
+        intro?.classList.remove('is-hidden');
         formwrap?.removeAttribute('hidden');
         formwrap?.classList.remove('is-hidden');
         form.querySelector<HTMLElement>('input[name="userId"]')?.focus();

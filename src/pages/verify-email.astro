@@ -42,8 +42,6 @@ const strings = {
         <p class="ve-msg-body" data-ve-msg-body>{V.noscript}</p>
       </div>
     </div>
-
-    <div class="ve-confetti" data-ve-confetti aria-hidden="true"></div>
   </section>
 
   <script is:inline type="module">
@@ -68,32 +66,104 @@ const strings = {
         if (msgBody) msgBody.textContent = body || '';
       };
 
-      // ~1,5 s Konfetti-Regen in CD-Farben. Selbst geschrieben, nur transform/opacity,
-      // räumt sich danach auf. Bei prefers-reduced-motion: kein Konfetti.
+      // Konfetti-BURST in CD-Farben: schlagartig viele Teilchen aus der Badge-Mitte,
+      // Schwerkraft zieht sie als kurzer Nachregen herunter, dann restlos aufgeräumt.
+      // Canvas (kein DOM-Schwarm), selbst geschrieben, KEINE Library. Nur ~2,3 s.
+      // Bei prefers-reduced-motion: kein Konfetti.
       const fireConfetti = () => {
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        const layer = root.querySelector('[data-ve-confetti]');
-        if (!layer) return;
+
         const colors = ['#fff03c', '#3b3b3a', '#f6f6f6'];
-        const count = window.matchMedia('(max-width: 600px)').matches ? 16 : 30;
-        const frag = document.createDocumentFragment();
-        const pieces = [];
-        for (let i = 0; i < count; i++) {
-          const p = document.createElement('span');
-          p.className = 've-piece';
-          const w = 6 + Math.random() * 6;
-          p.style.left = Math.random() * 100 + 'vw';
-          p.style.width = w + 'px';
-          p.style.height = w * 0.6 + 'px';
-          p.style.background = colors[i % colors.length];
-          p.style.setProperty('--dx', (Math.random() * 2 - 1) * 90 + 'px');
-          p.style.setProperty('--rot', Math.random() * 720 - 360 + 'deg');
-          p.style.animationDelay = Math.random() * 0.15 + 's';
-          frag.appendChild(p);
-          pieces.push(p);
+        const count = window.matchMedia('(max-width: 600px)').matches ? 60 : 120;
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 've-confetti-canvas';
+        canvas.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          canvas.remove();
+          return;
         }
-        layer.appendChild(frag);
-        setTimeout(() => pieces.forEach((p) => p.remove()), 1600);
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        let vw = window.innerWidth;
+        let vh = window.innerHeight;
+        canvas.width = Math.round(vw * dpr);
+        canvas.height = Math.round(vh * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Ursprung: Mitte des Erfolgs-Badges (Fallback: oberes Drittel).
+        let ox = vw / 2;
+        let oy = vh * 0.32;
+        const badge = root.querySelector('.ve-badge');
+        if (badge) {
+          const r = badge.getBoundingClientRect();
+          if (r.width) {
+            ox = r.left + r.width / 2;
+            oy = r.top + r.height / 2;
+          }
+        }
+
+        const TAU = Math.PI * 2;
+        const GRAVITY = 1500; // px/s²
+        const DRAG = 0.86; // exponentiell pro Sekunde
+        const DURATION = 2300; // ms
+
+        const parts = [];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * TAU;
+          const speed = 260 + Math.random() * 720;
+          const size = 6 + Math.random() * 7;
+          parts.push({
+            x: ox,
+            y: oy,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 260, // leichter Aufwärts-Boost
+            w: size,
+            h: size * (0.45 + Math.random() * 0.35),
+            rot: Math.random() * TAU,
+            vrot: (Math.random() * 2 - 1) * 12,
+            color: colors[i % colors.length],
+          });
+        }
+
+        const start = performance.now();
+        let last = 0;
+        const step = (t) => {
+          if (!last) last = t;
+          const dt = Math.min((t - last) / 1000, 0.05);
+          last = t;
+          const elapsed = t - start;
+          const dragF = Math.pow(DRAG, dt);
+          const fadeStart = DURATION * 0.65;
+          const fade =
+            elapsed < fadeStart ? 1 : Math.max(0, 1 - (elapsed - fadeStart) / (DURATION - fadeStart));
+
+          ctx.clearRect(0, 0, vw, vh);
+          ctx.globalAlpha = fade;
+          for (const p of parts) {
+            p.vy += GRAVITY * dt;
+            p.vx *= dragF;
+            p.vy *= dragF;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.rot += p.vrot * dt;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+          }
+
+          if (elapsed < DURATION) {
+            requestAnimationFrame(step);
+          } else {
+            canvas.remove();
+          }
+        };
+        requestAnimationFrame(step);
       };
 
       // Review-Schalter — NUR auf *.pages.dev, ohne Firebase-Call.
@@ -238,43 +308,24 @@ const strings = {
     color: var(--color-grey-text);
   }
 
-  /* ---- Konfetti ---- */
-  .ve-confetti {
+  /* ---- Konfetti-Burst (Canvas, per JS erzeugt → :global) ---- */
+  :global(.ve-confetti-canvas) {
     position: fixed;
     inset: 0;
+    width: 100vw;
+    height: 100vh;
     pointer-events: none;
-    overflow: hidden;
     z-index: 60;
-  }
-  :global(.ve-piece) {
-    position: absolute;
-    top: -24px;
-    border-radius: 2px;
-    will-change: transform, opacity;
-    animation: ve-fall 1.5s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
   }
   @keyframes ve-spin {
     to {
       transform: rotate(360deg);
     }
   }
-  @keyframes ve-fall {
-    0% {
-      transform: translate3d(0, 0, 0) rotate(0);
-      opacity: 1;
-    }
-    100% {
-      transform: translate3d(var(--dx, 0), 105vh, 0) rotate(var(--rot, 180deg));
-      opacity: 0;
-    }
-  }
 
   @media (prefers-reduced-motion: reduce) {
     .ve-spinner {
       animation: none;
-    }
-    :global(.ve-piece) {
-      display: none;
     }
   }
 </style>

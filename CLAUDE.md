@@ -578,6 +578,8 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
     Domain** (sonst wird die Absenderadresse abgelehnt; die Bestätigungsmail schlägt im Testmodus
     erwartbar fehl, blockiert den Formular-Erfolg aber nicht). **Launch:** in Cloudflare auf die
     verifizierte Absenderadresse setzen.
+  - **Secrets und private Reports gehören nicht nur nicht ins Repo, sondern auch nicht in den
+    Repo-ORDNER** (auch ungetrackt nicht) — Ablage immer **außerhalb** des Arbeitsverzeichnisses.
 - **Kontaktformular-Mails:** HTML-/Text-Templates (CD, DE/EN) in `functions/_lib/email-templates.ts`
   (eigener Functions-Scope, **nicht** `src/i18n`). Zwei Resend-Calls: interne Benachrichtigung
   (AWAITED, bestimmt die Response; enthält als einzige Mail den Freitext) + rein transaktionale
@@ -586,6 +588,8 @@ Fakten aus `site.ts`). Läuft lokal per npm-Script und als **GitHub Action bei j
 - **Static bleiben** (SSG). **Einzige Server-Ausnahme:** Cloudflare Pages Functions unter
   `functions/` für den Formular-Endpoint `/api/contact` (Resend-REST-API per `fetch`, **keine**
   weiteren Runtime-Abhängigkeiten). Client-seitiges JS für `/go/app` ist ok.
+- **Commits: Dateien IMMER gezielt stagen** (`git add <pfad> …`). **`git add -A` und `git add .`
+  sind verboten** — Schutz vor versehentlichem Einsammeln untrackter Dateien.
 - **Auto-Commit & -Push (immer `staging`):** Nach jeder abgeschlossenen Aufgabe und
   **erfolgreichem `npm run build`** alle Änderungen mit kurzer, beschreibender Commit-Message
   committen und auf **`staging`** pushen. **Nur bei grünem Build pushen** — schlägt der Build fehl,
