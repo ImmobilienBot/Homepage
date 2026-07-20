@@ -14,3 +14,10 @@
 /2025/09/24/ablosevereinbarung-nachmieter-vorlage    /2025/09/24/ablosevereinbarung-nachmieter-vorlage/    301
 /2025/09/04/wie-lange-gilt-schufa-auskunft           /2025/09/04/wie-lange-gilt-schufa-auskunft/           301
 /2025/08/28/app-fur-wohnungssuche                    /2025/08/28/app-fur-wohnungssuche/                    301
+
+# --- App-E-Mail-Verifizierung (aus der alten .htaccess übernommen, 302). Die
+#     Verifizierungsmails hängen mode/oobCode/apiKey/lang als Query an /verify an;
+#     Cloudflare reicht die eingehende Query standardmäßig ans Ziel durch (auf der
+#     Staging-Preview mit Test-Query verifiziert). ---
+/verify          https://bot-hello-world-6n5zm6.firebaseapp.com/__/auth/action  302
+/verify-staging  https://ib-testground.firebaseapp.com/__/auth/action           302
