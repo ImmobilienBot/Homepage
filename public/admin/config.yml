@@ -1569,11 +1569,6 @@ collections:
                 widget: string
                 required: false
                 i18n: true
-              - name: accountDelete
-                label: 'Account Delete'
-                widget: string
-                required: false
-                i18n: true
               - name: contact
                 label: 'Kontakt'
                 widget: string
