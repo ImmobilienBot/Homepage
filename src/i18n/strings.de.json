@@ -600,6 +600,7 @@
     "imprint": "Impressum",
     "privacy": "Datenschutz",
     "terms": "AGB",
+    "accountDelete": "Account löschen",
     "contact": "Kontakt",
     "colLegal": "Rechtliches",
     "colLang": "Sprache",
@@ -622,6 +623,41 @@
     "terms": {
       "title": "AGB"
     }
+  },
+  "verifyEmail": {
+    "metaTitle": "E-Mail-Bestätigung – Immobilien Bot",
+    "metaDescription": "Bestätige deine E-Mail-Adresse für dein Konto bei Immobilien Bot.",
+    "title": "E-Mail-Bestätigung",
+    "verifying": "Deine E-Mail wird verifiziert …",
+    "successTitle": "E-Mail erfolgreich bestätigt!",
+    "successBody": "Du kannst dieses Fenster schließen und dich in der App anmelden.",
+    "errorTitle": "Fehler bei der Verifizierung",
+    "errorBody": "Der Link ist möglicherweise abgelaufen oder wurde bereits verwendet.",
+    "invalidTitle": "Ungültiger Verifizierungslink",
+    "invalidBody": "Dieser Verifizierungslink ist ungültig oder unvollständig.",
+    "noscript": "Für die E-Mail-Bestätigung muss JavaScript aktiviert sein."
+  },
+  "accountDelete": {
+    "metaTitle": "Account löschen – Immobilien Bot",
+    "metaDescription": "Lösche dein Nutzerkonto bei Immobilien Bot: Sende uns deine User ID aus der App und eine Kontakt-E-Mail; wir bemühen uns, deinen Account innerhalb von 24 Stunden zu löschen.",
+    "title": "Account löschen",
+    "lead": "Schade, dass du uns verlassen möchtest.",
+    "body": "Bitte schick uns hier deine User ID aus der App und eine E-Mail-Adresse, unter der wir dich für Rückfragen erreichen können. Wir bemühen uns, deinen Account innerhalb von 24 Stunden zu löschen. Bitte logge dich aus der App aus.",
+    "form": {
+      "userId": "User ID",
+      "userIdPlaceholder": "Deine User ID aus der App",
+      "email": "E-Mail-Adresse",
+      "emailPlaceholder": "name@beispiel.de",
+      "consent": "Ja, ich möchte, dass mein Account schnellstmöglich gelöscht wird.",
+      "submit": "Senden",
+      "sending": "Wird gesendet …"
+    },
+    "success": {
+      "title": "Anfrage erhalten",
+      "copy": "Danke — wir haben deine Löschanfrage erhalten und bemühen uns, deinen Account innerhalb von 24 Stunden zu löschen.",
+      "again": "Weitere Anfrage senden"
+    },
+    "error": "Das Senden hat nicht geklappt. Bitte versuch es erneut oder schreib uns an {email}."
   },
   "blog": {
     "title": "Blog",

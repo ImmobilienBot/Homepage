@@ -41,3 +41,7 @@ Thumbs.db
 
 # Sveltia CMS bundle (per postinstall/prebuild aus node_modules synchronisiert, ~2 MB)
 public/admin/sveltia-cms.js
+
+# Lokale IONOS-Zugangsdaten + Inventar — NIE ins (oeffentliche) Repo
+ionos/
+ionos-inventar.md

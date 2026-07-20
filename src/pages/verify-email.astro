@@ -1,0 +1,331 @@
+---
+/**
+ * /verify-email/ — Firebase-E-Mail-Verifizierung (Action Page). Wird NUR aus den
+ * App-Verifizierungsmails geöffnet (Pfad darf NICHT brechen). Utility-Seite:
+ * noindex, standalone, kein Sitemap-Eintrag, aus dem Footer NICHT verlinkt.
+ *
+ * Firebase-Logik entspricht der alten WP-Action-Page (SDK 10.7.1 als ES-Module von
+ * www.gstatic.com; apiKey/mode/oobCode/lang aus der URL; mode==='verifyEmail' &&
+ * oobCode → applyActionCode; Zustände Verifying / Erfolg / Fehler / Ungültig).
+ * NEU im CD: beide Sprachen sind eingebettet (Skript wählt per ?lang, Default 'en'),
+ * aria-live-Status ohne Layout-Shift, No-JS-Hinweis, Konfetti nur im Erfolgsfall.
+ *
+ * Review-Schalter: ?preview=success|error rendert den Zustand OHNE Firebase-Call —
+ * aber NUR auf *.pages.dev (auf der echten Domain wirkungslos).
+ */
+import UtilityLayout from '../layouts/UtilityLayout.astro';
+import { useTranslations } from '../i18n';
+
+// Beide Sprachen einbetten — das Client-Skript wählt per ?lang.
+const V = useTranslations('de').verifyEmail;
+const strings = {
+  de: useTranslations('de').verifyEmail,
+  en: useTranslations('en').verifyEmail,
+};
+---
+
+<UtilityLayout title={V.metaTitle} description={V.metaDescription} lang="de">
+  <section class="ve" data-ve data-state="noscript" data-strings={JSON.stringify(strings)}>
+    <div class="ve-card">
+      <span class="ve-icon" aria-hidden="true">
+        <span class="ve-spinner"></span>
+        <span class="ve-badge">
+          <svg class="ve-badge-check" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#3b3b3a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"></path></svg>
+          <svg class="ve-badge-neutral" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#3b3b3a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path></svg>
+        </span>
+      </span>
+
+      <h1 class="ve-title" data-ve-title>{V.title}</h1>
+
+      <div class="ve-status" role="status" aria-live="polite">
+        <p class="ve-msg-title" data-ve-msg-title></p>
+        <p class="ve-msg-body" data-ve-msg-body>{V.noscript}</p>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline type="module">
+    const root = document.querySelector('[data-ve]');
+    if (root) {
+      const strings = JSON.parse(root.dataset.strings);
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang') === 'de' ? 'de' : 'en'; // Default 'en' (wie WP)
+      const s = strings[lang] || strings.en;
+
+      // Chrome an die gewählte Sprache angleichen.
+      document.documentElement.lang = lang;
+      document.title = s.metaTitle;
+      const titleEl = root.querySelector('[data-ve-title]');
+      const msgTitle = root.querySelector('[data-ve-msg-title]');
+      const msgBody = root.querySelector('[data-ve-msg-body]');
+      if (titleEl) titleEl.textContent = s.title;
+
+      const setState = (state, title, body) => {
+        root.dataset.state = state;
+        if (msgTitle) msgTitle.textContent = title || '';
+        if (msgBody) msgBody.textContent = body || '';
+      };
+
+      // Konfetti-BURST in CD-Farben: schlagartig viele Teilchen aus der Badge-Mitte,
+      // Schwerkraft zieht sie als kurzer Nachregen herunter, dann restlos aufgeräumt.
+      // Canvas (kein DOM-Schwarm), selbst geschrieben, KEINE Library. Nur ~2,3 s.
+      // Bei prefers-reduced-motion: kein Konfetti.
+      const fireConfetti = () => {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const colors = ['#fff03c', '#3b3b3a', '#f6f6f6'];
+        const count = window.matchMedia('(max-width: 600px)').matches ? 60 : 120;
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 've-confetti-canvas';
+        canvas.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          canvas.remove();
+          return;
+        }
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        let vw = window.innerWidth;
+        let vh = window.innerHeight;
+        canvas.width = Math.round(vw * dpr);
+        canvas.height = Math.round(vh * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Ursprung: Mitte des Erfolgs-Badges (Fallback: oberes Drittel).
+        let ox = vw / 2;
+        let oy = vh * 0.32;
+        const badge = root.querySelector('.ve-badge');
+        if (badge) {
+          const r = badge.getBoundingClientRect();
+          if (r.width) {
+            ox = r.left + r.width / 2;
+            oy = r.top + r.height / 2;
+          }
+        }
+
+        const TAU = Math.PI * 2;
+        const GRAVITY = 1500; // px/s²
+        const DRAG = 0.86; // exponentiell pro Sekunde
+        const DURATION = 2300; // ms
+
+        const parts = [];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * TAU;
+          const speed = 260 + Math.random() * 720;
+          const size = 6 + Math.random() * 7;
+          parts.push({
+            x: ox,
+            y: oy,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 260, // leichter Aufwärts-Boost
+            w: size,
+            h: size * (0.45 + Math.random() * 0.35),
+            rot: Math.random() * TAU,
+            vrot: (Math.random() * 2 - 1) * 12,
+            color: colors[i % colors.length],
+          });
+        }
+
+        const start = performance.now();
+        let last = 0;
+        const step = (t) => {
+          if (!last) last = t;
+          const dt = Math.min((t - last) / 1000, 0.05);
+          last = t;
+          const elapsed = t - start;
+          const dragF = Math.pow(DRAG, dt);
+          const fadeStart = DURATION * 0.65;
+          const fade =
+            elapsed < fadeStart ? 1 : Math.max(0, 1 - (elapsed - fadeStart) / (DURATION - fadeStart));
+
+          ctx.clearRect(0, 0, vw, vh);
+          ctx.globalAlpha = fade;
+          for (const p of parts) {
+            p.vy += GRAVITY * dt;
+            p.vx *= dragF;
+            p.vy *= dragF;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.rot += p.vrot * dt;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+          }
+
+          if (elapsed < DURATION) {
+            requestAnimationFrame(step);
+          } else {
+            canvas.remove();
+          }
+        };
+        requestAnimationFrame(step);
+      };
+
+      // Review-Schalter — NUR auf *.pages.dev, ohne Firebase-Call.
+      const preview = params.get('preview');
+      const isPreviewHost = window.location.hostname.endsWith('.pages.dev');
+      if (isPreviewHost && (preview === 'success' || preview === 'error')) {
+        if (preview === 'success') {
+          setState('success', s.successTitle, s.successBody);
+          fireConfetti();
+        } else {
+          setState('error', s.errorTitle, s.errorBody);
+        }
+      } else {
+        // Echter Ablauf.
+        setState('loading', '', s.verifying);
+        const apiKey = params.get('apiKey');
+        const mode = params.get('mode');
+        const oobCode = params.get('oobCode');
+        if (mode === 'verifyEmail' && oobCode) {
+          try {
+            const { initializeApp } = await import(
+              'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
+            );
+            const { getAuth, applyActionCode } = await import(
+              'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
+            );
+            const app = initializeApp({ apiKey });
+            const auth = getAuth(app);
+            await applyActionCode(auth, oobCode);
+            setState('success', s.successTitle, s.successBody);
+            fireConfetti();
+          } catch (e) {
+            setState('error', s.errorTitle, s.errorBody);
+          }
+        } else {
+          setState('invalid', s.invalidTitle, s.invalidBody);
+        }
+      }
+    }
+  </script>
+</UtilityLayout>
+
+<style>
+  .ve {
+    width: 100%;
+    max-width: 480px;
+  }
+  .ve-card {
+    background: var(--color-offwhite);
+    border-radius: 20px;
+    padding: 40px 28px;
+    box-shadow: 0 20px 50px rgb(0 0 0 / 0.08);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ---- Icon (Spinner ↔ Badge je Zustand) ---- */
+  .ve-icon {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 20px;
+  }
+  .ve-spinner {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 4px solid var(--color-darkgrey);
+    border-top-color: var(--color-black);
+    animation: ve-spin 0.9s linear infinite;
+    display: none;
+  }
+  .ve-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    display: none;
+    place-items: center;
+    background: var(--color-darkgrey);
+  }
+  .ve-badge-check {
+    display: none;
+  }
+  .ve-badge-neutral {
+    display: block;
+  }
+  /* Zustands-Sichtbarkeit */
+  .ve[data-state='loading'] .ve-spinner {
+    display: block;
+  }
+  .ve[data-state='success'] .ve-badge,
+  .ve[data-state='error'] .ve-badge,
+  .ve[data-state='invalid'] .ve-badge,
+  .ve[data-state='noscript'] .ve-badge {
+    display: grid;
+  }
+  .ve[data-state='success'] .ve-badge {
+    background: var(--color-yellow);
+  }
+  .ve[data-state='success'] .ve-badge-check {
+    display: block;
+  }
+  .ve[data-state='success'] .ve-badge-neutral {
+    display: none;
+  }
+
+  /* ---- Titel + Status ---- */
+  .ve-title {
+    margin: 0 0 12px;
+    font-weight: 900;
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+  .ve-status {
+    /* Höhe reservieren → kein Layout-Shift beim Statuswechsel (2 Zeilen). */
+    min-height: 3.4em;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .ve-msg-title {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    color: var(--color-black);
+  }
+  .ve-msg-title:empty {
+    display: none;
+  }
+  .ve-msg-body {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+
+  /* ---- Konfetti-Burst (Canvas, per JS erzeugt → :global) ---- */
+  :global(.ve-confetti-canvas) {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 60;
+  }
+  @keyframes ve-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ve-spinner {
+      animation: none;
+    }
+  }
+</style>

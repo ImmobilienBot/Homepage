@@ -305,3 +305,52 @@ export function renderConfirmationEmail(input: ConfirmationEmailInput): {
 
   return { subject: s.subject, html, text };
 }
+
+/* ---------------------------------------------------------------------------
+   Account-Löschanfrage (an mail@ …). Interne, team-facing Mail (Deutsch).
+   Enthält NUR die für die Löschung nötigen Daten: User ID + Kontakt-E-Mail.
+   Betreff exakt „Immobilien Bot - Account löschen" (Play-Console-Vorgabe).
+   --------------------------------------------------------------------------- */
+
+export interface AccountDeleteEmailInput {
+  userId: string; // roh (wird hier escaped)
+  email: string; // roh (wird hier escaped)
+  sentAt: string; // vorformatiert, Europe/Berlin
+  origin: string; // Request-Origin (Logo-/Footer-URL)
+}
+
+/** Fester Betreff der Löschanfrage. */
+export const ACCOUNT_DELETE_SUBJECT = 'Immobilien Bot - Account löschen';
+
+/** Löschanfrage-Mail: HTML + Plain-Text + Betreff. */
+export function renderAccountDeleteEmail(input: AccountDeleteEmailInput): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const userIdE = escapeHtml(input.userId);
+  const emailE = escapeHtml(input.email);
+  const sentAtE = escapeHtml(input.sentAt);
+
+  const content = `
+<p style="margin:0 0 20px;font-size:20px;font-weight:800;color:#3b3b3a;">Account-Löschanfrage</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+${fieldRow('User ID', userIdE)}
+${fieldRow('E-Mail', `<a href="mailto:${emailE}" style="color:#3b3b3a;">${emailE}</a>`)}
+${fieldRow('Zeitpunkt', sentAtE)}
+</table>
+<p style="margin:24px 0 0;color:#686868;font-size:14px;line-height:1.5;">Die Nutzer:in hat der Löschung ausdrücklich zugestimmt und um Löschung innerhalb von 24 Stunden gebeten.</p>
+`;
+
+  const html = emailShell('Account-Löschanfrage', content, input.origin);
+
+  const text =
+    `Account-Löschanfrage\n\n` +
+    `User ID:   ${input.userId}\n` +
+    `E-Mail:    ${input.email}\n` +
+    `Zeitpunkt: ${input.sentAt} (Europe/Berlin)\n\n` +
+    `Die Nutzer:in hat der Löschung ausdrücklich zugestimmt.\n\n` +
+    `— Immobilien Bot · ${siteHost(input.origin)}`;
+
+  return { subject: ACCOUNT_DELETE_SUBJECT, html, text };
+}

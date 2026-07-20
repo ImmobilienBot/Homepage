@@ -1,0 +1,157 @@
+---
+/**
+ * UtilityLayout.astro — schlanke Layout-Schiene für Utility-Seiten, die aus der
+ * App / aus Mails geöffnet werden (E-Mail-Verifizierung, Account-Löschung).
+ *
+ * Bewusst MINIMAL & schnell (meist auf dem Handy geöffnet): eigener schlanker
+ * Header (nur Logo → /) + schlanker Footer, KEINE Marketing-Chrome (kein Scroll-
+ * Nav/Signature-Pille, kein Cursor, kein SmartAppBar, keine Animations-Skripte).
+ * Immer noindex + standalone (kein hreflang-Paar) — wie die Rechtsseiten aus dem
+ * Index genommen. CD-Design (Grau/Schwarz/Gelb, Roboto) über global.css.
+ */
+import '@fontsource/roboto/latin-400.css';
+import '@fontsource/roboto/latin-500.css';
+import '@fontsource/roboto/latin-700.css';
+import '@fontsource/roboto/latin-900.css';
+import robotoBlackWoff2 from '@fontsource/roboto/files/roboto-latin-900-normal.woff2?url';
+import '../styles/global.css';
+import SEO from '../components/seo/SEO.astro';
+import Logo from '../assets/images/immobilien-bot-logo.svg';
+import { useTranslations } from '../i18n';
+import type { Locale } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Chrome-Sprache (Standard DE). Utility-Seiten sind DE-only/standalone. */
+  lang?: Locale;
+}
+
+const { title, description, lang = 'de' } = Astro.props;
+const t = useTranslations(lang);
+const F = t.footer;
+const copyright = F.copyright.replace('{year}', String(new Date().getFullYear()));
+const legalLinks = [
+  { label: F.imprint, href: '/impressum' },
+  { label: F.privacy, href: '/datenschutz' },
+  { label: F.terms, href: '/agb' },
+];
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preload" href={robotoBlackWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
+    <SEO title={title} description={description} noindex lang={lang} standalone />
+  </head>
+
+  <body class="util-body">
+    {/* Schlanker Header — nur Logo, führt zur Startseite. */}
+    <header class="util-header">
+      <a href="/" class="util-logo-link" aria-label="Immobilien Bot – Startseite">
+        <Logo class="util-logo" aria-hidden="true" />
+      </a>
+    </header>
+
+    <main id="main" class="util-main">
+      <slot />
+    </main>
+
+    {/* Schlanker Footer — Copyright + Rechtsseiten. */}
+    <footer class="util-footer">
+      <nav class="util-footer-links" aria-label={F.colLegal}>
+        {
+          legalLinks.map((l) => (
+            <a class="util-footer-link" href={l.href}>
+              {l.label}
+            </a>
+          ))
+        }
+      </nav>
+      <p class="util-copy">{copyright}</p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .util-body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-grey);
+    color: var(--color-black);
+  }
+
+  /* ---- Header ---- */
+  .util-header {
+    padding: 18px var(--spacing-inset);
+    display: flex;
+    align-items: center;
+  }
+  .util-logo-link {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 6px;
+  }
+  .util-logo-link:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 4px;
+  }
+  .util-logo {
+    height: 30px;
+    width: auto;
+    display: block;
+  }
+
+  /* ---- Main ---- */
+  .util-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px var(--spacing-inset) 48px;
+  }
+
+  /* ---- Footer ---- */
+  .util-footer {
+    padding: 20px var(--spacing-inset) calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 16px;
+    border-top: 1px solid var(--color-darkgrey);
+    text-align: center;
+  }
+  .util-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    justify-content: center;
+  }
+  .util-footer-link {
+    color: var(--color-grey-text);
+    font-size: 12.5px;
+    text-decoration: none;
+  }
+  .util-footer-link:hover {
+    color: var(--color-black);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .util-footer-link:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .util-copy {
+    margin: 0;
+    width: 100%;
+    color: var(--color-grey-text);
+    font-size: 12px;
+  }
+</style>

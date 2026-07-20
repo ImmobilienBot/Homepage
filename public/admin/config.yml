@@ -1569,6 +1569,11 @@ collections:
                 widget: string
                 required: false
                 i18n: true
+              - name: accountDelete
+                label: 'Account Delete'
+                widget: string
+                required: false
+                i18n: true
               - name: contact
                 label: 'Kontakt'
                 widget: string
@@ -1656,6 +1661,169 @@ collections:
                     widget: string
                     required: false
                     i18n: true
+          - name: verifyEmail
+            label: 'Verify Email'
+            widget: object
+            required: false
+            i18n: true
+            collapsed: true
+            fields:
+              - name: metaTitle
+                label: 'Seitentitel (Browser-Tab / SEO)'
+                widget: string
+                required: false
+                i18n: true
+              - name: metaDescription
+                label: 'Beschreibung (SEO)'
+                widget: text
+                required: false
+                i18n: true
+              - name: title
+                label: 'Titel'
+                widget: string
+                required: false
+                i18n: true
+              - name: verifying
+                label: 'Verifying'
+                widget: string
+                required: false
+                i18n: true
+              - name: successTitle
+                label: 'Success Title'
+                widget: string
+                required: false
+                i18n: true
+              - name: successBody
+                label: 'Success Body'
+                widget: string
+                required: false
+                i18n: true
+              - name: errorTitle
+                label: 'Error Title'
+                widget: string
+                required: false
+                i18n: true
+              - name: errorBody
+                label: 'Error Body'
+                widget: text
+                required: false
+                i18n: true
+              - name: invalidTitle
+                label: 'Invalid Title'
+                widget: string
+                required: false
+                i18n: true
+              - name: invalidBody
+                label: 'Invalid Body'
+                widget: string
+                required: false
+                i18n: true
+              - name: noscript
+                label: 'Noscript'
+                widget: string
+                required: false
+                i18n: true
+          - name: accountDelete
+            label: 'Account Delete'
+            widget: object
+            required: false
+            i18n: true
+            collapsed: true
+            fields:
+              - name: metaTitle
+                label: 'Seitentitel (Browser-Tab / SEO)'
+                widget: string
+                required: false
+                i18n: true
+              - name: metaDescription
+                label: 'Beschreibung (SEO)'
+                widget: text
+                required: false
+                i18n: true
+              - name: title
+                label: 'Titel'
+                widget: string
+                required: false
+                i18n: true
+              - name: lead
+                label: 'Einleitung'
+                widget: string
+                required: false
+                i18n: true
+              - name: body
+                label: 'Text'
+                widget: text
+                required: false
+                i18n: true
+              - name: form
+                label: 'Formular'
+                widget: object
+                required: false
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: userId
+                    label: 'User Id'
+                    widget: string
+                    required: false
+                    i18n: true
+                  - name: userIdPlaceholder
+                    label: 'User Id Placeholder'
+                    widget: string
+                    required: false
+                    i18n: true
+                  - name: email
+                    label: 'E-Mail'
+                    widget: string
+                    required: false
+                    i18n: true
+                  - name: emailPlaceholder
+                    label: 'Platzhalter E-Mail'
+                    widget: string
+                    required: false
+                    i18n: true
+                  - name: consent
+                    label: 'Consent'
+                    widget: text
+                    required: false
+                    i18n: true
+                  - name: submit
+                    label: 'Absenden-Button'
+                    widget: string
+                    required: false
+                    i18n: true
+                  - name: sending
+                    label: 'Sende-Status'
+                    widget: string
+                    required: false
+                    i18n: true
+              - name: success
+                label: 'Erfolgsmeldung'
+                widget: object
+                required: false
+                i18n: true
+                collapsed: true
+                fields:
+                  - name: title
+                    label: 'Titel'
+                    widget: string
+                    required: false
+                    i18n: true
+                  - name: copy
+                    label: 'Fließtext'
+                    widget: text
+                    required: false
+                    i18n: true
+                  - name: again
+                    label: 'Nochmal-Button'
+                    widget: string
+                    required: false
+                    i18n: true
+              - name: error
+                label: 'Fehlermeldung'
+                widget: text
+                required: false
+                i18n: true
           - name: blog
             label: 'Blog – Platzhalter'
             widget: object
