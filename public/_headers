@@ -18,3 +18,10 @@
 # Regeln an → /admin/* erbt zusätzlich die /*-Header oben.
 /admin/*
   X-Robots-Tag: noindex
+
+# Apple Universal Links: die Datei ist BEWUSST endungslos (Pflicht), sonst würde
+# Cloudflare sie als application/octet-stream ausliefern. Apple verlangt aber
+# application/json — hier explizit erzwingen. (assetlinks.json trägt die Endung
+# schon und wird automatisch als application/json geliefert.)
+/.well-known/apple-app-site-association
+  Content-Type: application/json

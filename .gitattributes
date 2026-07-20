@@ -1,0 +1,6 @@
+# Byte-Treue für aus dem alten Webspace übernommene App-Deep-Link-Dateien:
+# KEINE EOL-/Text-Normalisierung (core.autocrlf ist true) → exakt wie das Original
+# ausliefern. Apple/Android prüfen diese Dateien 1:1; ein eingeschleustes CRLF würde
+# die Byte-Identität brechen.
+public/.well-known/apple-app-site-association -text
+public/.well-known/assetlinks.json            -text

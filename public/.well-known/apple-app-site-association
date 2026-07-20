@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "2SYU396MK3.immobilien.bot",
+        "paths": [
+          "/verify-email"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "2SYU396MK3.immobilien.bot"
+    ]
+  }
+}

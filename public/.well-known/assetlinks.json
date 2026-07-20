@@ -1,0 +1,24 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "immobilien.bot",
+      "sha256_cert_fingerprints": [
+        "51:BD:74:D3:10:98:B2:20:8C:BB:D1:1B:80:3F:87:9D:35:A2:88:4E:AA:8F:07:88:CD:12:FB:7D:05:70:2B:91",
+        "25:3D:00:D7:8F:F0:11:46:9F:D2:B9:3B:4C:9F:4C:51:96:63:C2:BA:69:FD:E7:03:79:AB:50:C9:A1:17:70:69"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.immobilien.bot.debug",
+      "sha256_cert_fingerprints": [
+        "51:BD:74:D3:10:98:B2:20:8C:BB:D1:1B:80:3F:87:9D:35:A2:88:4E:AA:8F:07:88:CD:12:FB:7D:05:70:2B:91",
+        "25:3D:00:D7:8F:F0:11:46:9F:D2:B9:3B:4C:9F:4C:51:96:63:C2:BA:69:FD:E7:03:79:AB:50:C9:A1:17:70:69"
+      ]
+    }
+  }
+]
