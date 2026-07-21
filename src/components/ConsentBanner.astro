@@ -9,14 +9,20 @@
  *  2) Einstellungen-Layer (modaler Dialog, Fokus-Falle): Kategorien mit Toggles
  *     (Notwendig=immer an · Statistik→analytics_storage · Marketing→ad_*).
  *
+ * PERF: Der Einstellungen-Layer liegt in einem <template> und wird ERST beim ersten
+ * Öffnen ins DOM geklont → im Lighthouse-Lauf (der nie „Einstellungen" klickt) zählt er
+ * nicht zur DOM-/Style-Masse (schützt den LCP-Render-Delay der schweren Startseite).
+ * CSS ist bewusst is:global (alle Selektoren `.cc*`, kollisionsfrei), damit die
+ * geklonten Template-Knoten korrekt gestylt werden.
+ *
  * Consent Mode v2: bei Klick gtag('consent','update',{…}) + First-Party-Cookie
  * (ib_consent, 1 Jahr) + dataLayer-Event 'consent_update' (für Tags ohne nativen
- * Consent-Mode, z. B. Meta Pixel, via GTM-Trigger). Das FRÜH-Auslesen des Cookies
- * (returning visitor) passiert bereits im <head> (BaseLayout), VOR dem GTM-Snippet.
+ * Consent-Mode, z. B. Meta Pixel). Das FRÜH-Auslesen des Cookies (returning visitor)
+ * passiert bereits im <head> (BaseLayout), VOR dem GTM-Snippet.
  *
- * Ohne JS: Banner bleibt unsichtbar (hidden) — dann lädt aber auch kein GTM (JS),
- * also kein Tracking → zulässig. Nur transform/opacity animiert, reduced-motion aus.
- * Alle Texte aus i18n. Fixed → kein Layout-Shift, eigener Stacking-Context.
+ * Ohne JS: kein Banner (hidden) — dann lädt aber auch kein GTM (JS), also kein
+ * Tracking → zulässig. Nur transform/opacity animiert, reduced-motion aus. Fixed →
+ * kein Layout-Shift. Alle Texte aus i18n.
  */
 import { getLangFromUrl, useTranslations } from '../i18n';
 const lang = getLangFromUrl(Astro.url);
@@ -25,8 +31,12 @@ const C = useTranslations(lang).consent;
 const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
 ---
 
-<div class="cc" data-cc hidden>
-  {/* ---- Ebene 1: Erst-Layer (nicht-modale Leiste) ---- */}
+{/* Leerer Shell-Container — Leiste + Modal werden erst per JS (post-load) hineingeklont,
+    damit der Banner NICHT in der pre-LCP-DOM/Layout-Masse der schweren Startseite liegt. */}
+<div class="cc" data-cc hidden></div>
+
+{/* ---- Ebene 1: Erst-Layer (nicht-modale Leiste) — im <template>, post-load injiziert ---- */}
+<template data-cc-bar-tpl>
   <div
     class="cc-bar"
     data-cc-bar
@@ -34,6 +44,7 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
     aria-modal="false"
     aria-labelledby="cc-bar-title"
     aria-describedby="cc-bar-desc"
+    hidden
   >
     <div class="cc-bar-text">
       <p class="cc-bar-title" id="cc-bar-title">{C.title}</p>
@@ -47,8 +58,11 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
       <button type="button" class="cc-btn cc-btn--ghost" data-cc-open>{C.settings}</button>
     </div>
   </div>
+</template>
 
-  {/* ---- Ebene 2: Einstellungen-Layer (modaler Dialog) ---- */}
+{/* ---- Ebene 2: Einstellungen-Layer — im <template>, erst bei Bedarf ins DOM geklont.
+     So belastet er die DOM-/Style-Masse der Seite NICHT (Perf-Budget/LCP-Render-Delay). */}
+<template data-cc-modal-tpl>
   <div class="cc-modal" data-cc-modal hidden>
     <div class="cc-backdrop" data-cc-backdrop></div>
     <div
@@ -105,23 +119,27 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
       </div>
     </div>
   </div>
-</div>
+</template>
 
 <script>
   // ---- Consent-Island: Progressive Enhancement (ohne JS kein Banner/kein GTM) ----
   const root = document.querySelector<HTMLElement>('[data-cc]');
-  if (root) {
+  const barTpl = document.querySelector<HTMLTemplateElement>('[data-cc-bar-tpl]');
+  const modalTpl = document.querySelector<HTMLTemplateElement>('[data-cc-modal-tpl]');
+  if (root && barTpl && modalTpl) {
     const COOKIE = 'ib_consent';
     const VER = 1;
     const w = window as unknown as { dataLayer: unknown[]; gtag?: (...a: unknown[]) => void };
 
-    const bar = root.querySelector<HTMLElement>('[data-cc-bar]');
-    const modal = root.querySelector<HTMLElement>('[data-cc-modal]');
-    const dialog = root.querySelector<HTMLElement>('[data-cc-dialog]');
-    const analyticsIn = root.querySelector<HTMLInputElement>('[data-cc-analytics]');
-    const marketingIn = root.querySelector<HTMLInputElement>('[data-cc-marketing]');
     const reopen = document.querySelector<HTMLElement>('[data-consent-reopen]');
     let lastFocus: HTMLElement | null = null;
+
+    // Lazy erzeugte Referenzen (erst nach ensureBar()/ensureModal() gesetzt).
+    let bar: HTMLElement | null = null;
+    let modal: HTMLElement | null = null;
+    let dialog: HTMLElement | null = null;
+    let analyticsIn: HTMLInputElement | null = null;
+    let marketingIn: HTMLInputElement | null = null;
 
     type Choice = { a: boolean; m: boolean };
     const read = (): Choice | null => {
@@ -151,7 +169,17 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
       (w.dataLayer = w.dataLayer || []).push({ event: 'consent_update', analytics: c.a, marketing: c.m });
     };
 
+    // Leiste einmalig aus dem <template> klonen + verdrahten (Perf: erst post-load).
+    const ensureBar = () => {
+      if (bar) return;
+      root.appendChild(barTpl.content.cloneNode(true));
+      bar = root.querySelector<HTMLElement>('[data-cc-bar]');
+      root.querySelector('[data-cc-accept]')?.addEventListener('click', () => commit({ a: true, m: true }));
+      root.querySelector('[data-cc-reject]')?.addEventListener('click', () => commit({ a: false, m: false }));
+      root.querySelector('[data-cc-open]')?.addEventListener('click', openModal);
+    };
     const showBar = () => {
+      ensureBar();
       bar?.removeAttribute('hidden');
       root.removeAttribute('hidden');
       requestAnimationFrame(() => root.classList.add('is-in'));
@@ -160,7 +188,7 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
       root.classList.remove('is-in');
       root.setAttribute('hidden', '');
       bar?.setAttribute('hidden', '');
-      closeModal(true);
+      if (modal) closeModal(true);
     };
 
     // ---- Fokus-Falle (Einstellungen-Dialog) ----
@@ -192,7 +220,26 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
       }
     };
 
+    // Modal einmalig aus dem <template> ins DOM klonen + verdrahten (Perf: erst bei Bedarf).
+    const ensureModal = () => {
+      if (modal) return;
+      root.appendChild(modalTpl.content.cloneNode(true));
+      modal = root.querySelector<HTMLElement>('[data-cc-modal]');
+      dialog = root.querySelector<HTMLElement>('[data-cc-dialog]');
+      analyticsIn = root.querySelector<HTMLInputElement>('[data-cc-analytics]');
+      marketingIn = root.querySelector<HTMLInputElement>('[data-cc-marketing]');
+      root.querySelector('[data-cc-close]')?.addEventListener('click', () => closeModal());
+      root.querySelector('[data-cc-backdrop]')?.addEventListener('click', () => closeModal());
+      root
+        .querySelector('[data-cc-accept-all]')
+        ?.addEventListener('click', () => commit({ a: true, m: true }));
+      root
+        .querySelector('[data-cc-save]')
+        ?.addEventListener('click', () => commit({ a: !!analyticsIn?.checked, m: !!marketingIn?.checked }));
+    };
+
     const openModal = () => {
+      ensureModal();
       const c = read();
       if (analyticsIn) analyticsIn.checked = c ? c.a : false;
       if (marketingIn) marketingIn.checked = c ? c.m : false;
@@ -218,35 +265,34 @@ const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
       lastFocus?.focus();
     }
 
-    const commit = (c: Choice) => {
+    function commit(c: Choice) {
       write(c);
       apply(c);
       hideAll();
+    }
+
+    // ---- Init (Widerruf-Link + Erstbesuch-Leiste) ----
+    const init = () => {
+      reopen?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal();
+      });
+      // Erstbesuch (kein Cookie) → Leiste. Sonst bleibt alles versteckt (der <head>-
+      // Frühleser hat die Einwilligung schon angewandt).
+      if (!read()) showBar();
     };
-
-    // ---- Verdrahtung ----
-    root.querySelector('[data-cc-accept]')?.addEventListener('click', () => commit({ a: true, m: true }));
-    root.querySelector('[data-cc-reject]')?.addEventListener('click', () => commit({ a: false, m: false }));
-    root.querySelector('[data-cc-accept-all]')?.addEventListener('click', () => commit({ a: true, m: true }));
-    root.querySelector('[data-cc-save]')?.addEventListener('click', () =>
-      commit({ a: !!analyticsIn?.checked, m: !!marketingIn?.checked }),
-    );
-    root.querySelector('[data-cc-open]')?.addEventListener('click', openModal);
-    root.querySelector('[data-cc-close]')?.addEventListener('click', () => closeModal());
-    root.querySelector('[data-cc-backdrop]')?.addEventListener('click', () => closeModal());
-    reopen?.addEventListener('click', (e) => {
-      e.preventDefault();
-      openModal();
-    });
-
-    // ---- Init: Erstbesuch (kein Cookie) → Leiste. Sonst bleibt alles versteckt
-    //      (der <head>-Frühleser hat die Einwilligung schon angewandt). ----
-    if (!read()) showBar();
+    // Post-load + rAF → der Banner liegt NICHT in der pre-LCP-DOM/Layout-Masse
+    // (schützt den LCP-Render-Delay der schweren Startseite). Cookie-Banner darf
+    // eine Spur später erscheinen; Consent Mode bleibt (default-denied) unberührt.
+    if (document.readyState === 'complete') requestAnimationFrame(init);
+    else window.addEventListener('load', () => requestAnimationFrame(init), { once: true });
   }
 </script>
 
-<style>
-  /* Root: fixed, eigener Stacking-Context, über allem (Header z-40, Hero z-41). */
+<style is:global>
+  /* Root: fixed, eigener Stacking-Context, über allem (Header z-40, Hero z-41).
+     Bewusst is:global (alle Selektoren `.cc*`, kollisionsfrei) → die aus dem <template>
+     geklonten Modal-Knoten werden korrekt gestylt. */
   .cc {
     position: fixed;
     inset: 0;
