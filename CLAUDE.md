@@ -240,8 +240,9 @@ EN-Footer verlinkt sie mit Zusatz „(German)". `/contact` = Account-Löschen-In
 laufen zentral über `src/i18n` (`translatedRoutes`/`standaloneRoutes`, speist hreflang **und**
 Sprachumschalter). Sektionen der Startseite in dieser Reihenfolge:
 
-1. **Header** — sticky, minimal → Scroll-Pille. Logo, Anchor-Nav **Features · Portale · Preise ·
-   FAQ · Über uns · Kontakt** (Anchors werden IMMER absolut gerendert, `/#…` bzw. `/en/#…`, damit
+1. **Header** — sticky, minimal → Scroll-Pille. Logo, Anchor-Nav **Portale · Features · Preise ·
+   FAQ · Über uns · Kontakt** (Reihenfolge = Sektions-Reihenfolge; Anchors werden IMMER absolut
+   gerendert, `/#…` bzw. `/en/#…`, damit
    sie auch von Unterseiten wie `/ueber-uns` oder `/impressum` funktionieren). „Über uns" ist ein
    **Seitenlink mit Dropdown** (Manifest → `/ueber-uns#manifest`, Das Team → `/ueber-uns#team`;
    Desktop Hover+Fokus, `aria-expanded`, Escape schließt). **Sprachumschalter „DE | EN"** rechts vor
