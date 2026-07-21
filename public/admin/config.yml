@@ -1609,6 +1609,11 @@ collections:
                 widget: string
                 required: false
                 i18n: true
+              - name: cookieSettings
+                label: 'Cookie Settings'
+                widget: string
+                required: false
+                i18n: true
               - name: sources
                 label: 'Quellen'
                 widget: list
@@ -1618,6 +1623,98 @@ collections:
                   name: wert
                   label: 'Wert'
                   widget: string
+          - name: consent
+            label: 'Consent'
+            widget: object
+            required: false
+            i18n: true
+            collapsed: true
+            fields:
+              - name: title
+                label: 'Titel'
+                widget: string
+                required: false
+                i18n: true
+              - name: body
+                label: 'Text'
+                widget: text
+                required: false
+                i18n: true
+              - name: privacyLinkLabel
+                label: 'Privacy Link Label'
+                widget: string
+                required: false
+                i18n: true
+              - name: acceptAll
+                label: 'Accept All'
+                widget: string
+                required: false
+                i18n: true
+              - name: rejectAll
+                label: 'Reject All'
+                widget: string
+                required: false
+                i18n: true
+              - name: settings
+                label: 'Settings'
+                widget: string
+                required: false
+                i18n: true
+              - name: settingsTitle
+                label: 'Settings Title'
+                widget: string
+                required: false
+                i18n: true
+              - name: settingsIntro
+                label: 'Settings Intro'
+                widget: text
+                required: false
+                i18n: true
+              - name: save
+                label: 'Save'
+                widget: string
+                required: false
+                i18n: true
+              - name: close
+                label: 'Schließen'
+                widget: string
+                required: false
+                i18n: true
+              - name: necessaryName
+                label: 'Necessary Name'
+                widget: string
+                required: false
+                i18n: true
+              - name: necessaryDesc
+                label: 'Necessary Desc'
+                widget: text
+                required: false
+                i18n: true
+              - name: necessaryAlways
+                label: 'Necessary Always'
+                widget: string
+                required: false
+                i18n: true
+              - name: analyticsName
+                label: 'Analytics Name'
+                widget: string
+                required: false
+                i18n: true
+              - name: analyticsDesc
+                label: 'Analytics Desc'
+                widget: text
+                required: false
+                i18n: true
+              - name: marketingName
+                label: 'Marketing Name'
+                widget: string
+                required: false
+                i18n: true
+              - name: marketingDesc
+                label: 'Marketing Desc'
+                widget: text
+                required: false
+                i18n: true
           - name: legal
             label: 'Rechtsseiten – Titel'
             widget: object
