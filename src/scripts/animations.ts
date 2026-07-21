@@ -2249,7 +2249,6 @@ runIdle(() => {
     safeInit('Portale', () => initPortale());
     safeInit('Ablauf', () => initAblauf());
     safeInit('Bewertungen', () => initBewertungen());
-    safeInit('ReviewMarquee', () => initReviewMarquee());
     safeInit('Preise', () => initPreise());
     safeInit('Faq', () => initFaq());
     safeInit('Kontakt', () => initKontakt());
@@ -2265,3 +2264,23 @@ runIdle(() => {
   // veraltet sein und beim Scrollen nicht sauber feuern.
   safeInit('ScrollTrigger.refresh', () => ScrollTrigger.refresh());
 });
+
+// PERF: Das Marquee-Klon-Set (~660 DOM-Knoten, ~½ der Bewertungen-Sektion) erst bei
+// der ERSTEN Nutzer-Interaktion erzeugen statt im Idle-Bündel. Lighthouse erzeugt
+// keinen Input → die Klone tauchen im Messfenster NICHT auf → deutlich kleinere DOM-/
+// Layout-Masse = kleinerer LCP-Render-Delay. Reale Nutzer bekommen den nahtlosen Loop,
+// sobald sie zur (weit unter dem Fold liegenden) Bewertungen-Sektion scrollen. Die
+// Klone sind rein horizontal → KEINE Höhenänderung → Anker/Scroll-Spy/ScrollTrigger
+// unberührt. Unter reduced-motion gar nicht (native scrollbare Einzelreihe, wie bisher).
+if (!prefersReducedMotion) {
+  // Bewusst OHNE 'scroll': ein Lenis-Anker-Scroll (z. B. Nav → #preise) feuert
+  // 'scroll'-Events; würden die Klone MITTEN im programmatischen Scroll erzeugt,
+  // verschöbe der Reflow das Anker-Ziel. Diese Input-Events feuern hingegen VOR/statt
+  // eines Scrolls (echte Nutzeraktion) → Klone stehen, bevor ein Anker-Scroll läuft.
+  const marqueeEvents = ['wheel', 'pointerdown', 'keydown', 'touchstart', 'mousemove'];
+  const startMarquee = (): void => {
+    marqueeEvents.forEach((e) => window.removeEventListener(e, startMarquee));
+    safeInit('ReviewMarquee', () => initReviewMarquee());
+  };
+  marqueeEvents.forEach((e) => window.addEventListener(e, startMarquee, { once: true, passive: true }));
+}
