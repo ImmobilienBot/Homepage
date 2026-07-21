@@ -1,0 +1,592 @@
+---
+/**
+ * ConsentBanner — selbstgebauter Cookie-Consent (DE/EN, CD-konform, kein Fremd-Script).
+ *
+ * Zwei Ebenen:
+ *  1) Erst-Layer (fixierte Leiste unten): kurzer Text + Datenschutz-Link + drei
+ *     GLEICHWERTIGE Aktionen „Alle akzeptieren" · „Ablehnen" · „Einstellungen".
+ *     Ablehnen ist genauso prominent/leicht wie Akzeptieren (Rechtsvorgabe).
+ *  2) Einstellungen-Layer (modaler Dialog, Fokus-Falle): Kategorien mit Toggles
+ *     (Notwendig=immer an · Statistik→analytics_storage · Marketing→ad_*).
+ *
+ * Consent Mode v2: bei Klick gtag('consent','update',{…}) + First-Party-Cookie
+ * (ib_consent, 1 Jahr) + dataLayer-Event 'consent_update' (für Tags ohne nativen
+ * Consent-Mode, z. B. Meta Pixel, via GTM-Trigger). Das FRÜH-Auslesen des Cookies
+ * (returning visitor) passiert bereits im <head> (BaseLayout), VOR dem GTM-Snippet.
+ *
+ * Ohne JS: Banner bleibt unsichtbar (hidden) — dann lädt aber auch kein GTM (JS),
+ * also kein Tracking → zulässig. Nur transform/opacity animiert, reduced-motion aus.
+ * Alle Texte aus i18n. Fixed → kein Layout-Shift, eigener Stacking-Context.
+ */
+import { getLangFromUrl, useTranslations } from '../i18n';
+const lang = getLangFromUrl(Astro.url);
+const C = useTranslations(lang).consent;
+// Trennabstand kommt aus dem Markup (nicht aus String-Rändern → G6): {pre}<a>…</a>{post}
+const [bodyPre, bodyPost] = C.body.split('{privacyLink}');
+---
+
+<div class="cc" data-cc hidden>
+  {/* ---- Ebene 1: Erst-Layer (nicht-modale Leiste) ---- */}
+  <div
+    class="cc-bar"
+    data-cc-bar
+    role="dialog"
+    aria-modal="false"
+    aria-labelledby="cc-bar-title"
+    aria-describedby="cc-bar-desc"
+  >
+    <div class="cc-bar-text">
+      <p class="cc-bar-title" id="cc-bar-title">{C.title}</p>
+      <p class="cc-bar-desc" id="cc-bar-desc">
+        {bodyPre}<a class="cc-link" href="/datenschutz">{C.privacyLinkLabel}</a>{bodyPost}
+      </p>
+    </div>
+    <div class="cc-bar-actions">
+      <button type="button" class="cc-btn cc-btn--primary" data-cc-accept>{C.acceptAll}</button>
+      <button type="button" class="cc-btn cc-btn--dark" data-cc-reject>{C.rejectAll}</button>
+      <button type="button" class="cc-btn cc-btn--ghost" data-cc-open>{C.settings}</button>
+    </div>
+  </div>
+
+  {/* ---- Ebene 2: Einstellungen-Layer (modaler Dialog) ---- */}
+  <div class="cc-modal" data-cc-modal hidden>
+    <div class="cc-backdrop" data-cc-backdrop></div>
+    <div
+      class="cc-dialog"
+      data-cc-dialog
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cc-modal-title"
+    >
+      <div class="cc-dialog-head">
+        <p class="cc-modal-title" id="cc-modal-title">{C.settingsTitle}</p>
+        <button type="button" class="cc-close" data-cc-close aria-label={C.close}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <p class="cc-modal-intro">{C.settingsIntro}</p>
+
+      <ul class="cc-cats">
+        {/* Notwendig — immer an, deaktiviert */}
+        <li class="cc-cat">
+          <div class="cc-cat-head">
+            <span class="cc-cat-name">{C.necessaryName}</span>
+            <span class="cc-always">{C.necessaryAlways}</span>
+          </div>
+          <p class="cc-cat-desc">{C.necessaryDesc}</p>
+        </li>
+        {/* Statistik → analytics_storage */}
+        <li class="cc-cat">
+          <label class="cc-cat-head cc-cat-head--toggle">
+            <span class="cc-cat-name">{C.analyticsName}</span>
+            <span class="cc-switch">
+              <input type="checkbox" class="cc-switch-input" data-cc-analytics />
+              <span class="cc-switch-track" aria-hidden="true"><span class="cc-switch-knob"></span></span>
+            </span>
+          </label>
+          <p class="cc-cat-desc">{C.analyticsDesc}</p>
+        </li>
+        {/* Marketing → ad_storage + ad_user_data + ad_personalization */}
+        <li class="cc-cat">
+          <label class="cc-cat-head cc-cat-head--toggle">
+            <span class="cc-cat-name">{C.marketingName}</span>
+            <span class="cc-switch">
+              <input type="checkbox" class="cc-switch-input" data-cc-marketing />
+              <span class="cc-switch-track" aria-hidden="true"><span class="cc-switch-knob"></span></span>
+            </span>
+          </label>
+          <p class="cc-cat-desc">{C.marketingDesc}</p>
+        </li>
+      </ul>
+
+      <div class="cc-dialog-actions">
+        <button type="button" class="cc-btn cc-btn--dark" data-cc-save>{C.save}</button>
+        <button type="button" class="cc-btn cc-btn--primary" data-cc-accept-all>{C.acceptAll}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Consent-Island: Progressive Enhancement (ohne JS kein Banner/kein GTM) ----
+  const root = document.querySelector<HTMLElement>('[data-cc]');
+  if (root) {
+    const COOKIE = 'ib_consent';
+    const VER = 1;
+    const w = window as unknown as { dataLayer: unknown[]; gtag?: (...a: unknown[]) => void };
+
+    const bar = root.querySelector<HTMLElement>('[data-cc-bar]');
+    const modal = root.querySelector<HTMLElement>('[data-cc-modal]');
+    const dialog = root.querySelector<HTMLElement>('[data-cc-dialog]');
+    const analyticsIn = root.querySelector<HTMLInputElement>('[data-cc-analytics]');
+    const marketingIn = root.querySelector<HTMLInputElement>('[data-cc-marketing]');
+    const reopen = document.querySelector<HTMLElement>('[data-consent-reopen]');
+    let lastFocus: HTMLElement | null = null;
+
+    type Choice = { a: boolean; m: boolean };
+    const read = (): Choice | null => {
+      const m = document.cookie.match(/(?:^|; )ib_consent=([^;]*)/);
+      if (!m) return null;
+      try {
+        const c = JSON.parse(decodeURIComponent(m[1]));
+        if (!c || c.v !== VER) return null;
+        return { a: !!c.a, m: !!c.m };
+      } catch {
+        return null;
+      }
+    };
+    const write = (c: Choice) => {
+      const val = encodeURIComponent(JSON.stringify({ v: VER, a: c.a ? 1 : 0, m: c.m ? 1 : 0 }));
+      const secure = location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `${COOKIE}=${val}; Max-Age=${60 * 60 * 24 * 365}; Path=/; SameSite=Lax${secure}`;
+    };
+    // gtag consent update + dataLayer-Event (für Tags ohne nativen Consent Mode, z. B. Meta).
+    const apply = (c: Choice) => {
+      w.gtag?.('consent', 'update', {
+        analytics_storage: c.a ? 'granted' : 'denied',
+        ad_storage: c.m ? 'granted' : 'denied',
+        ad_user_data: c.m ? 'granted' : 'denied',
+        ad_personalization: c.m ? 'granted' : 'denied',
+      });
+      (w.dataLayer = w.dataLayer || []).push({ event: 'consent_update', analytics: c.a, marketing: c.m });
+    };
+
+    const showBar = () => {
+      bar?.removeAttribute('hidden');
+      root.removeAttribute('hidden');
+      requestAnimationFrame(() => root.classList.add('is-in'));
+    };
+    const hideAll = () => {
+      root.classList.remove('is-in');
+      root.setAttribute('hidden', '');
+      bar?.setAttribute('hidden', '');
+      closeModal(true);
+    };
+
+    // ---- Fokus-Falle (Einstellungen-Dialog) ----
+    const focusables = () =>
+      dialog
+        ? Array.from(
+            dialog.querySelectorAll<HTMLElement>(
+              'button, [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((el) => el.offsetParent !== null)
+        : [];
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const f = focusables();
+      if (!f.length) return;
+      const first = f[0];
+      const last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    const openModal = () => {
+      const c = read();
+      if (analyticsIn) analyticsIn.checked = c ? c.a : false;
+      if (marketingIn) marketingIn.checked = c ? c.m : false;
+      lastFocus = document.activeElement as HTMLElement;
+      root.removeAttribute('hidden');
+      modal?.removeAttribute('hidden');
+      requestAnimationFrame(() => {
+        root.classList.add('is-in');
+        modal?.classList.add('is-open');
+        (root.querySelector<HTMLElement>('[data-cc-close]') || dialog)?.focus();
+      });
+      document.addEventListener('keydown', onKeydown, true);
+    };
+    // silent=true → Teil von hideAll (kein Zurückfallen auf die Leiste).
+    function closeModal(silent = false) {
+      document.removeEventListener('keydown', onKeydown, true);
+      modal?.classList.remove('is-open');
+      modal?.setAttribute('hidden', '');
+      if (silent) return;
+      // Ohne gespeicherte Wahl zurück zur Leiste; sonst (Widerruf) alles schließen.
+      if (read()) hideAll();
+      else showBar();
+      lastFocus?.focus();
+    }
+
+    const commit = (c: Choice) => {
+      write(c);
+      apply(c);
+      hideAll();
+    };
+
+    // ---- Verdrahtung ----
+    root.querySelector('[data-cc-accept]')?.addEventListener('click', () => commit({ a: true, m: true }));
+    root.querySelector('[data-cc-reject]')?.addEventListener('click', () => commit({ a: false, m: false }));
+    root.querySelector('[data-cc-accept-all]')?.addEventListener('click', () => commit({ a: true, m: true }));
+    root.querySelector('[data-cc-save]')?.addEventListener('click', () =>
+      commit({ a: !!analyticsIn?.checked, m: !!marketingIn?.checked }),
+    );
+    root.querySelector('[data-cc-open]')?.addEventListener('click', openModal);
+    root.querySelector('[data-cc-close]')?.addEventListener('click', () => closeModal());
+    root.querySelector('[data-cc-backdrop]')?.addEventListener('click', () => closeModal());
+    reopen?.addEventListener('click', (e) => {
+      e.preventDefault();
+      openModal();
+    });
+
+    // ---- Init: Erstbesuch (kein Cookie) → Leiste. Sonst bleibt alles versteckt
+    //      (der <head>-Frühleser hat die Einwilligung schon angewandt). ----
+    if (!read()) showBar();
+  }
+</script>
+
+<style>
+  /* Root: fixed, eigener Stacking-Context, über allem (Header z-40, Hero z-41). */
+  .cc {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none; /* nur die Kinder fangen Klicks */
+  }
+  .cc[hidden] {
+    display: none;
+  }
+
+  /* ---- Ebene 1: Leiste unten ---- */
+  .cc-bar {
+    pointer-events: auto;
+    position: absolute;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(16px);
+    width: min(920px, calc(100vw - 24px));
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 20px;
+    background: var(--color-offwhite);
+    border-radius: 18px;
+    box-shadow:
+      0 2px 8px rgb(0 0 0 / 0.08),
+      0 24px 60px -20px rgb(0 0 0 / 0.35);
+    opacity: 0;
+    transition:
+      opacity 0.28s ease,
+      transform 0.28s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .cc.is-in .cc-bar {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .cc-bar[hidden] {
+    display: none;
+  }
+  .cc-bar-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .cc-bar-title {
+    margin: 0 0 3px;
+    font-weight: 900;
+    font-size: 1rem;
+    line-height: 1.2;
+    color: var(--color-black);
+  }
+  .cc-bar-desc {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+  .cc-link {
+    color: var(--color-black);
+    font-weight: 700;
+    text-underline-offset: 2px;
+  }
+  .cc-link:hover {
+    text-decoration: underline;
+  }
+  .cc-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+  }
+
+  /* ---- Buttons (banner-eigene Pillen; Accept≡Reject gleich prominent) ---- */
+  .cc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    padding: 11px 20px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    transition:
+      transform 0.15s ease,
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
+  .cc-btn--primary {
+    background: var(--color-yellow);
+    color: var(--color-black);
+  }
+  .cc-btn--dark {
+    background: var(--color-black);
+    color: var(--color-offwhite);
+  }
+  .cc-btn--ghost {
+    background: transparent;
+    color: var(--color-black);
+    border-color: var(--color-darkgrey);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .cc-btn:hover {
+      transform: translateY(-1px);
+    }
+    .cc-btn--ghost:hover {
+      border-color: var(--color-black);
+    }
+  }
+  .cc-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+  .cc-btn:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+  .cc-btn--dark:focus-visible {
+    outline-color: var(--color-yellow);
+  }
+
+  /* ---- Ebene 2: Modaler Einstellungen-Dialog ---- */
+  .cc-modal {
+    pointer-events: auto;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+  }
+  .cc-modal[hidden] {
+    display: none;
+  }
+  .cc-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(59 59 58 / 0.45);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .cc-modal.is-open .cc-backdrop {
+    opacity: 1;
+  }
+  .cc-dialog {
+    position: relative;
+    width: min(560px, 100%);
+    max-height: min(88vh, 720px);
+    overflow-y: auto;
+    background: var(--color-offwhite);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 30px 70px -20px rgb(0 0 0 / 0.5);
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    transition:
+      opacity 0.25s ease,
+      transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .cc-modal.is-open .cc-dialog {
+    opacity: 1;
+    transform: none;
+  }
+  .cc-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .cc-modal-title {
+    margin: 0;
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: var(--color-black);
+  }
+  .cc-close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-grey);
+    color: var(--color-black);
+    cursor: pointer;
+  }
+  .cc-close:hover {
+    background: var(--color-darkgrey);
+  }
+  .cc-close:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+  .cc-modal-intro {
+    margin: 0 0 18px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+  .cc-cats {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cc-cat {
+    padding: 14px 0;
+    border-top: 1px solid var(--color-darkgrey);
+  }
+  .cc-cat:last-child {
+    border-bottom: 1px solid var(--color-darkgrey);
+  }
+  .cc-cat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .cc-cat-head--toggle {
+    cursor: pointer;
+  }
+  .cc-cat-name {
+    font-weight: 900;
+    font-size: 0.98rem;
+    color: var(--color-black);
+  }
+  .cc-always {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-grey-text);
+  }
+  .cc-cat-desc {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-grey-text);
+  }
+
+  /* ---- Toggle-Switch (Checkbox visuell versteckt, Track/Knob als UI) ---- */
+  .cc-switch {
+    flex: none;
+    position: relative;
+    display: inline-flex;
+  }
+  .cc-switch-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .cc-switch-track {
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--color-darkgrey);
+    display: inline-flex;
+    align-items: center;
+    padding: 3px;
+    transition: background-color 0.2s ease;
+  }
+  .cc-switch-knob {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-offwhite);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+    transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .cc-switch-input:checked + .cc-switch-track {
+    background: var(--color-black);
+  }
+  .cc-switch-input:checked + .cc-switch-track .cc-switch-knob {
+    transform: translateX(20px);
+    background: var(--color-yellow);
+  }
+  .cc-switch-input:focus-visible + .cc-switch-track {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+
+  .cc-dialog-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .cc-dialog-actions .cc-btn {
+    flex: 1;
+  }
+
+  /* ---- Mobile: Leiste + Buttons gestapelt, volle Tap-Größe ---- */
+  @media (max-width: 719.98px) {
+    .cc-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+      padding: 16px;
+      bottom: max(10px, env(safe-area-inset-bottom, 0px));
+      width: calc(100vw - 16px);
+    }
+    .cc-bar-actions {
+      flex-wrap: wrap;
+    }
+    .cc-btn--primary,
+    .cc-btn--dark {
+      flex: 1 1 0;
+      padding-block: 13px;
+    }
+    .cc-btn--ghost {
+      flex: 1 1 100%;
+      order: 3;
+    }
+  }
+
+  /* ---- prefers-reduced-motion: keine Einblende-Bewegung, harte Zustände ---- */
+  @media (prefers-reduced-motion: reduce) {
+    .cc-bar,
+    .cc-backdrop,
+    .cc-dialog,
+    .cc-btn,
+    .cc-switch-track,
+    .cc-switch-knob {
+      transition: none;
+    }
+    .cc-bar {
+      transform: translateX(-50%);
+    }
+    .cc.is-in .cc-bar {
+      transform: translateX(-50%);
+    }
+    .cc-dialog {
+      transform: none;
+    }
+  }
+</style>

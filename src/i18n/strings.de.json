@@ -608,10 +608,30 @@
     "langSwitch": "English",
     "copyright": "© {year} JS Immobilien Bot GmbH",
     "signature": "Das Original. Schneller als die anderen.",
+    "cookieSettings": "Cookie-Einstellungen",
     "sources": [
       "Statistik: Berliner Zeitung.",
       "Eigene Nutzerdaten Immobilien Bot. Zum Vergleich: 54 % der Wohnungssuchenden suchen länger als ein Jahr (ImmoScout24, 2024)."
     ]
+  },
+  "consent": {
+    "title": "Deine Cookie-Einstellungen",
+    "body": "Wir nutzen Cookies für anonyme Statistik und Marketing, um die Seite und unsere Angebote zu verbessern. Notwendige Cookies sind immer aktiv. Details in unserer {privacyLink}.",
+    "privacyLinkLabel": "Datenschutzerklärung",
+    "acceptAll": "Alle akzeptieren",
+    "rejectAll": "Ablehnen",
+    "settings": "Einstellungen",
+    "settingsTitle": "Cookie-Einstellungen",
+    "settingsIntro": "Wähle selbst, welche Cookies wir setzen dürfen. Du kannst deine Wahl jederzeit über den Footer-Link „Cookie-Einstellungen“ ändern.",
+    "save": "Auswahl speichern",
+    "close": "Schließen",
+    "necessaryName": "Notwendig",
+    "necessaryDesc": "Für den Betrieb der Seite erforderlich – z. B. Sicherheit und deine Cookie-Auswahl. Immer aktiv.",
+    "necessaryAlways": "Immer aktiv",
+    "analyticsName": "Statistik",
+    "analyticsDesc": "Anonyme Messung der Nutzung, damit wir die Seite verbessern können.",
+    "marketingName": "Marketing",
+    "marketingDesc": "Damit wir dir passende Werbung ausspielen und deren Erfolg messen können."
   },
   "legal": {
     "imprint": {

@@ -25,6 +25,7 @@ import SEO from '../components/seo/SEO.astro';
 import Header from '../components/sections/Header.astro';
 import Footer from '../components/sections/Footer.astro';
 import SmartAppBar from '../components/SmartAppBar.astro';
+import ConsentBanner from '../components/ConsentBanner.astro';
 import { GTM_ID } from '../data/site';
 import { getLangFromUrl, useTranslations, hreflangCodes } from '../i18n';
 import type { Locale } from '../data/site';
@@ -88,11 +89,6 @@ const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd
       document.documentElement.classList.add('js');
     </script>
 
-    {/* ---- Consent-Banner-Platzhalter (CookieYes) ----
-        TODO(CLAUDE.md): CookieYes-Snippet im <head>, mit Consent Mode v2
-        verknüpft. Default „denied" bis Einwilligung. */}
-    {/* <script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/XXXX/script.js"></script> */}
-
     {/* ---- Google Consent Mode v2 (Default: denied) ---- */}
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
@@ -108,18 +104,53 @@ const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd
       });
     </script>
 
+    {/* ---- Consent-Früh-Auslesen (NACH default-denied, VOR GTM) ----
+        Wiederkehrender Besucher mit ib_consent-Cookie → Einwilligung SOFORT anwenden,
+        damit die Tags von Anfang an im richtigen Consent-Zustand feuern. Erstbesucher
+        (kein Cookie) → nichts tun, alles bleibt denied, der Banner zeigt sich. */}
+    <script is:inline>
+      (function () {
+        try {
+          var m = document.cookie.match(/(?:^|; )ib_consent=([^;]*)/);
+          if (!m) return;
+          var c = JSON.parse(decodeURIComponent(m[1]));
+          if (!c || c.v !== 1) return;
+          gtag('consent', 'update', {
+            analytics_storage: c.a ? 'granted' : 'denied',
+            ad_storage: c.m ? 'granted' : 'denied',
+            ad_user_data: c.m ? 'granted' : 'denied',
+            ad_personalization: c.m ? 'granted' : 'denied',
+          });
+          window.dataLayer.push({ event: 'consent_update', analytics: !!c.a, marketing: !!c.m });
+        } catch (e) {}
+      })();
+    </script>
+
     {/* ---- Google Tag Manager (Platzhalter — echte ID via site.ts) ---- */}
     <script is:inline define:vars={{ GTM_ID }}>
       (function (w, d, s, l, i) {
         if (!i || i.indexOf('XXXX') !== -1) return; // Platzhalter-ID → nicht feuern
-        w[l] = w[l] || [];
-        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer' ? '&l=' + l : '';
-        j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-        f.parentNode.insertBefore(j, f);
+        function loadGtm() {
+          if (w.__gtmStarted) return;
+          w.__gtmStarted = true;
+          w[l] = w[l] || [];
+          w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+          var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer' ? '&l=' + l : '';
+          j.async = true;
+          j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        }
+        // GTM erst NACH dem Laden (idle) injizieren → schützt LCP/TBT (Lighthouse-Budget).
+        // Consent Mode bleibt korrekt: default-denied + das Cookie-Früh-Auslesen stehen
+        // synchron im <head>; GTM liest den Consent-Zustand beim (leicht) verzögerten Laden.
+        function start() {
+          if ('requestIdleCallback' in w) w.requestIdleCallback(loadGtm, { timeout: 3000 });
+          else setTimeout(loadGtm, 1500);
+        }
+        if (d.readyState === 'complete') start();
+        else w.addEventListener('load', start);
       })(window, document, 'script', 'dataLayer', GTM_ID);
     </script>
 
@@ -166,6 +197,9 @@ const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd
 
     {/* ---- Smart-App-Bar (mobile, < lg): OS-bewusste Install-Karte, JS-Enhancement ---- */}
     <SmartAppBar />
+
+    {/* ---- Cookie-Consent (selbst gebaut, DE/EN, Consent Mode v2). Ohne JS unsichtbar. ---- */}
+    <ConsentBanner />
 
     {/* ---- Eigener Cursor (Signature-Moment) ----
         Nur aktiv bei (pointer:fine) und ohne prefers-reduced-motion — wird per

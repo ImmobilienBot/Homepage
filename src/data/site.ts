@@ -292,5 +292,6 @@ export const portalCount = portals.length;
 /* Tracking / GTM                                                     */
 /* ------------------------------------------------------------------ */
 
-/** GTM-Container-ID — TODO(CLAUDE.md): echte ID von Artem eintragen. */
-export const GTM_ID = 'GTM-XXXXXXX';
+/** GTM-Container-ID (scharf) — verwaltet Meta Pixel + GA4 + Google Ads, gegated
+ *  über Consent Mode v2 (Default „denied"; siehe BaseLayout + ConsentBanner). */
+export const GTM_ID = 'GTM-W5JK6C5M';

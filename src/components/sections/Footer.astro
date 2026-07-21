@@ -46,6 +46,13 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
               <a class="footer-link" href={l.href}>{l.label}</a>
             </li>
           ))}
+          {/* Widerruf: öffnet den Consent-Einstellungen-Layer erneut (nur mit JS
+              sinnvoll — ohne JS existiert weder Banner noch Tracking). */}
+          <li class="footer-cookie-item">
+            <button type="button" class="footer-link footer-cookie-btn" data-consent-reopen>
+              {F.cookieSettings}
+            </button>
+          </li>
         </ul>
       </nav>
 
@@ -151,6 +158,25 @@ const enHref = switchLangHref(Astro.url.pathname, 'en');
   }
   .footer-link[aria-current='true'] {
     font-weight: 700;
+  }
+  /* Cookie-Widerruf-Button: nur mit JS sichtbar (ohne JS kein Banner/Tracking).
+     Optik = footer-link (Button-Reset, damit er sich einreiht). */
+  .footer-cookie-item {
+    display: none;
+  }
+  :global(html.js) .footer-cookie-item {
+    display: block;
+  }
+  .footer-cookie-btn {
+    background: none;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-align: left;
+    cursor: pointer;
   }
   .footer-lang {
     margin: 0;

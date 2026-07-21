@@ -608,10 +608,30 @@
     "langSwitch": "Deutsch",
     "copyright": "© {year} JS Immobilien Bot GmbH",
     "signature": "The original. Faster than the rest.",
+    "cookieSettings": "Cookie settings",
     "sources": [
       "Statistics: Berliner Zeitung.",
       "Immobilien Bot user data. For comparison: 54% of home seekers search for more than a year (ImmoScout24, 2024)."
     ]
+  },
+  "consent": {
+    "title": "Your cookie settings",
+    "body": "We use cookies for anonymous statistics and marketing to improve the site and our offers. Necessary cookies are always on. Details in our {privacyLink}.",
+    "privacyLinkLabel": "privacy policy",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject",
+    "settings": "Settings",
+    "settingsTitle": "Cookie settings",
+    "settingsIntro": "Choose which cookies we may set. You can change your choice anytime via the “Cookie settings” link in the footer.",
+    "save": "Save selection",
+    "close": "Close",
+    "necessaryName": "Necessary",
+    "necessaryDesc": "Required for the site to work – e.g. security and your cookie choice. Always on.",
+    "necessaryAlways": "Always on",
+    "analyticsName": "Statistics",
+    "analyticsDesc": "Anonymous usage measurement so we can improve the site.",
+    "marketingName": "Marketing",
+    "marketingDesc": "So we can show you relevant ads and measure their success."
   },
   "legal": {
     "imprint": {
