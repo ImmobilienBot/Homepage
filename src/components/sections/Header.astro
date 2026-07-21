@@ -6,9 +6,9 @@
  * (offwhite/95 + backdrop-blur, weicher großer Schatten, deutlich vom Rand
  * abgesetzt). Zitiert die App-Bottom-Bar.
  *
- * Nav-Reihenfolge: Features · Portale · Preise · FAQ · Über uns (Seite +
- * Dropdown) · Kontakt. Anchor-Links werden IMMER absolut gerendert
- * (/#features bzw. /en/#features) → funktionieren auch von Unterseiten aus.
+ * Nav-Reihenfolge (= Sektions-Reihenfolge): Portale · Features · Preise · FAQ ·
+ * Über uns (Seite + Dropdown) · Kontakt. Anchor-Links werden IMMER absolut gerendert
+ * (/#portale bzw. /en/#portale) → funktionieren auch von Unterseiten aus.
  * Sprachumschalter „DE | EN" (statischer Link, kein JS) rechts vor dem CTA;
  * mobil im aufklappbaren Menü (natives <details>, ohne JS bedienbar).
  */
@@ -30,11 +30,13 @@ const aboutHref = lang === 'en' ? '/en/about' : '/ueber-uns';
 const path = Astro.url.pathname;
 const isAbout = path === aboutHref || path === `${aboutHref}/`;
 
-// Section-Anchors (Scroll-Spy). Reihenfolge im Markup: features, portale, preise,
-// faq, [Über uns], kontakt — „Über uns" ist ein Seitenlink (kein Scroll-Spy).
+// Section-Anchors (Scroll-Spy). Reihenfolge = Sektions-Reihenfolge auf der Startseite:
+// portale, features, preise, faq, [Über uns], kontakt — „Über uns" ist ein Seitenlink
+// (kein Scroll-Spy). So wandert der Aktiv-Marker beim Scrollen vorwärts (Portale steht
+// vor Features im DOM), statt zurückzuspringen.
 const navBefore = [
-  { id: 'features', label: t.nav.features },
   { id: 'portale', label: t.nav.portale },
+  { id: 'features', label: t.nav.features },
   { id: 'preise', label: t.nav.pricing },
   { id: 'faq', label: t.nav.faq },
 ];
@@ -43,7 +45,7 @@ const navBefore = [
 const deHref = switchLangHref(path, 'de');
 const enHref = switchLangHref(path, 'en');
 
-// Vollständige Menü-Reihenfolge fürs Mobile-Overlay (Features · Portale · Preise ·
+// Vollständige Menü-Reihenfolge fürs Mobile-Overlay (Portale · Features · Preise ·
 // FAQ · Über uns · Kontakt). `section` = Scroll-Spy-ID (Über uns ist ein Seitenlink
 // ohne Spy). Anchors absolut → funktionieren auch von Unterseiten.
 const navItems = [

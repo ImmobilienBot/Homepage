@@ -49,6 +49,13 @@ const ogImageURL = new URL(ogImage, Astro.site);
 // Standalone-Seiten (DE-only) tragen bewusst KEINE hreflang-Alternates.
 const alternates = standalone ? [] : getAlternates(Astro.url, Astro.site);
 
+// Preview-Builds vor Google schützen: noindex, wenn die noindex-Prop gesetzt ist ODER
+// es ein Cloudflare-Preview ist. Cloudflare Pages setzt zur Buildzeit CF_PAGES=1 und
+// CF_PAGES_BRANCH; nur der Production-Branch (main) bleibt indexierbar. Lokal ist
+// CF_PAGES nicht gesetzt → index, follow. Env buildseitig aus process.env gelesen.
+const isPreviewBuild = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'main';
+const robotsContent = noindex || isPreviewBuild ? 'noindex, nofollow' : 'index, follow';
+
 // ---- JSON-LD Grundgerüst -------------------------------------------------
 // MobileApplication mit Store-Links + aggregateRating aus site.ts.
 const jsonLd = {
@@ -133,7 +140,7 @@ const jsonLd = {
 <title>{title}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalURL.href} />
-<meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+<meta name="robots" content={robotsContent} />
 
 {/* hreflang — reziproke DE/EN-Verlinkung + x-default */}
 {
