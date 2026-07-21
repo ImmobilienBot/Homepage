@@ -58,6 +58,7 @@
   "sections": {
     "problem": {
       "title": "Das Problem",
+      "context": "Warum du schnell sein musst",
       "stat": "Bewerbungen auf {flats} Wohnungen. Nach {minutes} Minuten war Schluss.",
       "board": {
         "applicants": "Bewerbungen",

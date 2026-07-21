@@ -58,6 +58,7 @@
   "sections": {
     "problem": {
       "title": "The Problem",
+      "context": "Why you need to be fast",
       "stat": "applicants for {flats} flats. After {minutes} minutes, it was over.",
       "board": {
         "applicants": "Applicants",

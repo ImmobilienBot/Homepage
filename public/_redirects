@@ -15,6 +15,13 @@
 /2025/09/04/wie-lange-gilt-schufa-auskunft           /2025/09/04/wie-lange-gilt-schufa-auskunft/           301
 /2025/08/28/app-fur-wohnungssuche                    /2025/08/28/app-fur-wohnungssuche/                    301
 
+# --- Account-Löschen (App- + Play-Console-Lösch-URL, Parität zur alten .htaccess).
+#     Der Pfad /contact war in der Google Play Console als „Konto löschen"-URL
+#     hinterlegt; der Inhalt lebt jetzt als /account-loeschen/ mit echtem Formular.
+#     Beide Varianten (mit/ohne Slash) 301 auf die kanonische Löschseite. ---
+/contact   /account-loeschen/   301
+/contact/  /account-loeschen/   301
+
 # --- App-E-Mail-Verifizierung (aus der alten .htaccess übernommen, 302). Die
 #     Verifizierungsmails hängen mode/oobCode/apiKey/lang als Query an /verify an;
 #     Cloudflare reicht die eingehende Query standardmäßig ans Ziel durch (auf der

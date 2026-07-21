@@ -67,7 +67,6 @@ export const standaloneRoutes = new Set([
   '/impressum',
   '/datenschutz',
   '/agb',
-  '/contact',
   '/account-loeschen',
   '/verify-email',
 ]);

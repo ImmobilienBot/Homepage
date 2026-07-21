@@ -276,6 +276,11 @@ collections:
                     widget: string
                     required: false
                     i18n: true
+                  - name: context
+                    label: 'Context'
+                    widget: string
+                    required: false
+                    i18n: true
                   - name: stat
                     label: 'Statistik-Zeile'
                     widget: text
