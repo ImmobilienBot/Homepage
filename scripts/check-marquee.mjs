@@ -2,8 +2,10 @@
  * check-marquee.mjs — Dauer-Wächter für die Bewertungen-Marquee (mit JS).
  *
  * Hintergrund: Die Marquee rendert jedes Testimonial serverseitig nur EINMAL; das
- * nahtlose Klon-Set (−50 %-Loop) hängt initReviewMarquee() (animations.ts) erst nach
- * First Paint clientseitig an und markiert die Reihe als `.is-marquee` (Loop-Gate).
+ * nahtlose Klon-Set (−50 %-Loop) hängt initReviewMarquee() (animations.ts) erst bei der
+ * ERSTEN Nutzer-Interaktion clientseitig an (Perf/LCP: aus dem Idle-Bündel genommen) und
+ * markiert die Reihe als `.is-marquee` (Loop-Gate). Der Guard löst darum eine echte
+ * Eingabe (mousemove/wheel) aus — genau wie ein realer Nutzer, der zur Sektion scrollt.
  * Dieser Klon-Wrapper wird via document.createElement erzeugt und trägt daher NICHT
  * das Astro-`data-astro-cid` — eine an die Komponente *skopte* `.bw-clones`-Regel
  * (z. B. display:contents) griffe an ihm nicht. Genau das war der feb6ed7-Regressions-
@@ -117,8 +119,15 @@ async function main() {
         const page = await browser.newPage();
         await page.setViewport({ width, height: 900, deviceScaleFactor: 1, isMobile: false, hasTouch: true });
         await page.goto(`http://localhost:${PORT}${path}`, { waitUntil: 'networkidle0', timeout: 30000 });
-        // In die Bewertungen scrollen → content-visibility rendern + Idle-Bündel anstoßen.
+        // In die Bewertungen scrollen (Sichtbarkeit) UND eine echte Nutzer-Eingabe
+        // auslösen: das Klon-Set entsteht bewusst erst bei erster Interaktion
+        // (initReviewMarquee ist aus dem Idle-Bündel raus → Perf/LCP; animations.ts).
+        // mousemove + wheel bringen die Reihen exakt so in den Loop wie ein realer
+        // Nutzer. Bewusst KEIN reines 'scroll' als Trigger (stört sonst Lenis-Anker-
+        // Scrolls) — deshalb hier eine echte Zeiger-/Wheel-Eingabe statt scrollIntoView.
         await page.evaluate(() => document.querySelector('#bewertungen')?.scrollIntoView({ block: 'start' }));
+        await page.mouse.move(Math.round(width / 2), 450);
+        await page.mouse.wheel({ deltaY: 10 });
 
         // (a) Warten (≤ 3 s), bis ALLE Marquee-Reihen `.is-marquee` tragen. Zeitmessung
         // per Poll (kein Date.now im Script-Sandbox-Kontext nötig — hier ist Node).
