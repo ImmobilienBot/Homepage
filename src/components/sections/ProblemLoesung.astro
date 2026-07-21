@@ -83,6 +83,12 @@ const ICONS = [
   <div class="section-wipe" data-p3-wipe aria-hidden="true"></div>
 
   <div class="p3-inner">
+    {/* 0 · Kontext-Überschrift (H2 der Sektion) — IMMER im DOM, ohne JS sofort sichtbar,
+        kein Layout-Shift. Mobil: prominente CD-Zeile ÜBER den Zahlen (gibt der großen
+        „43.000" Kontext). Desktop: dezente Eyebrow-Zeile über der Partikel-Zahl — die
+        Scroll-Choreografie bleibt unberührt (kein data-p3-reveal, kein JS-Hook). */}
+    <h2 class="p3-context">{P.context}</h2>
+
     {/* 1 · Partikel-Zahl (Display, KEIN Heading) + eng gekoppelter Statistik-Satz.
         Die „Stage" reserviert nur die Layout-Position der Zahl (Canvas zeichnet die
         Zahl dort). Ohne JS/reduced-motion: statische DOM-„43.000" sichtbar. */}
@@ -124,10 +130,11 @@ const ICONS = [
       </div>
     </div>
 
-    {/* 3 · Umkehr-Headline (H2) — groß, voller Kontrast, Marker nur auf „du".
-        [data-p3-reveal]: wird per JS nach dem „du"-Moment eingeblendet; ohne JS /
-        reduced-motion sofort sichtbar. */}
-    <h2 class="p3-head" data-p3-reveal>
+    {/* 3 · Umkehr-Payoff — groß, voller Kontrast, Marker nur auf „deine.". KEIN Heading
+        mehr (die H2 der Sektion ist die Kontext-Zeile oben → keine Doppel-H2): der
+        Payoff bleibt als betonter Absatz. [data-p3-reveal]: wird per JS nach dem
+        „deine."-Moment eingeblendet; ohne JS / reduced-motion sofort sichtbar. */}
+    <p class="p3-head" data-p3-reveal>
       <span>{headPrefix}</span><span class="p3-head-nowrap"
         ><span class="marker"
           ><span class="marker__bg" aria-hidden="true"></span><span class="marker__label"
@@ -135,7 +142,7 @@ const ICONS = [
           ></span
         >{headSuffix}</span
       >
-    </h2>
+    </p>
 
     {/* 4 · Vorteils-Reihe (kein Fließsatz), je Icon + Label */}
     <ul class="p3-benefits" data-p3-reveal>
@@ -213,6 +220,33 @@ const ICONS = [
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  /* ---- 0 · Kontext-Überschrift (H2 der Sektion) ----------------------------
+     Mobil: prominente CD-Zeile (Roboto Black, kompakt) ÜBER den Zahlen — gibt der
+     großen „43.000" den fehlenden Kontext. Desktop: leise Eyebrow-Zeile über der
+     Partikel-Zahl (nicht mit ihr konkurrierend). Immer im DOM, ohne JS sofort da. */
+  .p3-context {
+    margin: 0 0 clamp(0.75rem, 3vw, 1.25rem);
+    max-width: 22ch;
+    font-weight: 900;
+    font-size: clamp(1.35rem, 6.4vw, 1.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: var(--color-offwhite);
+    text-wrap: balance;
+  }
+  @media (min-width: 1024px) {
+    .p3-context {
+      /* dezent: kleine, gesperrte Eyebrow-Zeile über der dominanten Zahl */
+      margin: 0 0 clamp(0.5rem, 1.4vw, 1rem);
+      max-width: none;
+      font-size: clamp(0.8rem, 1.05vw, 0.95rem);
+      line-height: 1.2;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgb(246 246 246 / 0.62); /* Weiß-Token @ 0.62 ≥ 4.5:1 auf #3b3b3a */
+    }
   }
 
   /* ---- 1 · Statistik-Block: Zahl + Satz bilden EINE enge Einheit ---- */
