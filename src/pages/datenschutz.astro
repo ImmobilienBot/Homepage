@@ -7,7 +7,10 @@
  *   1. Webhosting → Cloudflare Pages (Auftragsverarbeitung) [neu ergänzt]
  *   2. Kontaktformular → Versand via Resend (Auftragsverarbeiter)
  *   3. Schriftart „Roboto" lokal gehostet (statt Google Fonts CDN)
- *   4. Cookie-/Consent-Plugin-Passage („Real Cookie Banner") als veraltet markiert
+ *   4. Cookies/Consent-Management: eigener Banner (Consent Mode v2) statt „Real Cookie
+ *      Banner"; Rechtsgrundlagen inkl. § 25 TDDDG
+ *   5. Mobile App: In-App-Käufe (Apple/Google) + Telegram-Benachrichtigungen [Entwurf,
+ *      TODO(Legal)]
  * Alle übrigen Passagen sind wortgleich zur Quelle.
  */
 import LegalLayout from '../layouts/LegalLayout.astro';
@@ -16,22 +19,30 @@ import LegalLayout from '../layouts/LegalLayout.astro';
 <LegalLayout
   title="Datenschutz"
   description="Datenschutzerklärung der JS Immobilien Bot GmbH: Verantwortlicher, Rechtsgrundlagen, verarbeitete Daten, Betroffenenrechte und eingesetzte Dienste."
-  updated="24. Juli 2023"
+  updated="21. Juli 2026"
 >
-  <!-- TODO(Legal): veraltet — finales Consent-Setup (GTM + Consent Mode v2 + CookieYes) folgt in eigener Runde -->
-  <h2>Cookies</h2>
+  <h2>Cookies und Consent-Management</h2>
   <p>
-    Zur Verwaltung der eingesetzten Cookies und ähnlichen Technologien (Tracking-Pixel, Web-Beacons
-    etc.) und diesbezüglicher Einwilligungen setzen wir das Consent Tool „Real Cookie Banner“ ein.
-    Details zur Funktionsweise von „Real Cookie Banner“ findest du unter
-    <a href="https://devowl.io/de/rcb/datenverarbeitung/">https://devowl.io/de/rcb/datenverarbeitung/</a>.
-    Rechtsgrundlagen für die Verarbeitung von personenbezogenen Daten in diesem Zusammenhang sind Art.
-    6 Abs. 1 lit. c DS-GVO und Art. 6 Abs. 1 lit. f DS-GVO. Unser berechtigtes Interesse ist die
-    Verwaltung der eingesetzten Cookies und ähnlichen Technologien und der diesbezüglichen
-    Einwilligungen. Die Bereitstellung der personenbezogenen Daten ist weder vertraglich vorgeschrieben
-    noch für den Abschluss eines Vertrages notwendig. Du bist nicht verpflichtet die personenbezogenen
-    Daten bereitzustellen. Wenn du die personenbezogenen Daten nicht bereitstellst, können wir deine
-    Einwilligungen nicht verwalten.
+    Auf unserer Website setzen wir technisch notwendige Cookies sowie – sofern Sie einwilligen –
+    Cookies und ähnliche Technologien zur Reichweitenmessung und für Marketingzwecke ein. Die
+    Verwaltung Ihrer Einwilligungen und deren Widerruf erfolgt über unser eigenes
+    Consent-Management-System (Cookie-Banner). Beim Aufruf der Website wird ein technisch notwendiges
+    Cookie auf Ihrem Endgerät gespeichert, um die gewählten Einstellungen (Einwilligung oder
+    Ablehnung) für zukünftige Besuche zu sichern.
+  </p>
+  <p>Rechtsgrundlagen:</p>
+  <ul>
+    <li>
+      Technisch notwendige Cookies &amp; Speicherung der Einwilligung: Art. 6 Abs. 1 lit. f DSGVO
+      i. V. m. § 25 Abs. 2 TDDDG.
+    </li>
+    <li>
+      Optionale Cookies (Analyse/Marketing): Art. 6 Abs. 1 lit. a DSGVO i. V. m. § 25 Abs. 1 TDDDG.
+    </li>
+  </ul>
+  <p>
+    Sie können Ihre Einstellungen jederzeit über den Link „Cookie-Einstellungen“ im Footer anpassen
+    oder widerrufen.
   </p>
 
   <h2>Präambel</h2>
@@ -42,7 +53,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     Verarbeitungen personenbezogener Daten, sowohl im Rahmen der Erbringung unserer Leistungen als auch
     insbesondere auf unseren Webseiten, in mobilen Applikationen sowie innerhalb externer
     Onlinepräsenzen, wie z.B. unserer Social-Media-Profile (nachfolgend zusammenfassend bezeichnet als
-    „Onlineangebot“). Die verwendeten Begriffe sind nicht geschlechtsspezifisch. Stand: 24. Juli 2023
+    „Onlineangebot“). Die verwendeten Begriffe sind nicht geschlechtsspezifisch. Stand: 21. Juli 2026
   </p>
 
   <h2>Verantwortlicher</h2>
@@ -506,6 +517,35 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     • Verarbeitete Daten: E-Mail-Adresse, Benutzerkennung, Einstellungen, ggf. Laufzeit/Abo-Status<br />
     • Zweck: Vertragserfüllung gemäß Art. 6 Abs. 1 lit. b DSGVO<br />
     • Speicherdauer: Bis zur Löschung durch den Nutzer oder bei Beendigung des Vertragsverhältnisses
+  </p>
+
+  <!-- TODO(Legal): Entwurf — vor finalem Live juristisch gegenlesen -->
+  <h3>In-App-Käufe (Apple App Store und Google Play)</h3>
+  <p>
+    Kostenpflichtige Funktionen unserer App (Abonnements) werden ausschließlich als In-App-Käufe über
+    die Plattformbetreiber Apple (App Store) bzw. Google (Google Play) abgewickelt. Die
+    Zahlungsabwicklung erfolgt vollständig durch Apple bzw. Google; wir erhalten dabei keine
+    Zahlungs- oder Kreditkartendaten, sondern lediglich Informationen zum Bestell-/Abonnementstatus.
+    Es gelten die Datenschutzbestimmungen von Apple bzw. Google.<br />
+    • Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)<br />
+    • Datenschutz Apple:
+    <a href="https://www.apple.com/legal/privacy/de-ww/">https://www.apple.com/legal/privacy/de-ww/</a><br />
+    • Datenschutz Google:
+    <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>
+  </p>
+
+  <!-- TODO(Legal): Entwurf — vor finalem Live juristisch gegenlesen.
+       HINWEIS: genaue an Telegram übermittelte Datenarten (z. B. Chat-ID) mit Juri/Entwicklung
+       final abgleichen. -->
+  <h3>Benachrichtigungen über Telegram</h3>
+  <p>
+    Optional können Sie Ihr Telegram-Konto mit der App verknüpfen, um Benachrichtigungen über neue
+    Angebote zusätzlich per Telegram zu erhalten. Bei der Verknüpfung wird eine Kennung Ihres
+    Telegram-Kontos (z. B. Chat-ID) verarbeitet, um die Benachrichtigungen zustellen zu können; die
+    dafür erforderlichen Daten werden an den Betreiber von Telegram übertragen. Telegram verarbeitet
+    Daten auch außerhalb der Europäischen Union.<br />
+    • Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung — Verknüpfung erfolgt freiwillig)<br />
+    • Datenschutz Telegram: <a href="https://telegram.org/privacy">https://telegram.org/privacy</a>
   </p>
 
   <h2>Änderung und Aktualisierung der Datenschutzerklärung</h2>
