@@ -255,40 +255,39 @@ const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'mai
           aria-hidden="true"
           style="position:fixed;bottom:10px;left:10px;z-index:150;pointer-events:none;display:flex;flex-direction:column;gap:2px;max-width:calc(100vw - 20px);padding:6px 10px;border-radius:10px;background:#3b3b3a;box-shadow:0 4px 16px rgb(0 0 0 / 0.25);font-family:Roboto,system-ui,sans-serif"
         >
-          <span style="font-weight:900;font-size:12px;line-height:1.2;letter-spacing:0.02em;color:#fff03c">
-            <span id="ib-live-dot" style="color:#fff03c">
-              ●
-            </span>{' '}
-            <span id="ib-live-status">VORSCHAU – NICHT LIVE</span>
+          <span id="ib-live-line" style="font-weight:900;font-size:12px;line-height:1.2;letter-spacing:0.02em;color:#f6f6f6">
+            <span id="ib-live-dot">●</span>{' '}
+            <span id="ib-live-status">STAGING</span>
           </span>
           <span style="font-size:11px;line-height:1.2;color:#f6f6f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
             {buildBranch} · v{version} · {buildSha} · {buildTime}
           </span>
-          {/* Live-Sync-Status: vergleicht per GitHub-API main (Live) gegen staging
-              (Preview). Nur ahead_by ist verlässlich = „noch nicht live"; behind_by wird
-              durch die Merge-Commits (staging→main) dauerhaft > 0 und ist reines Rauschen,
-              daher ignoriert. Branchnamen fest = unsere Branches. is:inline → nur im
-              Preview-Build ausgeliefert, NICHT gebündelt. Ohne JS / bei Fehler bleibt
-              der ehrliche Default „VORSCHAU – NICHT LIVE". Kein Storage, keine Animation. */}
+          {/* Live-Sync-Status: fragt den SAME-ORIGIN-Endpunkt /api/live-status ab (der die
+              GitHub-Compare-API serverseitig + edge-gecacht spiegelt — der direkte Browser-
+              Call auf api.github.com scheiterte an Rate-Limit/Blocking). Nur `ahead`
+              (= Commits, die staging vor main hat) ist verlässlich; behind = Merge-Commit-
+              Rauschen, wird nicht geliefert. is:inline → nur im Preview-Build ausgeliefert,
+              NICHT gebündelt. Farbe sitzt auf der Parent-Span (Punkt UND Text). Ohne JS /
+              bei unbekanntem Status bleibt der neutrale Default (grau „STAGING"). Kein
+              Storage, keine Animation. */}
           <script is:inline>
             {`(function () {
               try {
-                fetch('https://api.github.com/repos/ImmobilienBot/Homepage/compare/main...staging', {
-                  headers: { Accept: 'application/vnd.github+json' },
-                })
+                fetch('/api/live-status')
                   .then(function (r) { return r.ok ? r.json() : null; })
                   .then(function (d) {
                     if (!d) return;
+                    var line = document.getElementById('ib-live-line');
                     var s = document.getElementById('ib-live-status');
-                    var dot = document.getElementById('ib-live-dot');
-                    if (!s || !dot) return;
-                    var a = d.ahead_by || 0;
-                    if (a > 0) {
-                      s.textContent = 'NICHT LIVE · ' + a + ' noch zu pushen';
-                      dot.style.color = '#fff03c';
+                    if (!line || !s) return;
+                    var ahead = d.ahead;
+                    if (typeof ahead !== 'number') return;
+                    if (ahead > 0) {
+                      line.style.color = '#fff03c';
+                      s.textContent = 'NICHT LIVE · ' + ahead + ' noch zu pushen';
                     } else {
+                      line.style.color = '#35c66b';
                       s.textContent = 'Staging = Live · alles gepusht';
-                      dot.style.color = '#35c66b';
                     }
                   })
                   .catch(function () {});
