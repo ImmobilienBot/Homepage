@@ -1713,6 +1713,7 @@ function initKontakt() {
  */
 function initFeatureLangLottie(section: HTMLElement) {
   if (prefersReducedMotion) return;
+  if (!window.matchMedia('(min-width: 1024px)').matches) return; // Mobile/Touch: Fallback-SVG, kein Lottie-Chunk
   const holder = section.querySelector<HTMLElement>('[data-ft-lang-lottie]');
   const tile = holder?.closest<HTMLElement>('.ft-tile');
   const src = holder?.getAttribute('data-lottie-src');
@@ -2112,6 +2113,7 @@ function initBenefitLottie() {
   const holders = gsap.utils.toArray<HTMLElement>('[data-p3-lottie]');
   const section = document.querySelector<HTMLElement>('#problem.problem3c');
   if (!holders.length || !section) return;
+  if (!window.matchMedia('(min-width: 1024px)').matches) return; // Mobile: Fallback-SVGs, kein Lottie-Chunk
 
   const YELLOW_RGB = [1, 0.941, 0.235]; // #fff03c
   let loaded = false;
