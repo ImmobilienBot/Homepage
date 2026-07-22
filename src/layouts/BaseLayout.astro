@@ -265,7 +265,9 @@ const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'mai
             {buildBranch} · v{version} · {buildSha} · {buildTime}
           </span>
           {/* Live-Sync-Status: vergleicht per GitHub-API main (Live) gegen staging
-              (Preview). Branchnamen fest = unsere Branches. is:inline → nur im
+              (Preview). Nur ahead_by ist verlässlich = „noch nicht live"; behind_by wird
+              durch die Merge-Commits (staging→main) dauerhaft > 0 und ist reines Rauschen,
+              daher ignoriert. Branchnamen fest = unsere Branches. is:inline → nur im
               Preview-Build ausgeliefert, NICHT gebündelt. Ohne JS / bei Fehler bleibt
               der ehrliche Default „VORSCHAU – NICHT LIVE". Kein Storage, keine Animation. */}
           <script is:inline>
@@ -281,14 +283,10 @@ const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'mai
                     var dot = document.getElementById('ib-live-dot');
                     if (!s || !dot) return;
                     var a = d.ahead_by || 0;
-                    var b = d.behind_by || 0;
                     if (a > 0) {
                       s.textContent = 'NICHT LIVE · ' + a + ' noch zu pushen';
                       dot.style.color = '#fff03c';
-                    } else if (a === 0 && b > 0) {
-                      s.textContent = 'Live ist ' + b + ' voraus';
-                      dot.style.color = '#f6f6f6';
-                    } else if (a === 0 && b === 0) {
+                    } else {
                       s.textContent = 'Staging = Live · alles gepusht';
                       dot.style.color = '#35c66b';
                     }
