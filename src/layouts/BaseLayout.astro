@@ -256,11 +256,47 @@ const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'mai
           style="position:fixed;bottom:10px;left:10px;z-index:150;pointer-events:none;display:flex;flex-direction:column;gap:2px;max-width:calc(100vw - 20px);padding:6px 10px;border-radius:10px;background:#3b3b3a;box-shadow:0 4px 16px rgb(0 0 0 / 0.25);font-family:Roboto,system-ui,sans-serif"
         >
           <span style="font-weight:900;font-size:12px;line-height:1.2;letter-spacing:0.02em;color:#fff03c">
-            ● VORSCHAU – NICHT LIVE
+            <span id="ib-live-dot" style="color:#fff03c">
+              ●
+            </span>{' '}
+            <span id="ib-live-status">VORSCHAU – NICHT LIVE</span>
           </span>
           <span style="font-size:11px;line-height:1.2;color:#f6f6f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
             {buildBranch} · v{version} · {buildSha} · {buildTime}
           </span>
+          {/* Live-Sync-Status: vergleicht per GitHub-API main (Live) gegen staging
+              (Preview). Branchnamen fest = unsere Branches. is:inline → nur im
+              Preview-Build ausgeliefert, NICHT gebündelt. Ohne JS / bei Fehler bleibt
+              der ehrliche Default „VORSCHAU – NICHT LIVE". Kein Storage, keine Animation. */}
+          <script is:inline>
+            {`(function () {
+              try {
+                fetch('https://api.github.com/repos/ImmobilienBot/Homepage/compare/main...staging', {
+                  headers: { Accept: 'application/vnd.github+json' },
+                })
+                  .then(function (r) { return r.ok ? r.json() : null; })
+                  .then(function (d) {
+                    if (!d) return;
+                    var s = document.getElementById('ib-live-status');
+                    var dot = document.getElementById('ib-live-dot');
+                    if (!s || !dot) return;
+                    var a = d.ahead_by || 0;
+                    var b = d.behind_by || 0;
+                    if (a > 0) {
+                      s.textContent = 'NICHT LIVE · ' + a + ' noch zu pushen';
+                      dot.style.color = '#fff03c';
+                    } else if (a === 0 && b > 0) {
+                      s.textContent = 'Live ist ' + b + ' voraus';
+                      dot.style.color = '#f6f6f6';
+                    } else if (a === 0 && b === 0) {
+                      s.textContent = 'Staging = Live · alles gepusht';
+                      dot.style.color = '#35c66b';
+                    }
+                  })
+                  .catch(function () {});
+              } catch (e) {}
+            })();`}
+          </script>
         </div>
       )
     }
