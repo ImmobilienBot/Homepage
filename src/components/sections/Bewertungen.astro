@@ -178,9 +178,10 @@ const rows = [
     padding-inline: var(--spacing-inset);
   }
 
-  /* ---- Header ---- */
+  /* ---- Header (zentriert) ---- */
   .bw-head {
     margin-bottom: clamp(2rem, 4vw, 3rem);
+    text-align: center;
   }
   .bw-h2 {
     font-weight: 900;
@@ -204,6 +205,7 @@ const rows = [
   }
   .bw-sub {
     margin-top: clamp(1rem, 2vw, 1.4rem);
+    margin-inline: auto;
     max-width: 560px;
     font-size: clamp(1.05rem, 1.6vw, 1.3rem);
     line-height: 1.5;
@@ -211,6 +213,7 @@ const rows = [
   }
   .bw-transnote {
     margin-top: 0.6rem;
+    margin-inline: auto;
     font-size: 13px;
     color: var(--color-grey-text);
   }
@@ -307,11 +310,16 @@ const rows = [
        Style-&-Layout-Arbeit, die sonst den First Paint des LCP-Elements (Hero-Phone)
        blockiert. Ersetzt das frühere `contain: layout paint` (impliziert es). Rein
        CSS, kein JS; die Reihe hat KEINEN ScrollTrigger-Reveal (nur CSS-Marquee) →
-       keine „leere Sektion"-Gefahr. `contain-intrinsic-size: auto` reserviert einen
-       Platzhalter, merkt sich aber nach dem ersten Rendern die echte Höhe (self-
-       correcting) → CLS bleibt 0. */
+       keine „leere Sektion"-Gefahr.
+       contain-intrinsic-size: EXAKTE Reihenhöhe je Reihe/Breakpoint (unten pro
+       .bw-row--1/--2 gesetzt). Die Karten sind fix breit (330 px Desktop · 280 px
+       Mobil) → die Reihenhöhe = höchste Karte ist pro Breakpoint konstant. Ein zu
+       großer Platzhalter (früher pauschal 400 px) ließ die Reihe beim ersten Render
+       um ~244 px SCHRUMPFEN. Das ist zwar CLS-neutral (passiert below-the-fold), aber
+       es verschob das (schon fixierte) Lenis-Anker-Ziel → Nav-Anker landeten beim
+       ERSTEN Klick ~157 px zu tief (2. Klick saß). Exakte Höhe = kein Schrumpfen =
+       kein Anker-Overshoot. `auto` korrigiert zusätzlich nach dem ersten Render. */
     content-visibility: auto;
-    contain-intrinsic-size: auto 400px;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   }
@@ -349,6 +357,15 @@ const rows = [
   }
   .bw-row--2 .bw-track {
     --dur: 74s;
+  }
+  /* Exakte content-visibility-Platzhalterhöhe je Reihe (Desktop-Basis; Mobil im
+     <768px-Block). = Höhe der höchsten fix-breiten Karte (330 px) der Reihe → beim
+     ersten Render KEIN Schrumpfen mehr → kein Anker-Erstklick-Overshoot. */
+  .bw-row--1 {
+    contain-intrinsic-size: auto 256px;
+  }
+  .bw-row--2 {
+    contain-intrinsic-size: auto 301px;
   }
   /* Gegenläufige zweite Reihe — Richtung im is-marquee-Scope (gleiche Spezifität wie
      die Animation, danach in der Quelle → überschreibt animation-direction:normal). */
@@ -420,6 +437,14 @@ const rows = [
     }
     .bw-count {
       font-size: 11px;
+    }
+    /* Mobil sind die Karten 280 px breit → Text bricht mehr um → höhere Reihen.
+       Exakte Platzhalterhöhe je Reihe → kein Schrumpfen beim ersten Render. */
+    .bw-row--1 {
+      contain-intrinsic-size: auto 278px;
+    }
+    .bw-row--2 {
+      contain-intrinsic-size: auto 346px;
     }
   }
 

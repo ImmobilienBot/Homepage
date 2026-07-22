@@ -29,6 +29,7 @@ import ConsentBanner from '../components/ConsentBanner.astro';
 import { GTM_ID } from '../data/site';
 import { getLangFromUrl, useTranslations, hreflangCodes } from '../i18n';
 import type { Locale } from '../data/site';
+import pkg from '../../package.json';
 
 interface Props {
   title: string;
@@ -51,6 +52,22 @@ const lang: Locale = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd, preloadBodyFont } =
   Astro.props;
+
+// ---- Build-/Versionsanzeige (Mechanik wie isPreviewBuild in SEO.astro) ----
+// Cloudflare Pages setzt zur Buildzeit CF_PAGES / CF_PAGES_BRANCH / CF_PAGES_COMMIT_SHA.
+// Meta „x-build" steht auf ALLEN Builds (unsichtbar); das sichtbare „NICHT LIVE"-Badge
+// nur auf Preview-/Nicht-main-Builds. Lokal (CF_PAGES ungesetzt) → showBadge=false →
+// Audit-HTML bleibt unverändert.
+const buildBranch = process.env.CF_PAGES_BRANCH ?? 'local';
+const buildSha = (process.env.CF_PAGES_COMMIT_SHA ?? 'dev').slice(0, 7);
+const version = pkg.version;
+const _pad = (n: number) => String(n).padStart(2, '0');
+const _now = new Date();
+const buildTime = `${_pad(_now.getUTCDate())}.${_pad(_now.getUTCMonth() + 1)}. ${_pad(
+  _now.getUTCHours(),
+)}:${_pad(_now.getUTCMinutes())}`;
+const buildInfo = `${buildBranch}·v${version}·${buildSha}·${buildTime}`;
+const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'main';
 ---
 
 <!doctype html>
@@ -59,6 +76,8 @@ const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    {/* Build-/Versions-Signatur — unsichtbar, auf allen Builds (auch Production). */}
+    <meta name="x-build" content={buildInfo} />
 
     {/* Roboto Black (Hero-Headline) früh preloaden → kein Font-Swap-Shift. */}
     <link
@@ -225,5 +244,25 @@ const { title, description, canonical, ogImage, noindex, standalone, extraJsonLd
     <script>
       import '../scripts/animations';
     </script>
+
+    {/* ---- „NICHT LIVE"-Signal (nur Preview/Staging, nie main; kein JS) ----
+        Styles inline am Element, damit auf Production/Local (showBadge=false) KEIN
+        Badge-Markup UND kein Badge-CSS im HTML landet. Fixiert unten links, statisch,
+        keine Animation; z-index über Inhalt (Header z-40), aber unter Consent (z-200). */}
+    {
+      showBadge && (
+        <div
+          aria-hidden="true"
+          style="position:fixed;bottom:10px;left:10px;z-index:150;pointer-events:none;display:flex;flex-direction:column;gap:2px;max-width:calc(100vw - 20px);padding:6px 10px;border-radius:10px;background:#3b3b3a;box-shadow:0 4px 16px rgb(0 0 0 / 0.25);font-family:Roboto,system-ui,sans-serif"
+        >
+          <span style="font-weight:900;font-size:12px;line-height:1.2;letter-spacing:0.02em;color:#fff03c">
+            ● VORSCHAU – NICHT LIVE
+          </span>
+          <span style="font-size:11px;line-height:1.2;color:#f6f6f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            {buildBranch} · v{version} · {buildSha} · {buildTime}
+          </span>
+        </div>
+      )
+    }
   </body>
 </html>
