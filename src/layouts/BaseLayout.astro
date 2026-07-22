@@ -270,8 +270,7 @@ const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'mai
               NICHT gebündelt. Farbe sitzt auf der Parent-Span (Punkt UND Text). Ohne JS /
               bei unbekanntem Status bleibt der neutrale Default (grau „STAGING"). Kein
               Storage, keine Animation. */}
-          <script is:inline>
-            {`(function () {
+          <script is:inline set:html={`(function () {
               try {
                 fetch('/api/live-status')
                   .then(function (r) { return r.ok ? r.json() : null; })
@@ -292,8 +291,7 @@ const showBadge = !!process.env.CF_PAGES && process.env.CF_PAGES_BRANCH !== 'mai
                   })
                   .catch(function () {});
               } catch (e) {}
-            })();`}
-          </script>
+            })();`} />
         </div>
       )
     }
