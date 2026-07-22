@@ -288,8 +288,8 @@
       "toggleAria": "Abrechnungszeitraum"
     },
     "bewertungen": {
-      "headline": "Traumwohnung gefunden, bevor es andere taten.",
-      "headlineMark": "gefunden",
+      "headline": "Das sagen echte Nutzer.",
+      "headlineMark": "echte",
       "subline": "{total} Bewertungen auf drei Plattformen · {downloads} Downloads",
       "tileLabel": "{count} Bewertungen",
       "starsSr": "{n} von 5 Sternen",
