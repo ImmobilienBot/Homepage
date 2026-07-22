@@ -37,10 +37,14 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const weekPrice = nf(weekPlan.priceValue, 2); // „2,99 €" / „€2.99"
 const monthPrice = nf(monthPlan.priceValue, 2); // „7,99 €" / „€7.99"
 // Tagespreis: Wochenpreis/7 bzw. Monatspreis/30, auf 2 Nachkommastellen (Intl → &nbsp; vor €).
-const weekDay = P.day.replace('{price}', nf(round2(weekPlan.priceValue / 7), 2));
-const monthDay = P.day.replace('{price}', nf(round2(monthPlan.priceValue / 30), 2));
-// Spar-% = 1 − Monatspreis / (4 × Wochenpreis), gerundet (aktuell 33).
-const savePct = Math.round((1 - monthPlan.priceValue / (4 * weekPlan.priceValue)) * 100);
+const weekDayVal = round2(weekPlan.priceValue / 7); // 0,43
+const monthDayVal = round2(monthPlan.priceValue / 30); // 0,27
+const weekDay = P.day.replace('{price}', nf(weekDayVal, 2));
+const monthDay = P.day.replace('{price}', nf(monthDayVal, 2));
+// Spar-% = 1 − Tagespreis(Monat)/Tagespreis(Woche), gerundet — konsistent mit den zwei
+// Tagespreisen auf der Karte (0,27 € vs. 0,43 € ⇒ 37 %). Weiter aus site.ts abgeleitet;
+// ändern sich die Preise, rechnet sich die Zahl automatisch neu.
+const savePct = Math.round((1 - monthDayVal / weekDayVal) * 100);
 const badge = P.badge.replace('{x}', String(savePct));
 // 70-%-Stat aus site.ts; Quelle ² (Footer) wie in der Ablauf-Sektion.
 const stat = P.stat.replace('{rate}', String(firstMonthSuccessRate));
